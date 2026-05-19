@@ -39,6 +39,9 @@ export default function Dashboard() {
           <div style={styles.userInfo}>
             <span style={styles.welcome}>Welcome, {user.username}! 💜</span>
             <span style={styles.bias}>Bias: {user.bias}</span>
+            <button onClick={() => navigate("/birthdays")} style={styles.navBtn}>
+  🎂 Birthdays
+</button>
             <button onClick={logout} style={styles.logoutBtn}>Logout</button>
           </div>
         )}
@@ -87,6 +90,8 @@ const styles = {
   userInfo: { display: "flex", alignItems: "center", gap: "1rem" },
   welcome: { color: "white" },
   bias: { color: "#b39ddb", background: "#3d0066", padding: "4px 12px", borderRadius: "20px" },
+  navBtn: { padding: "6px 16px", background: "#7c3aed", border: "none",
+  color: "white", borderRadius: "6px", cursor: "pointer" },
   logoutBtn: { padding: "6px 16px", background: "transparent", border: "1px solid #b39ddb",
     color: "#b39ddb", borderRadius: "6px", cursor: "pointer" },
   content: { maxWidth: "800px", margin: "2rem auto", padding: "0 1rem" },
