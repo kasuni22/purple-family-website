@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import shutil
 import os
+from typing import Optional
+from pydantic import BaseModel
 
 from .database import engine, get_db
 from . import models, schemas, auth
@@ -146,3 +148,24 @@ def create_song(song: schemas.SongCreate, db: Session = Depends(get_db),
 @app.get("/songs")
 def get_songs(db: Session = Depends(get_db)):
     return db.query(models.Song).order_by(models.Song.created_at.desc()).all()
+
+# ─── EDIT PROFILE ──────────────────────────────────────────
+
+class ProfileUpdate(BaseModel):
+    bias: Optional[str] = None
+    country: Optional[str] = None
+    birthday: Optional[str] = None
+
+@app.put("/auth/profile")
+def update_profile(data: ProfileUpdate, db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)):
+    if data.bias is not None:
+        current_user.bias = data.bias
+    if data.country is not None:
+        current_user.country = data.country
+    if data.birthday is not None:
+        from datetime import date
+        current_user.birthday = date.fromisoformat(data.birthday)
+    db.commit()
+    db.refresh(current_user)
+    return current_user

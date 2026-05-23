@@ -8,6 +8,7 @@ import Wallpapers from "./pages/Wallpapers";
 import Members from "./pages/Members";
 import Singalong from "./pages/Singalong";
 import Quiz from "./pages/Quiz";
+import EditProfile from "./pages/EditProfile";
 
 function App() {
   const token = localStorage.getItem("token");
@@ -24,6 +25,7 @@ function App() {
         <Route path="/members" element={token ? <Members /> : <Navigate to="/login" />} />
         <Route path="/singalong" element={token ? <Singalong /> : <Navigate to="/login" />} />
         <Route path="/quiz" element={token ? <Quiz /> : <Navigate to="/login" />} />
+        <Route path="/edit-profile" element={token ? <EditProfile /> : <Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );
