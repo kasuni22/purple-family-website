@@ -45,6 +45,9 @@ export default function Dashboard() {
             <button onClick={() => navigate("/wallpapers")} style={styles.navBtn}>
               🖼️ Wallpapers
             </button>
+            <button onClick={() => navigate("/members")} style={styles.navBtn}>
+              👥 Members
+            </button>
             <button onClick={logout} style={styles.logoutBtn}>Logout</button>
           </div>
         )}

@@ -112,3 +112,20 @@ def get_wallpapers(db: Session = Depends(get_db)):
 def get_birthdays(db: Session = Depends(get_db)):
     users = db.query(models.User).filter(models.User.birthday != None).all()
     return [{"username": u.username, "birthday": u.birthday, "bias": u.bias} for u in users]
+
+    # ─── MEMBERS ROUTE ─────────────────────────────────────────
+
+@app.get("/members")
+def get_members(db: Session = Depends(get_db)):
+    users = db.query(models.User).order_by(models.User.created_at.desc()).all()
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "country": u.country,
+            "bias": u.bias,
+            "is_admin": u.is_admin,
+            "created_at": u.created_at
+        }
+        for u in users
+    ]
