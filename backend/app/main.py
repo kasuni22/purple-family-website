@@ -129,3 +129,20 @@ def get_members(db: Session = Depends(get_db)):
         }
         for u in users
     ]
+
+# ─── SINGALONG ROUTES ──────────────────────────────────────
+
+@app.post("/songs")
+def create_song(song: schemas.SongCreate, db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+    new_song = models.Song(**song.model_dump(), added_by_id=current_user.id)
+    db.add(new_song)
+    db.commit()
+    db.refresh(new_song)
+    return new_song
+
+@app.get("/songs")
+def get_songs(db: Session = Depends(get_db)):
+    return db.query(models.Song).order_by(models.Song.created_at.desc()).all()

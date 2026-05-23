@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Birthdays from "./pages/Birthdays";
 import Wallpapers from "./pages/Wallpapers";
 import Members from "./pages/Members";
+import Singalong from "./pages/Singalong";
 
 function App() {
   const token = localStorage.getItem("token");
@@ -20,6 +21,7 @@ function App() {
         <Route path="/birthdays" element={token ? <Birthdays /> : <Navigate to="/login" />} />
         <Route path="/wallpapers" element={token ? <Wallpapers /> : <Navigate to="/login" />} />
         <Route path="/members" element={token ? <Members /> : <Navigate to="/login" />} />
+        <Route path="/singalong" element={token ? <Singalong /> : <Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );

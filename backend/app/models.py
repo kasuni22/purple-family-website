@@ -41,3 +41,14 @@ class Wallpaper(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     uploaded_by = relationship("User", back_populates="wallpapers")
+
+class Song(Base):
+    __tablename__ = "songs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    artist = Column(String)
+    lyrics = Column(String)
+    youtube_url = Column(String)
+    added_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, server_default=func.now())

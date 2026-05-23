@@ -58,3 +58,9 @@ class WallpaperOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class SongCreate(BaseModel):
+    title: str
+    artist: str
+    lyrics: str
+    youtube_url: str        
