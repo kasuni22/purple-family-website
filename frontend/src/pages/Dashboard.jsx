@@ -51,6 +51,9 @@ export default function Dashboard() {
             <button onClick={() => navigate("/singalong")} style={styles.navBtn}>
               🎵 Sing-Along
             </button>
+            <button onClick={() => navigate("/quiz")} style={styles.navBtn}>
+              🎮 Quiz
+            </button>
             <button onClick={logout} style={styles.logoutBtn}>Logout</button>
           </div>
         )}
