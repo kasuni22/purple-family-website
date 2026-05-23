@@ -7,17 +7,17 @@
 html, body {
   width: 100%;
   min-height: 100vh;
-  background: #1a0533;
+  background: #f8f5ff;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
-  background: #1a0533;
+  background: #f8f5ff;
   text-align: left;
 }
 
 body {
   font-family: 'Segoe UI', sans-serif;
-  color: white;
+  color: #2d0a4e;
 }

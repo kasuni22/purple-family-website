@@ -46,17 +46,30 @@ export default function Register() {
 
 const styles = {
   container: {
-    minHeight: "100vh", background: "#1a0533", display: "flex",
-    flexDirection: "column", alignItems: "center", justifyContent: "center"
+    minHeight: "100vh",
+    background: "#f8f5ff",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  title: { color: "#b39ddb", fontSize: "2rem", marginBottom: "2rem" },
+  title: { color: "#2d0a4e", fontSize: "2rem", marginBottom: "2rem" },
   form: { display: "flex", flexDirection: "column", gap: "1rem", width: "320px" },
   input: {
-    padding: "12px", borderRadius: "8px", border: "1px solid #b39ddb",
-    background: "#2d0a4e", color: "white", fontSize: "1rem"
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #d4b8ff",
+    background: "#ffffff",
+    color: "#2d0a4e",
+    fontSize: "1rem",
   },
   button: {
-    padding: "12px", borderRadius: "8px", background: "#7c3aed",
-    color: "white", fontSize: "1rem", cursor: "pointer", border: "none"
-  }
+    padding: "12px",
+    borderRadius: "8px",
+    background: "#7c3aed",
+    color: "white",
+    fontSize: "1rem",
+    cursor: "pointer",
+    border: "none",
+  },
 };

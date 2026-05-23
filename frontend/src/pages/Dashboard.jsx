@@ -85,45 +85,78 @@ export default function Dashboard() {
 }
 
 const styles = {
-  container: { minHeight: "100vh", background: "#1a0533" },
+  container: { minHeight: "100vh", background: "#f8f5ff" },
   header: {
-    background: "#2d0a4e", padding: "1rem 2rem", display: "flex",
-    justifyContent: "space-between", alignItems: "center",
-    borderBottom: "2px solid #7c3aed"
+    background: "#ffffff",
+    padding: "1rem 2rem",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottom: "2px solid #e0d0ff",
   },
-  logo: { color: "#b39ddb", margin: 0 },
+  logo: { color: "#7c3aed", margin: 0 },
   userInfo: { display: "flex", alignItems: "center", gap: "1rem" },
-  welcome: { color: "white" },
-  bias: { color: "#b39ddb", background: "#3d0066", padding: "4px 12px", borderRadius: "20px" },
+  welcome: { color: "#2d0a4e" },
+  bias: {
+    color: "#7c3aed",
+    background: "#f0e6ff",
+    padding: "4px 12px",
+    borderRadius: "20px",
+  },
   navBtn: {
-    padding: "6px 16px", background: "#7c3aed", border: "none",
-    color: "white", borderRadius: "6px", cursor: "pointer"
+    padding: "6px 16px",
+    background: "#7c3aed",
+    border: "none",
+    color: "white",
+    borderRadius: "6px",
+    cursor: "pointer",
   },
   logoutBtn: {
-    padding: "6px 16px", background: "transparent", border: "1px solid #b39ddb",
-    color: "#b39ddb", borderRadius: "6px", cursor: "pointer"
+    padding: "6px 16px",
+    background: "transparent",
+    border: "1px solid #d4b8ff",
+    color: "#7c3aed",
+    borderRadius: "6px",
+    cursor: "pointer",
   },
   content: { maxWidth: "800px", margin: "2rem auto", padding: "0 1rem" },
   card: {
-    background: "#2d0a4e", borderRadius: "12px", padding: "1.5rem",
-    marginBottom: "1.5rem", border: "1px solid #7c3aed"
+    background: "#ffffff",
+    borderRadius: "12px",
+    padding: "1.5rem",
+    marginBottom: "1.5rem",
+    border: "1px solid #d4b8ff",
   },
-  cardTitle: { color: "#b39ddb", marginTop: 0 },
+  cardTitle: { color: "#2d0a4e", marginTop: 0 },
   form: { display: "flex", flexDirection: "column", gap: "1rem" },
   input: {
-    padding: "12px", borderRadius: "8px", border: "1px solid #b39ddb",
-    background: "#1a0533", color: "white", fontSize: "1rem"
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #d4b8ff",
+    background: "#f0e6ff",
+    color: "#2d0a4e",
+    fontSize: "1rem",
   },
   textarea: {
-    padding: "12px", borderRadius: "8px", border: "1px solid #b39ddb",
-    background: "#1a0533", color: "white", fontSize: "1rem", resize: "vertical"
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #d4b8ff",
+    background: "#f0e6ff",
+    color: "#2d0a4e",
+    fontSize: "1rem",
+    resize: "vertical",
   },
   button: {
-    padding: "12px", borderRadius: "8px", background: "#7c3aed",
-    color: "white", fontSize: "1rem", cursor: "pointer", border: "none"
+    padding: "12px",
+    borderRadius: "8px",
+    background: "#7c3aed",
+    color: "white",
+    fontSize: "1rem",
+    cursor: "pointer",
+    border: "none",
   },
-  post: { borderBottom: "1px solid #3d0066", paddingBottom: "1rem", marginBottom: "1rem" },
-  postTitle: { color: "#b39ddb", margin: "0 0 0.5rem 0" },
-  postContent: { color: "white", margin: "0 0 0.5rem 0" },
-  postDate: { color: "#888" }
+  post: { borderBottom: "1px solid #d4b8ff", paddingBottom: "1rem", marginBottom: "1rem" },
+  postTitle: { color: "#2d0a4e", margin: "0 0 0.5rem 0" },
+  postContent: { color: "#2d0a4e", margin: "0 0 0.5rem 0" },
+  postDate: { color: "#888888" },
 };
