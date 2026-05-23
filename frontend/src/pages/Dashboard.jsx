@@ -40,8 +40,11 @@ export default function Dashboard() {
             <span style={styles.welcome}>Welcome, {user.username}! 💜</span>
             <span style={styles.bias}>Bias: {user.bias}</span>
             <button onClick={() => navigate("/birthdays")} style={styles.navBtn}>
-  🎂 Birthdays
-</button>
+              🎂 Birthdays
+            </button>
+            <button onClick={() => navigate("/wallpapers")} style={styles.navBtn}>
+              🖼️ Wallpapers
+            </button>
             <button onClick={logout} style={styles.logoutBtn}>Logout</button>
           </div>
         )}
@@ -54,10 +57,10 @@ export default function Dashboard() {
           <form onSubmit={handlePost} style={styles.form}>
             <input style={styles.input} placeholder="Title"
               value={newPost.title}
-              onChange={e => setNewPost({...newPost, title: e.target.value})} required />
+              onChange={e => setNewPost({ ...newPost, title: e.target.value })} required />
             <textarea style={styles.textarea} placeholder="What's on your mind ARMY? 💜"
               value={newPost.content} rows={4}
-              onChange={e => setNewPost({...newPost, content: e.target.value})} required />
+              onChange={e => setNewPost({ ...newPost, content: e.target.value })} required />
             <button style={styles.button} type="submit">Post 💜</button>
           </form>
         </div>
@@ -65,7 +68,7 @@ export default function Dashboard() {
         {/* Posts Feed */}
         <div style={styles.card}>
           <h2 style={styles.cardTitle}>💜 Family Updates</h2>
-          {posts.length === 0 && <p style={{color: "#ccc"}}>No posts yet. Be the first! 💜</p>}
+          {posts.length === 0 && <p style={{ color: "#ccc" }}>No posts yet. Be the first! 💜</p>}
           {posts.map(post => (
             <div key={post.id} style={styles.post}>
               <h3 style={styles.postTitle}>{post.title}</h3>
@@ -83,28 +86,42 @@ export default function Dashboard() {
 
 const styles = {
   container: { minHeight: "100vh", background: "#1a0533" },
-  header: { background: "#2d0a4e", padding: "1rem 2rem", display: "flex",
+  header: {
+    background: "#2d0a4e", padding: "1rem 2rem", display: "flex",
     justifyContent: "space-between", alignItems: "center",
-    borderBottom: "2px solid #7c3aed" },
+    borderBottom: "2px solid #7c3aed"
+  },
   logo: { color: "#b39ddb", margin: 0 },
   userInfo: { display: "flex", alignItems: "center", gap: "1rem" },
   welcome: { color: "white" },
   bias: { color: "#b39ddb", background: "#3d0066", padding: "4px 12px", borderRadius: "20px" },
-  navBtn: { padding: "6px 16px", background: "#7c3aed", border: "none",
-  color: "white", borderRadius: "6px", cursor: "pointer" },
-  logoutBtn: { padding: "6px 16px", background: "transparent", border: "1px solid #b39ddb",
-    color: "#b39ddb", borderRadius: "6px", cursor: "pointer" },
+  navBtn: {
+    padding: "6px 16px", background: "#7c3aed", border: "none",
+    color: "white", borderRadius: "6px", cursor: "pointer"
+  },
+  logoutBtn: {
+    padding: "6px 16px", background: "transparent", border: "1px solid #b39ddb",
+    color: "#b39ddb", borderRadius: "6px", cursor: "pointer"
+  },
   content: { maxWidth: "800px", margin: "2rem auto", padding: "0 1rem" },
-  card: { background: "#2d0a4e", borderRadius: "12px", padding: "1.5rem",
-    marginBottom: "1.5rem", border: "1px solid #7c3aed" },
+  card: {
+    background: "#2d0a4e", borderRadius: "12px", padding: "1.5rem",
+    marginBottom: "1.5rem", border: "1px solid #7c3aed"
+  },
   cardTitle: { color: "#b39ddb", marginTop: 0 },
   form: { display: "flex", flexDirection: "column", gap: "1rem" },
-  input: { padding: "12px", borderRadius: "8px", border: "1px solid #b39ddb",
-    background: "#1a0533", color: "white", fontSize: "1rem" },
-  textarea: { padding: "12px", borderRadius: "8px", border: "1px solid #b39ddb",
-    background: "#1a0533", color: "white", fontSize: "1rem", resize: "vertical" },
-  button: { padding: "12px", borderRadius: "8px", background: "#7c3aed",
-    color: "white", fontSize: "1rem", cursor: "pointer", border: "none" },
+  input: {
+    padding: "12px", borderRadius: "8px", border: "1px solid #b39ddb",
+    background: "#1a0533", color: "white", fontSize: "1rem"
+  },
+  textarea: {
+    padding: "12px", borderRadius: "8px", border: "1px solid #b39ddb",
+    background: "#1a0533", color: "white", fontSize: "1rem", resize: "vertical"
+  },
+  button: {
+    padding: "12px", borderRadius: "8px", background: "#7c3aed",
+    color: "white", fontSize: "1rem", cursor: "pointer", border: "none"
+  },
   post: { borderBottom: "1px solid #3d0066", paddingBottom: "1rem", marginBottom: "1rem" },
   postTitle: { color: "#b39ddb", margin: "0 0 0.5rem 0" },
   postContent: { color: "white", margin: "0 0 0.5rem 0" },
