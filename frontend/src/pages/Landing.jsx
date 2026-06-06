@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.svg";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -7,7 +8,7 @@ export default function Landing() {
     <div style={styles.container}>
       {/* Navbar */}
       <nav style={styles.nav}>
-        <h1 style={styles.logo}>💜 Purple Family</h1>
+        <img src={logo} alt="Purple Family" style={{height: "50px"}} />
         <div style={styles.navButtons}>
           <button onClick={() => navigate("/login")} style={styles.loginBtn}>Login</button>
           <button onClick={() => navigate("/register")} style={styles.joinBtn}>Join Us 💜</button>
@@ -91,7 +92,6 @@ const styles = {
   nav: { background: "white", padding: "1rem 3rem", display: "flex",
     justifyContent: "space-between", alignItems: "center",
     borderBottom: "2px solid #e0d0ff", position: "sticky", top: 0, zIndex: 100 },
-  logo: { color: "#7c3aed", margin: 0, fontSize: "1.5rem" },
   navButtons: { display: "flex", gap: "1rem" },
   loginBtn: { padding: "8px 20px", background: "white", border: "1px solid #7c3aed",
     color: "#7c3aed", borderRadius: "8px", cursor: "pointer", fontSize: "1rem" },

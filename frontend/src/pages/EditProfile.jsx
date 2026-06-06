@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.svg";
 
 export default function EditProfile() {
   const [form, setForm] = useState({ bias: "", country: "", birthday: "" });
@@ -36,7 +37,7 @@ export default function EditProfile() {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.logo}>💜 Purple Family</h1>
+        <img src={logo} alt="Purple Family" style={{height: "40px"}} />
         <button onClick={() => navigate("/dashboard")} style={styles.backBtn}>
           ← Dashboard
         </button>

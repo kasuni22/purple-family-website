@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.svg";
 
 export default function Wallpapers() {
   const [wallpapers, setWallpapers] = useState([]);
@@ -44,7 +45,7 @@ export default function Wallpapers() {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.logo}>💜 Purple Family</h1>
+        <img src={logo} alt="Purple Family" style={{height: "40px"}} />
         <div style={styles.headerRight}>
           {user?.is_admin && (
             <button onClick={() => setUploading(!uploading)} style={styles.uploadBtn}>

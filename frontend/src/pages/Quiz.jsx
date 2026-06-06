@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.svg";
 
 const questions = [
   {
@@ -109,7 +110,7 @@ export default function Quiz() {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.logo}>💜 Purple Family</h1>
+        <img src={logo} alt="Purple Family" style={{height: "40px"}} />
         <button onClick={() => navigate("/dashboard")} style={styles.backBtn}>
           ← Dashboard
         </button>

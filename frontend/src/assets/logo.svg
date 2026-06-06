@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80">
+  <!-- SL flag color stripes -->
+  <rect x="0" y="0" width="6" height="80" fill="#8B0000"/>
+  <rect x="6" y="0" width="4" height="80" fill="#FF8C00"/>
+  <rect x="10" y="0" width="6" height="80" fill="#006400"/>
+
+  <!-- Purple circle -->
+  <circle cx="40" cy="40" r="32" fill="#7c3aed"/>
+  <text x="40" y="48" text-anchor="middle"
+    font-family="system-ui" font-size="24" fill="white">♥</text>
+
+  <!-- Text -->
+  <text x="82" y="32" font-family="system-ui, sans-serif"
+    font-size="34" font-weight="bold" fill="#2d0a4e">Purple Family</text>
+  <text x="82" y="52" font-family="system-ui, sans-serif"
+    font-size="13" font-weight="bold" fill="#7c3aed">Sri Lankan BTS ARMY Community</text>
+  <text x="82" y="68" font-family="system-ui, sans-serif"
+    font-size="15" fill="#b39ddb">est. 2026</text>
+</svg>

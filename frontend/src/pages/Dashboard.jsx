@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.svg";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -34,7 +35,7 @@ export default function Dashboard() {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.logo}>💜 Purple Family</h1>
+        <img src={logo} alt="Purple Family" style={{height: "40px"}} />
         {user && (
           <div style={styles.userInfo}>
             <span style={styles.welcome}>Welcome, {user.username}! 💜</span>
