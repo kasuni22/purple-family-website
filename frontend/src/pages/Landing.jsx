@@ -63,15 +63,15 @@ export default function Landing() {
         <h2 style={styles.featuresTitle}>Everything for ARMY 💜</h2>
         <div style={styles.featuresGrid}>
           {[
-            { icon: "📢", title: "Family Board", desc: "Share updates, thoughts and love with your purple family" },
-            { icon: "🎂", title: "Birthday Calendar", desc: "Never miss an ARMY birthday! Celebrate together" },
-            { icon: "🖼️", title: "Wallpaper Gallery", desc: "Download beautiful BTS wallpapers for free" },
-            { icon: "👥", title: "Members", desc: "Meet ARMYs from Sri Lanka and see their bias" },
-            { icon: "🎵", title: "Sing-Along", desc: "Sing your heart out with BTS lyrics and YouTube videos" },
-            { icon: "🎮", title: "BTS Quiz", desc: "Test your BTS knowledge and challenge your ARMY friends" },
+            { icon: "📢", title: "Family Board", desc: "Share updates, thoughts and love with your purple family", path: "/dashboard" },
+            { icon: "🎂", title: "Birthday Calendar", desc: "Never miss an ARMY birthday! Celebrate together 💜", path: "/register" },
+            { icon: "🖼️", title: "Wallpaper Gallery", desc: "Download beautiful BTS wallpapers for free", path: "/register" },
+            { icon: "👥", title: "Know About OT7", desc: "Learn about all 7 BTS members and share your thoughts", path: "/register" },
+            { icon: "🎵", title: "Sing-Along", desc: "Sing your heart out with BTS lyrics and YouTube videos", path: "/register" },
+            { icon: "🎮", title: "BTS Quiz", desc: "Test your BTS knowledge and challenge your ARMY friends!", path: "/register" },
           ].map((f, i) => (
             <div key={i} style={styles.featureCard}
-              onClick={() => navigate("/register")}>
+              onClick={() => navigate(f.path)}>
               <div style={styles.featureIcon}>{f.icon}</div>
               <h3 style={styles.featureTitle}>{f.title}</h3>
               <p style={styles.featureDesc}>{f.desc}</p>
@@ -91,6 +91,31 @@ export default function Landing() {
         </div>
       </div>
 
+      {/* WhatsApp Community Section */}
+      <div style={styles.whatsapp}>
+        <div style={styles.whatsappContent}>
+          <div style={styles.whatsappIcon}>💬</div>
+          <div style={styles.whatsappText}>
+            <h2 style={styles.whatsappTitle}>Join our SL ARMY WhatsApp Community! 💜</h2>
+            <p style={styles.whatsappDesc}>
+              Make ARMY friends, chat about BTS, share news and spread purple love
+              with Sri Lankan ARMYs!
+            </p>
+            <div style={styles.whatsappFeatures}>
+              <span style={styles.wFeature}>💜 Make ARMY friends</span>
+              <span style={styles.wFeature}>📢 BTS news & updates</span>
+              <span style={styles.wFeature}>🎉 Fun events</span>
+              <span style={styles.wFeature}>🇱🇰 SL ARMY only</span>
+            </div>
+          </div>
+          <a href="https://chat.whatsapp.com/your-link-here"
+            target="_blank" rel="noopener noreferrer"
+            style={styles.whatsappBtn}>
+            Join WhatsApp Community 💬
+          </a>
+        </div>
+      </div>
+
       {/* CTA Section */}
       <div style={styles.cta}>
         <h2 style={styles.ctaTitle}>Ready to join the Purple Family? 💜</h2>
@@ -102,9 +127,24 @@ export default function Landing() {
 
       {/* Footer */}
       <footer style={styles.footer}>
-        <p style={styles.footerText}>Made by 💜 Kasuni Kariyawasam</p>
-        <p style={styles.footerText}>© 2026 Purple Family. All rights reserved.</p>
-        <p style={styles.footerSmall}>Built with Python & React</p>
+        <div style={styles.footerContent}>
+          <div style={styles.footerLeft}>
+            <img src={logo} alt="Purple Family" style={{ height: "40px", marginBottom: "0.5rem" }} />
+            <p style={styles.footerDesc}>A safe space for Sri Lankan BTS ARMY 💜</p>
+          </div>
+          <div style={styles.footerMiddle}>
+            <p style={styles.footerLink} onClick={() => navigate("/register")}>Join Us</p>
+            <p style={styles.footerLink} onClick={() => navigate("/login")}>Login</p>
+          </div>
+          <div style={styles.footerRight}>
+            <p style={styles.footerText}>Made by 💜 Kasuni Kariyawasam</p>
+            <p style={styles.footerText}>© 2026 Purple Family. All rights reserved.</p>
+            <p style={styles.footerSmall}>Built with 🐍 Python & ⚛️ React</p>
+          </div>
+        </div>
+        <div style={styles.footerBottom}>
+          <p style={styles.footerBottomText}>💜 Purple Family — Sri Lankan BTS ARMY Community 💜</p>
+        </div>
       </footer>
     </div>
   );
@@ -222,10 +262,52 @@ const styles = {
     padding: "10px 24px", background: "white", border: "2px solid #d4b8ff",
     color: "#7c3aed", borderRadius: "30px", fontSize: "1rem", fontWeight: "500"
   },
+  whatsapp: {
+    background: "#f0e6ff", padding: "4rem 3rem",
+    borderTop: "2px solid #d4b8ff", borderBottom: "2px solid #d4b8ff"
+  },
+  whatsappContent: {
+    maxWidth: "1000px", margin: "0 auto", display: "flex",
+    alignItems: "center", gap: "2rem", flexWrap: "wrap"
+  },
+  whatsappIcon: { fontSize: "5rem", flexShrink: 0 },
+  whatsappText: { flex: 1 },
+  whatsappTitle: {
+    color: "#2d0a4e", fontSize: "1.6rem",
+    marginBottom: "0.75rem"
+  },
+  whatsappDesc: {
+    color: "#666", fontSize: "1rem", lineHeight: 1.6,
+    marginBottom: "1rem"
+  },
+  whatsappFeatures: { display: "flex", gap: "0.75rem", flexWrap: "wrap" },
+  wFeature: {
+    padding: "6px 14px", background: "white",
+    border: "1px solid #d4b8ff", color: "#7c3aed",
+    borderRadius: "20px", fontSize: "0.85rem"
+  },
+  whatsappBtn: {
+    padding: "14px 28px", background: "#25D366",
+    color: "white", borderRadius: "10px", textDecoration: "none",
+    fontSize: "1rem", fontWeight: "bold", flexShrink: 0,
+    whiteSpace: "nowrap"
+  },
   cta: { background: "#7c3aed", padding: "5rem 3rem", textAlign: "center" },
   ctaTitle: { color: "white", fontSize: "2rem", marginBottom: "1rem" },
   ctaDesc: { color: "#e0d0ff", fontSize: "1.1rem", marginBottom: "2rem" },
-  footer: { background: "#2d0a4e", padding: "2rem", textAlign: "center" },
-  footerText: { color: "#b39ddb", fontSize: "0.95rem", marginBottom: "0.3rem" },
-  footerSmall: { color: "#7c3aed", fontSize: "0.85rem", marginTop: "0.5rem" }
+  footer: { background: "#2d0a4e", padding: "3rem 3rem 0" },
+  footerContent: {
+    maxWidth: "1100px", margin: "0 auto", display: "flex",
+    justifyContent: "space-between", flexWrap: "wrap", gap: "2rem",
+    paddingBottom: "2rem", borderBottom: "1px solid #7c3aed"
+  },
+  footerLeft: { display: "flex", flexDirection: "column" },
+  footerDesc: { color: "#b39ddb", fontSize: "0.9rem" },
+  footerMiddle: { display: "flex", flexDirection: "column", gap: "0.5rem" },
+  footerLink: { color: "#b39ddb", fontSize: "0.9rem", cursor: "pointer" },
+  footerRight: { display: "flex", flexDirection: "column", gap: "0.3rem" },
+  footerText: { color: "#b39ddb", fontSize: "0.9rem" },
+  footerSmall: { color: "#7c3aed", fontSize: "0.85rem", marginTop: "0.5rem" },
+  footerBottom: { textAlign: "center", padding: "1rem 0" },
+  footerBottomText: { color: "#7c3aed", fontSize: "0.85rem" },
 };
