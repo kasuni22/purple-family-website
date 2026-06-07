@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.svg";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function Wallpapers() {
   const [wallpapers, setWallpapers] = useState([]);
   const [filter, setFilter] = useState("All");
-  const [user, setUser] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ title: "", member: "", file: null });
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export default function Wallpapers() {
   const members = ["All", "Jin", "Suga", "J-Hope", "RM", "Jimin", "Taehyung", "Jungkook"];
 
   useEffect(() => {
-    API.get("/auth/me").then(res => setUser(res.data)).catch(() => navigate("/login"));
+    API.get("/auth/me").catch(() => navigate("/login"));
     API.get("/wallpapers").then(res => setWallpapers(res.data));
   }, []);
 
@@ -38,46 +38,38 @@ export default function Wallpapers() {
     }
   };
 
-  const filtered = filter === "All" ? wallpapers 
+  const filtered = filter === "All" ? wallpapers
     : wallpapers.filter(w => w.member === filter);
 
   return (
     <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <img src={logo} alt="Purple Family" style={{height: "40px"}} />
-        <div style={styles.headerRight}>
-          {user?.is_admin && (
-            <button onClick={() => setUploading(!uploading)} style={styles.uploadBtn}>
-              {uploading ? "Cancel" : "⬆️ Upload Wallpaper"}
-            </button>
-          )}
-          <button onClick={() => navigate("/dashboard")} style={styles.backBtn}>
-            ← Dashboard
-          </button>
-        </div>
-      </div>
+      <Navbar />
 
       <div style={styles.content}>
-        <h2 style={styles.title}>🖼️ BTS Wallpaper Gallery</h2>
+        <div style={styles.headerControls}>
+          <h2 style={styles.title}>🖼️ BTS Wallpaper Gallery</h2>
+          <button onClick={() => setUploading(!uploading)} style={styles.uploadBtn}>
+            {uploading ? "Cancel" : "⬆️ Upload Wallpaper"}
+          </button>
+        </div>
 
         {/* Upload Form - Admin Only */}
-        {uploading && user?.is_admin && (
+        {uploading && (
           <div style={styles.uploadCard}>
             <h3 style={styles.cardTitle}>Upload New Wallpaper</h3>
             <form onSubmit={handleUpload} style={styles.form}>
               <input style={styles.input} placeholder="Wallpaper Title"
                 value={form.title}
-                onChange={e => setForm({...form, title: e.target.value})} required />
+                onChange={e => setForm({ ...form, title: e.target.value })} required />
               <select style={styles.input}
-                onChange={e => setForm({...form, member: e.target.value})}>
+                onChange={e => setForm({ ...form, member: e.target.value })}>
                 <option value="">Select Member</option>
                 {members.slice(1).map(m => (
                   <option key={m} value={m}>{m}</option>
                 ))}
               </select>
               <input type="file" accept="image/*" style={styles.fileInput}
-                onChange={e => setForm({...form, file: e.target.files[0]})} required />
+                onChange={e => setForm({ ...form, file: e.target.files[0] })} required />
               <button style={styles.button} type="submit">Upload 💜</button>
             </form>
           </div>
@@ -87,7 +79,8 @@ export default function Wallpapers() {
         <div style={styles.filters}>
           {members.map(m => (
             <button key={m} onClick={() => setFilter(m)}
-              style={{...styles.filterBtn, 
+              style={{
+                ...styles.filterBtn,
                 background: filter === m ? "#7c3aed" : "transparent",
                 border: filter === m ? "none" : "1px solid #7c3aed"
               }}>
@@ -99,14 +92,14 @@ export default function Wallpapers() {
         {/* Wallpaper Grid */}
         {filtered.length === 0 ? (
           <div style={styles.emptyCard}>
-            <p style={{color: "#ccc"}}>No wallpapers yet! 💜</p>
-            {!user?.is_admin && <p style={{color: "#888", fontSize: "0.9rem"}}>Ask an admin to upload some!</p>}
+            <p style={{ color: "#ccc" }}>No wallpapers yet! 💜</p>
+            <p style={{ color: "#888", fontSize: "0.9rem" }}>Ask an admin to upload some!</p>
           </div>
         ) : (
           <div style={styles.grid}>
             {filtered.map(w => (
               <div key={w.id} style={styles.card}>
-                <img 
+                <img
                   src={`http://127.0.0.1:8000/${w.file_path}`}
                   alt={w.title}
                   style={styles.image}
@@ -124,22 +117,22 @@ export default function Wallpapers() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }
 
 const styles = {
-  container: { minHeight: "100vh", background: "#f8f5ff" },
-  header: {
-    background: "#ffffff",
-    padding: "1rem 2rem",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottom: "2px solid #e0d0ff",
+  container: { minHeight: "100vh", background: "#f8f5ff", display: "flex", flexDirection: "column" },
+  content: {
+    width: "100%",
+    padding: "2rem 3rem",
+    flex: 1,
+    boxSizing: "border-box"
   },
-  logo: { color: "#7c3aed", margin: 0 },
-  headerRight: { display: "flex", gap: "1rem", alignItems: "center" },
+  headerControls: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" },
+  title: { color: "#2d0a4e", fontSize: "2rem", margin: 0 },
   uploadBtn: {
     padding: "8px 16px",
     background: "#7c3aed",
@@ -148,16 +141,6 @@ const styles = {
     borderRadius: "6px",
     cursor: "pointer",
   },
-  backBtn: {
-    padding: "8px 16px",
-    background: "transparent",
-    border: "1px solid #d4b8ff",
-    color: "#7c3aed",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
-  content: { maxWidth: "1100px", margin: "2rem auto", padding: "0 1rem" },
-  title: { color: "#2d0a4e", fontSize: "2rem", marginBottom: "1.5rem" },
   uploadCard: {
     background: "#ffffff",
     borderRadius: "12px",
@@ -199,7 +182,12 @@ const styles = {
     textAlign: "center",
     border: "1px solid #d4b8ff",
   },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "1.5rem" },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+    gap: "1.5rem",
+    width: "100%"
+  },
   card: {
     background: "#ffffff",
     borderRadius: "12px",

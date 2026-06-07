@@ -52,3 +52,28 @@ class Song(Base):
     youtube_url = Column(String)
     added_by_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, server_default=func.now())
+
+class BirthdayPost(Base):
+    __tablename__ = "birthday_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    message = Column(String)
+    image_path = Column(String, nullable=True)
+    for_username = Column(String)
+    posted_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, server_default=func.now())
+
+    posted_by = relationship("User", foreign_keys=[posted_by_id])
+    comments = relationship("BirthdayComment", back_populates="post")
+
+class BirthdayComment(Base):
+    __tablename__ = "birthday_comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(String)
+    post_id = Column(Integer, ForeignKey("birthday_posts.id"))
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, server_default=func.now())
+
+    post = relationship("BirthdayPost", back_populates="comments")
+    owner = relationship("User", foreign_keys=[owner_id])

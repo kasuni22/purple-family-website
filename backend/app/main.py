@@ -181,3 +181,73 @@ def update_profile(data: ProfileUpdate, db: Session = Depends(get_db),
     db.commit()
     db.refresh(current_user)
     return current_user
+
+# ─── BIRTHDAY POSTS & COMMENTS ─────────────────────────────
+
+@app.get("/birthday-posts")
+def get_birthday_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.BirthdayPost).order_by(
+        models.BirthdayPost.created_at.desc()).all()
+    return [
+        {
+            "id": p.id,
+            "message": p.message,
+            "image_path": p.image_path,
+            "for_username": p.for_username,
+            "posted_by": p.posted_by.username,
+            "created_at": p.created_at,
+            "comments": [
+                {
+                    "id": c.id,
+                    "content": c.content,
+                    "owner": c.owner.username,
+                    "created_at": c.created_at
+                }
+                for c in p.comments
+            ]
+        }
+        for p in posts
+    ]
+
+@app.post("/birthday-posts")
+def create_birthday_post(
+    for_username: str = Form(...),
+    message: str = Form(...),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    image_path = None
+    if file and file.filename:
+        image_path = f"uploads/{file.filename}"
+        with open(image_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+    post = models.BirthdayPost(
+        message=message,
+        image_path=image_path,
+        for_username=for_username,
+        posted_by_id=current_user.id
+    )
+    db.add(post)
+    db.commit()
+    db.refresh(post)
+    return post
+
+@app.post("/birthday-comments/{post_id}")
+def add_comment(
+    post_id: int,
+    content: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    comment = models.BirthdayComment(
+        content=content,
+        post_id=post_id,
+        owner_id=current_user.id
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return {"id": comment.id, "content": comment.content,
+            "owner": current_user.username, "created_at": comment.created_at}

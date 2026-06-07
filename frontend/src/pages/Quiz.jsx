@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.svg";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const questions = [
   {
@@ -12,7 +13,7 @@ const questions = [
     question: "What does BTS stand for?",
     options: ["Baepsae The Star", "Bangtan Sonyeondan", "Bulletproof Tiger Squad", "Bangtan Seonyeo"],
     answer: "Bangtan Sonyeondan"
-},
+  },
   {
     question: "Which BTS member is the oldest?",
     options: ["Suga", "Jin", "RM", "J-Hope"],
@@ -100,29 +101,25 @@ export default function Quiz() {
 
   const getOptionStyle = (option) => {
     if (!answered) return styles.option;
-    if (option === questions[current].answer) return {...styles.option, ...styles.correct};
+    if (option === questions[current].answer) return { ...styles.option, ...styles.correct };
     if (option === selected && option !== questions[current].answer)
-      return {...styles.option, ...styles.wrong};
-    return {...styles.option, ...styles.dimmed};
+      return { ...styles.option, ...styles.wrong };
+    return { ...styles.option, ...styles.dimmed };
   };
 
   return (
     <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <img src={logo} alt="Purple Family" style={{height: "40px"}} />
-        <button onClick={() => navigate("/dashboard")} style={styles.backBtn}>
-          ← Dashboard
-        </button>
-      </div>
+      <Navbar />
 
       <div style={styles.content}>
         {!showResult ? (
           <div style={styles.quizCard}>
             {/* Progress */}
             <div style={styles.progressBar}>
-              <div style={{...styles.progressFill,
-                width: `${((current) / questions.length) * 100}%`}} />
+              <div style={{
+                ...styles.progressFill,
+                width: `${((current) / questions.length) * 100}%`
+              }} />
             </div>
             <div style={styles.progressText}>
               Question {current + 1} of {questions.length} • Score: {score}
@@ -188,65 +185,99 @@ export default function Quiz() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }
 
 const styles = {
   container: { minHeight: "100vh", background: "#f8f5ff" },
-  header: { background: "white", padding: "1rem 2rem", display: "flex",
+  header: {
+    background: "white", padding: "1rem 2rem", display: "flex",
     justifyContent: "space-between", alignItems: "center",
-    borderBottom: "2px solid #e0d0ff" },
+    borderBottom: "2px solid #e0d0ff"
+  },
   logo: { color: "#7c3aed", margin: 0 },
-  backBtn: { padding: "8px 16px", background: "white",
+  backBtn: {
+    padding: "8px 16px", background: "white",
     border: "1px solid #d4b8ff", color: "#7c3aed",
-    borderRadius: "6px", cursor: "pointer" },
+    borderRadius: "6px", cursor: "pointer"
+  },
   content: { maxWidth: "700px", margin: "3rem auto", padding: "0 1rem" },
-  quizCard: { background: "white", borderRadius: "16px", padding: "2rem",
-    border: "1px solid #d4b8ff" },
-  progressBar: { background: "#f0e6ff", borderRadius: "10px",
-    height: "8px", marginBottom: "0.5rem" },
-  progressFill: { background: "#7c3aed", height: "8px",
-    borderRadius: "10px", transition: "width 0.3s" },
+  quizCard: {
+    background: "white", borderRadius: "16px", padding: "2rem",
+    border: "1px solid #d4b8ff"
+  },
+  progressBar: {
+    background: "#f0e6ff", borderRadius: "10px",
+    height: "8px", marginBottom: "0.5rem"
+  },
+  progressFill: {
+    background: "#7c3aed", height: "8px",
+    borderRadius: "10px", transition: "width 0.3s"
+  },
   progressText: { color: "#888", fontSize: "0.9rem", marginBottom: "2rem" },
-  question: { color: "#2d0a4e", fontSize: "1.4rem", marginBottom: "1.5rem",
-    lineHeight: 1.4 },
-  options: { display: "flex", flexDirection: "column", gap: "0.75rem",
-    marginBottom: "1.5rem" },
-  option: { padding: "1rem 1.25rem", borderRadius: "10px", border: "1px solid #d4b8ff",
+  question: {
+    color: "#2d0a4e", fontSize: "1.4rem", marginBottom: "1.5rem",
+    lineHeight: 1.4
+  },
+  options: {
+    display: "flex", flexDirection: "column", gap: "0.75rem",
+    marginBottom: "1.5rem"
+  },
+  option: {
+    padding: "1rem 1.25rem", borderRadius: "10px", border: "1px solid #d4b8ff",
     background: "#f8f5ff", color: "#2d0a4e", fontSize: "1rem", cursor: "pointer",
-    textAlign: "left", display: "flex", alignItems: "center", gap: "1rem" },
+    textAlign: "left", display: "flex", alignItems: "center", gap: "1rem"
+  },
   correct: { background: "#d4edda", border: "2px solid #28a745", color: "#155724" },
   wrong: { background: "#f8d7da", border: "2px solid #dc3545", color: "#721c24" },
   dimmed: { opacity: 0.5 },
-  optionLetter: { background: "#7c3aed", color: "white", borderRadius: "50%",
+  optionLetter: {
+    background: "#7c3aed", color: "white", borderRadius: "50%",
     width: "28px", height: "28px", display: "flex", alignItems: "center",
     justifyContent: "center", fontSize: "0.85rem", fontWeight: "bold",
-    flexShrink: 0 },
-  nextBtn: { width: "100%", padding: "14px", background: "#7c3aed", border: "none",
+    flexShrink: 0
+  },
+  nextBtn: {
+    width: "100%", padding: "14px", background: "#7c3aed", border: "none",
     color: "white", borderRadius: "10px", fontSize: "1.1rem", cursor: "pointer",
-    fontWeight: "bold" },
-  resultCard: { background: "white", borderRadius: "16px", padding: "3rem",
-    border: "1px solid #d4b8ff", textAlign: "center" },
+    fontWeight: "bold"
+  },
+  resultCard: {
+    background: "white", borderRadius: "16px", padding: "3rem",
+    border: "1px solid #d4b8ff", textAlign: "center"
+  },
   resultEmoji: { fontSize: "4rem", marginBottom: "1rem" },
   resultTitle: { color: "#2d0a4e", fontSize: "2rem", marginBottom: "1.5rem" },
-  scoreCircle: { width: "120px", height: "120px", borderRadius: "50%",
+  scoreCircle: {
+    width: "120px", height: "120px", borderRadius: "50%",
     background: "#f0e6ff", border: "4px solid #7c3aed", display: "flex",
-    alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem" },
+    alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem"
+  },
   scoreNumber: { fontSize: "2.5rem", fontWeight: "bold", color: "#7c3aed" },
   scoreTotal: { fontSize: "1.2rem", color: "#888" },
   resultMessage: { color: "#2d0a4e", fontSize: "1.1rem", marginBottom: "2rem" },
-  breakdown: { display: "flex", justifyContent: "center", gap: "3rem",
-    marginBottom: "2rem" },
-  breakdownItem: { display: "flex", flexDirection: "column", alignItems: "center",
-    gap: "0.5rem" },
+  breakdown: {
+    display: "flex", justifyContent: "center", gap: "3rem",
+    marginBottom: "2rem"
+  },
+  breakdownItem: {
+    display: "flex", flexDirection: "column", alignItems: "center",
+    gap: "0.5rem"
+  },
   correct2: { color: "#28a745", fontWeight: "bold" },
   wrong2: { color: "#dc3545", fontWeight: "bold" },
   breakdownNum: { fontSize: "1.5rem", fontWeight: "bold", color: "#2d0a4e" },
-  restartBtn: { width: "100%", padding: "14px", background: "#7c3aed", border: "none",
+  restartBtn: {
+    width: "100%", padding: "14px", background: "#7c3aed", border: "none",
     color: "white", borderRadius: "10px", fontSize: "1.1rem", cursor: "pointer",
-    marginBottom: "1rem" },
-  homeBtn: { width: "100%", padding: "14px", background: "white",
+    marginBottom: "1rem"
+  },
+  homeBtn: {
+    width: "100%", padding: "14px", background: "white",
     border: "2px solid #7c3aed", color: "#7c3aed", borderRadius: "10px",
-    fontSize: "1.1rem", cursor: "pointer" }
+    fontSize: "1.1rem", cursor: "pointer"
+  }
 };

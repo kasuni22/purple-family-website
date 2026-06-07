@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.svg";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function EditProfile() {
   const [form, setForm] = useState({ bias: "", country: "", birthday: "" });
@@ -35,13 +36,7 @@ export default function EditProfile() {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <img src={logo} alt="Purple Family" style={{height: "40px"}} />
-        <button onClick={() => navigate("/dashboard")} style={styles.backBtn}>
-          ← Dashboard
-        </button>
-      </div>
+      <Navbar />
 
       <div style={styles.content}>
         <div style={styles.card}>
@@ -64,7 +59,7 @@ export default function EditProfile() {
             <label style={styles.label}>Your Bias 💜</label>
             <select style={styles.input}
               value={form.bias}
-              onChange={e => setForm({...form, bias: e.target.value})}>
+              onChange={e => setForm({ ...form, bias: e.target.value })}>
               <option value="">Select your bias</option>
               {biasOptions.map(b => (
                 <option key={b} value={b}>{b}</option>
@@ -74,12 +69,12 @@ export default function EditProfile() {
             <label style={styles.label}>Country 🌍</label>
             <input style={styles.input} placeholder="e.g. Sri Lanka"
               value={form.country}
-              onChange={e => setForm({...form, country: e.target.value})} />
+              onChange={e => setForm({ ...form, country: e.target.value })} />
 
             <label style={styles.label}>Birthday 🎂</label>
             <input style={styles.input} type="date"
               value={form.birthday}
-              onChange={e => setForm({...form, birthday: e.target.value})} />
+              onChange={e => setForm({ ...form, birthday: e.target.value })} />
 
             {saved && (
               <div style={styles.successMsg}>
@@ -93,40 +88,52 @@ export default function EditProfile() {
           </form>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
 
 const styles = {
-  container: { minHeight: "100vh", background: "#f8f5ff" },
-  header: { background: "white", padding: "1rem 2rem", display: "flex",
-    justifyContent: "space-between", alignItems: "center",
-    borderBottom: "2px solid #e0d0ff" },
-  logo: { color: "#7c3aed", margin: 0 },
-  backBtn: { padding: "8px 16px", background: "white",
-    border: "1px solid #d4b8ff", color: "#7c3aed",
-    borderRadius: "6px", cursor: "pointer" },
-  content: { maxWidth: "500px", margin: "3rem auto", padding: "0 1rem" },
-  card: { background: "white", borderRadius: "16px", padding: "2rem",
-    border: "1px solid #d4b8ff" },
+  container: { minHeight: "100vh", background: "#f8f5ff", display: "flex", flexDirection: "column" },
+  content: {
+    width: "100%",
+    padding: "2rem 3rem",
+    flex: 1,
+    boxSizing: "border-box"
+  },
+  card: {
+    background: "white", borderRadius: "16px", padding: "2rem",
+    border: "1px solid #d4b8ff"
+  },
   avatarSection: { textAlign: "center", marginBottom: "2rem" },
-  avatar: { width: "80px", height: "80px", borderRadius: "50%",
+  avatar: {
+    width: "80px", height: "80px", borderRadius: "50%",
     background: "#7c3aed", display: "flex", alignItems: "center",
     justifyContent: "center", fontSize: "2rem", fontWeight: "bold",
-    margin: "0 auto 1rem", color: "white" },
+    margin: "0 auto 1rem", color: "white"
+  },
   username: { color: "#2d0a4e", marginBottom: "0.25rem" },
   email: { color: "#888", fontSize: "0.9rem", marginBottom: "0.5rem" },
-  adminBadge: { display: "inline-block", padding: "4px 14px",
+  adminBadge: {
+    display: "inline-block", padding: "4px 14px",
     background: "#fff3cd", color: "#856404", borderRadius: "20px",
-    fontSize: "0.85rem" },
+    fontSize: "0.85rem"
+  },
   form: { display: "flex", flexDirection: "column", gap: "0.75rem" },
   formTitle: { color: "#2d0a4e", marginBottom: "0.5rem" },
   label: { color: "#7c3aed", fontSize: "0.9rem", fontWeight: "500" },
-  input: { padding: "12px", borderRadius: "8px", border: "1px solid #d4b8ff",
-    background: "#f8f5ff", color: "#2d0a4e", fontSize: "1rem" },
-  successMsg: { background: "#d4edda", color: "#155724", padding: "12px",
-    borderRadius: "8px", textAlign: "center" },
-  button: { padding: "14px", borderRadius: "8px", background: "#7c3aed",
+  input: {
+    padding: "12px", borderRadius: "8px", border: "1px solid #d4b8ff",
+    background: "#f8f5ff", color: "#2d0a4e", fontSize: "1rem"
+  },
+  successMsg: {
+    background: "#d4edda", color: "#155724", padding: "12px",
+    borderRadius: "8px", textAlign: "center"
+  },
+  button: {
+    padding: "14px", borderRadius: "8px", background: "#7c3aed",
     color: "white", fontSize: "1rem", cursor: "pointer", border: "none",
-    fontWeight: "bold", marginTop: "0.5rem" }
+    fontWeight: "bold", marginTop: "0.5rem"
+  }
 };

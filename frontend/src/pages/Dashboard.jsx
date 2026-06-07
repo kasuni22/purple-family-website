@@ -1,18 +1,17 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.svg";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import btsHero from "../assets/bts-hero.jpeg";
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState({ title: "", content: "" });
   const navigate = useNavigate();
 
   useEffect(() => {
-    API.get("/auth/me").then(res => setUser(res.data))
-      .catch(() => navigate("/login"));
+    API.get("/auth/me").catch(() => navigate("/login"));
     API.get("/posts").then(res => setPosts(res.data));
   }, []);
 
@@ -27,11 +26,6 @@ export default function Dashboard() {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
-
   return (
     <div style={styles.container}>
       {/* BTS Background */}
@@ -40,41 +34,7 @@ export default function Dashboard() {
           onError={(e) => e.target.style.display = "none"} />
       </div>
 
-      {/* Navbar */}
-      <div style={styles.header}>
-        {/* Left - Logo */}
-        <img src={logo} alt="Purple Family" style={{ height: "40px" }} />
-
-        {/* Center - Nav Links */}
-        <div style={styles.navCenter}>
-          <button onClick={() => navigate("/birthdays")} style={styles.navBtn}>
-            🎂 Birthdays
-          </button>
-          <button onClick={() => navigate("/wallpapers")} style={styles.navBtn}>
-            🖼️ Wallpapers
-          </button>
-          <button onClick={() => navigate("/members")} style={styles.navBtn}>
-            👥 Members
-          </button>
-          <button onClick={() => navigate("/singalong")} style={styles.navBtn}>
-            🎵 Sing-Along
-          </button>
-          <button onClick={() => navigate("/quiz")} style={styles.navBtn}>
-            🎮 Quiz
-          </button>
-        </div>
-
-        {/* Right - Profile, Welcome, Logout */}
-        {user && (
-          <div style={styles.navRight}>
-            <button onClick={() => navigate("/edit-profile")} style={styles.profileBtn}>
-              👤 Profile
-            </button>
-            <span style={styles.welcome}>Welcome, {user.username}! 💜</span>
-            <button onClick={logout} style={styles.logoutBtn}>Logout</button>
-          </div>
-        )}
-      </div>
+      <Navbar />
 
       {/* Content */}
       <div style={styles.content}>
@@ -115,14 +75,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer style={styles.footer}>
-        <div style={styles.footerContent}>
-          <p style={styles.footerText}>Made with 💜 by Kasuni Kariyawasam</p>
-          <p style={styles.footerText}>© 2026 Purple Family. All rights reserved.</p>
-          <p style={styles.footerSmall}>Built with 🐍 Python & ⚛️ React</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
@@ -137,30 +90,6 @@ const styles = {
     height: "100%", zIndex: 0, pointerEvents: "none"
   },
   bgImg: { width: "100%", height: "100%", objectFit: "cover", opacity: 0.50 },
-  header: {
-    background: "white", padding: "0.75rem 2rem", display: "flex",
-    justifyContent: "space-between", alignItems: "center",
-    borderBottom: "2px solid #e0d0ff", position: "sticky",
-    top: 0, zIndex: 100
-  },
-  navCenter: { display: "flex", alignItems: "center", gap: "0.5rem" },
-  navRight: { display: "flex", alignItems: "center", gap: "1rem" },
-  navBtn: {
-    padding: "6px 14px", background: "transparent",
-    border: "1px solid #d4b8ff", color: "#7c3aed",
-    borderRadius: "20px", cursor: "pointer", fontSize: "0.9rem"
-  },
-  profileBtn: {
-    padding: "6px 14px", background: "#f0e6ff",
-    border: "1px solid #d4b8ff", color: "#7c3aed",
-    borderRadius: "20px", cursor: "pointer", fontSize: "0.9rem"
-  },
-  welcome: { color: "#2d0a4e", fontWeight: "500", fontSize: "0.95rem" },
-  logoutBtn: {
-    padding: "6px 16px", background: "transparent",
-    border: "1px solid #d4b8ff", color: "#7c3aed",
-    borderRadius: "20px", cursor: "pointer"
-  },
   content: {
     maxWidth: "800px", margin: "2rem auto", padding: "0 1rem",
     flex: 1, position: "relative", zIndex: 1, width: "100%"
@@ -195,11 +124,4 @@ const styles = {
   },
   postUsername: { color: "#7c3aed", fontSize: "0.85rem", fontWeight: "500" },
   postDate: { color: "#888" },
-  footer: {
-    background: "#2d0a4e", padding: "1.5rem",
-    textAlign: "center", position: "relative", zIndex: 1
-  },
-  footerContent: { display: "flex", flexDirection: "column", gap: "0.3rem" },
-  footerText: { color: "#b39ddb", fontSize: "0.9rem" },
-  footerSmall: { color: "#7c3aed", fontSize: "0.85rem" },
 };
