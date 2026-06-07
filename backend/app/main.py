@@ -74,7 +74,19 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db), current
 
 @app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
-    return db.query(models.Post).order_by(models.Post.created_at.desc()).all()
+    posts = db.query(models.Post).order_by(models.Post.created_at.desc()).all()
+    return [
+        {
+            "id": p.id,
+            "title": p.title,
+            "content": p.content,
+            "owner_id": p.owner_id,
+            "created_at": p.created_at,
+            "username": db.query(models.User).filter(
+                models.User.id == p.owner_id).first().username
+        }
+        for p in posts
+    ]
 
 # ─── WALLPAPER ROUTES ──────────────────────────────────────
 
