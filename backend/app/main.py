@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Optional
 import shutil
@@ -119,6 +120,27 @@ def upload_wallpaper(
 @app.get("/wallpapers")
 def get_wallpapers(db: Session = Depends(get_db)):
     return db.query(models.Wallpaper).order_by(models.Wallpaper.created_at.desc()).all()
+
+
+@app.get("/wallpapers/{wallpaper_id}/download")
+def download_wallpaper(wallpaper_id: int, db: Session = Depends(get_db)):
+    wallpaper = db.query(models.Wallpaper).filter(models.Wallpaper.id == wallpaper_id).first()
+    if not wallpaper:
+        raise HTTPException(status_code=404, detail="Wallpaper not found")
+
+    file_path = wallpaper.file_path
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    filename = os.path.basename(file_path)
+    _, ext = os.path.splitext(filename)
+    if not ext:
+        ext = ".jpg"
+
+    disp_name = (wallpaper.title or filename) + ext if not (wallpaper.title and wallpaper.title.endswith(ext)) else (wallpaper.title or filename)
+
+    headers = {"Content-Disposition": f'attachment; filename="{disp_name}"'}
+    return FileResponse(file_path, media_type="application/octet-stream", filename=disp_name, headers=headers)
 
 # ─── BIRTHDAY ROUTES ───────────────────────────────────────
 

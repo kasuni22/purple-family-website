@@ -9,6 +9,7 @@ export default function Wallpapers() {
   const [filter, setFilter] = useState("All");
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ title: "", member: "", file: null });
+  const [selectedWallpaper, setSelectedWallpaper] = useState(null);
   const navigate = useNavigate();
 
   const members = ["All", "Jin", "Suga", "J-Hope", "RM", "Jimin", "Taehyung", "Jungkook"];
@@ -27,7 +28,9 @@ export default function Wallpapers() {
     formData.append("file", form.file);
     try {
       const res = await API.post("/wallpapers", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
       setWallpapers([res.data, ...wallpapers]);
       setForm({ title: "", member: "", file: null });
@@ -40,6 +43,15 @@ export default function Wallpapers() {
 
   const filtered = filter === "All" ? wallpapers
     : wallpapers.filter(w => w.member === filter);
+
+  const getFileUrl = (path) => {
+    if (!path) return "";
+    return path.startsWith("http") ? path : `http://127.0.0.1:8000/${path}`;
+  };
+
+  const handleDownload = (wallpaper) => {
+    window.location.href = `http://127.0.0.1:8000/wallpapers/${wallpaper.id}/download`;
+  };
 
   return (
     <div style={styles.container}>
@@ -93,27 +105,46 @@ export default function Wallpapers() {
         {filtered.length === 0 ? (
           <div style={styles.emptyCard}>
             <p style={{ color: "#ccc" }}>No wallpapers yet! 💜</p>
-            <p style={{ color: "#888", fontSize: "0.9rem" }}>Ask an admin to upload some!</p>
+            <p style={{ color: "#888", fontSize: "0.9rem" }}>Be the first ARMY to upload a wallpaper! 💜</p>
           </div>
         ) : (
           <div style={styles.grid}>
             {filtered.map(w => (
-              <div key={w.id} style={styles.card}>
+              <div key={w.id} style={styles.card} onClick={() => setSelectedWallpaper(w)}>
                 <img
-                  src={`http://127.0.0.1:8000/${w.file_path}`}
+                  src={getFileUrl(w.file_path)}
                   alt={w.title}
                   style={styles.image}
                 />
                 <div style={styles.cardInfo}>
                   <h3 style={styles.cardTitle}>{w.title}</h3>
                   {w.member && <p style={styles.member}>💜 {w.member}</p>}
-                  <a href={`http://127.0.0.1:8000/${w.file_path}`}
-                    download style={styles.downloadBtn}>
+                  <button onClick={(e) => { e.stopPropagation(); handleDownload(w); }}
+                    style={styles.downloadBtn}>
                     ⬇️ Download
-                  </a>
+                  </button>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {selectedWallpaper && (
+          <div style={styles.modalOverlay} onClick={() => setSelectedWallpaper(null)}>
+            <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+              <button style={styles.closeBtn} onClick={() => setSelectedWallpaper(null)}>×</button>
+              <img src={getFileUrl(selectedWallpaper.file_path)} alt={selectedWallpaper.title}
+                style={styles.modalImage} />
+              <div style={styles.modalInfo}>
+                <h3 style={styles.modalTitle}>{selectedWallpaper.title}</h3>
+                {selectedWallpaper.member && (
+                  <p style={styles.member}>💜 {selectedWallpaper.member}</p>
+                )}
+                <button style={styles.downloadBtn} onClick={() => handleDownload(selectedWallpaper)}>
+                  ⬇️ Download
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -193,8 +224,11 @@ const styles = {
     borderRadius: "12px",
     overflow: "hidden",
     border: "1px solid #d4b8ff",
+    display: "flex",
+    flexDirection: "column",
+    cursor: "pointer",
   },
-  image: { width: "100%", height: "200px", objectFit: "cover" },
+  image: { width: "100%", height: "280px", objectFit: "contain", background: "#f8f5ff" },
   cardInfo: { padding: "1rem" },
   cardTitle: { color: "#2d0a4e", margin: "0 0 0.5rem" },
   member: { color: "#888888", fontSize: "0.9rem", margin: "0 0 0.5rem" },
@@ -207,4 +241,53 @@ const styles = {
     textDecoration: "none",
     fontSize: "0.9rem",
   },
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(45, 10, 78, 0.75)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    padding: "2rem",
+  },
+  modalContent: {
+    position: "relative",
+    background: "white",
+    borderRadius: "16px",
+    padding: "1rem",
+    maxWidth: "900px",
+    width: "100%",
+    maxHeight: "90vh",
+    overflow: "auto",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+  },
+  modalImage: {
+    width: "100%",
+    maxHeight: "70vh",
+    objectFit: "contain",
+    borderRadius: "12px",
+    background: "#f8f5ff",
+  },
+  modalInfo: {
+    padding: "1rem 0 0",
+  },
+  modalTitle: {
+    color: "#2d0a4e",
+    margin: "0 0 0.5rem",
+  },
+  closeBtn: {
+    position: "absolute",
+    top: "12px",
+    right: "12px",
+    background: "#7c3aed",
+    color: "white",
+    border: "none",
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    cursor: "pointer",
+    fontSize: "1rem",
+    zIndex: 2,
+  }
 };

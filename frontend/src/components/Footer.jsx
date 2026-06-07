@@ -2,7 +2,7 @@ export default function Footer() {
   return (
     <footer style={styles.footer}>
       <div style={styles.footerContent}>
-        <p style={styles.footerText}>Made with 💜 by Kasuni Kariyawasam</p>
+        <p style={styles.footerText}>Made by 💜 Kasuni Kariyawasam</p>
         <p style={styles.footerText}>© 2026 Purple Family. All rights reserved.</p>
         <p style={styles.footerSmall}>Built with 🐍 Python & ⚛️ React</p>
       </div>
