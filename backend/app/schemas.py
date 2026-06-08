@@ -55,6 +55,10 @@ class WallpaperOut(BaseModel):
     file_path: str
     member: Optional[str] = None
     created_at: datetime
+    uploaded_by_id: int
+    uploaded_by_username: str
+    likes_count: int
+    liked_by_current_user: bool
 
     class Config:
         from_attributes = True

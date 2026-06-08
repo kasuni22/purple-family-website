@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -18,6 +18,7 @@ class User(Base):
 
     posts = relationship("Post", back_populates="owner")
     wallpapers = relationship("Wallpaper", back_populates="uploaded_by")
+    wallpaper_likes = relationship("WallpaperLike", back_populates="user", cascade="all, delete-orphan")
 
 class Post(Base):
     __tablename__ = "posts"
@@ -41,6 +42,19 @@ class Wallpaper(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     uploaded_by = relationship("User", back_populates="wallpapers")
+    likes = relationship("WallpaperLike", back_populates="wallpaper", cascade="all, delete-orphan")
+
+class WallpaperLike(Base):
+    __tablename__ = "wallpaper_likes"
+    __table_args__ = (UniqueConstraint("wallpaper_id", "user_id", name="uix_wallpaper_user"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    wallpaper_id = Column(Integer, ForeignKey("wallpapers.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    wallpaper = relationship("Wallpaper", back_populates="likes")
+    user = relationship("User", back_populates="wallpaper_likes")
 
 class Song(Base):
     __tablename__ = "songs"

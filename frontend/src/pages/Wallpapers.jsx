@@ -10,14 +10,78 @@ export default function Wallpapers() {
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ title: "", member: "", file: null });
   const [selectedWallpaper, setSelectedWallpaper] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
   const members = ["All", "Jin", "Suga", "J-Hope", "RM", "Jimin", "Taehyung", "Jungkook"];
 
   useEffect(() => {
-    API.get("/auth/me").catch(() => navigate("/login"));
-    API.get("/wallpapers").then(res => setWallpapers(res.data));
-  }, []);
+    const loadData = async () => {
+      try {
+        const userRes = await API.get("/auth/me");
+        setCurrentUser(userRes.data);
+        const wallpapersRes = await API.get("/wallpapers");
+        setWallpapers(wallpapersRes.data);
+      } catch {
+        navigate("/login");
+      }
+    };
+    loadData();
+  }, [navigate]);
+
+  const formatDate = (value) => {
+    if (!value) return "";
+    return new Date(value).toLocaleDateString();
+  };
+
+  const canDeleteWallpaper = (wallpaper) => {
+    return currentUser && (currentUser.is_admin || currentUser.id === wallpaper.uploaded_by_id);
+  };
+
+  const updateWallpaperState = (wallpaperId, changes) => {
+    setWallpapers(prev => prev.map(w => w.id === wallpaperId ? { ...w, ...changes } : w));
+    setSelectedWallpaper(prev => prev && prev.id === wallpaperId ? { ...prev, ...changes } : prev);
+  };
+
+  const handleLike = async (wallpaper, e) => {
+    e.stopPropagation();
+    try {
+      await API.post(`/wallpapers/${wallpaper.id}/like`);
+      updateWallpaperState(wallpaper.id, {
+        liked_by_current_user: true,
+        likes_count: (wallpaper.likes_count || 0) + 1,
+      });
+    } catch (err) {
+      alert(err.response?.data?.detail || "Could not like wallpaper");
+    }
+  };
+
+  const handleUnlike = async (wallpaper, e) => {
+    e.stopPropagation();
+    try {
+      await API.delete(`/wallpapers/${wallpaper.id}/like`);
+      updateWallpaperState(wallpaper.id, {
+        liked_by_current_user: false,
+        likes_count: Math.max((wallpaper.likes_count || 1) - 1, 0),
+      });
+    } catch (err) {
+      alert(err.response?.data?.detail || "Could not remove like");
+    }
+  };
+
+  const handleDelete = async (wallpaper, e) => {
+    e.stopPropagation();
+    if (!window.confirm(`Delete wallpaper \"${wallpaper.title}\"?`)) return;
+    try {
+      await API.delete(`/wallpapers/${wallpaper.id}`);
+      setWallpapers(prev => prev.filter(w => w.id !== wallpaper.id));
+      if (selectedWallpaper?.id === wallpaper.id) {
+        setSelectedWallpaper(null);
+      }
+    } catch (err) {
+      alert(err.response?.data?.detail || "Could not delete wallpaper");
+    }
+  };
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -60,13 +124,15 @@ export default function Wallpapers() {
       <div style={styles.content}>
         <div style={styles.headerControls}>
           <h2 style={styles.title}>🖼️ BTS Wallpaper Gallery</h2>
-          <button onClick={() => setUploading(!uploading)} style={styles.uploadBtn}>
-            {uploading ? "Cancel" : "⬆️ Upload Wallpaper"}
-          </button>
+          {currentUser?.is_admin && (
+            <button onClick={() => setUploading(!uploading)} style={styles.uploadBtn}>
+              {uploading ? "Cancel" : "⬆️ Upload Wallpaper"}
+            </button>
+          )}
         </div>
 
         {/* Upload Form - Admin Only */}
-        {uploading && (
+        {currentUser?.is_admin && uploading && (
           <div style={styles.uploadCard}>
             <h3 style={styles.cardTitle}>Upload New Wallpaper</h3>
             <form onSubmit={handleUpload} style={styles.form}>
@@ -74,6 +140,7 @@ export default function Wallpapers() {
                 value={form.title}
                 onChange={e => setForm({ ...form, title: e.target.value })} required />
               <select style={styles.input}
+                value={form.member}
                 onChange={e => setForm({ ...form, member: e.target.value })}>
                 <option value="">Select Member</option>
                 {members.slice(1).map(m => (
@@ -119,10 +186,25 @@ export default function Wallpapers() {
                 <div style={styles.cardInfo}>
                   <h3 style={styles.cardTitle}>{w.title}</h3>
                   {w.member && <p style={styles.member}>💜 {w.member}</p>}
-                  <button onClick={(e) => { e.stopPropagation(); handleDownload(w); }}
-                    style={styles.downloadBtn}>
-                    ⬇️ Download
-                  </button>
+                  <p style={styles.meta}>👤 {w.uploaded_by_username || "Unknown"} · 📅 {formatDate(w.created_at)}</p>
+                  <p style={styles.likes}>💜 {w.likes_count || 0} likes</p>
+                  <div style={styles.actionRow}>
+                    <button
+                      onClick={(e) => w.liked_by_current_user ? handleUnlike(w, e) : handleLike(w, e)}
+                      style={styles.likeBtn}
+                    >
+                      {w.liked_by_current_user ? "❤️ Liked" : "🤍 Like"}
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDownload(w); }}
+                      style={styles.downloadBtn}>
+                      ⬇️ Download
+                    </button>
+                    {canDeleteWallpaper(w) && (
+                      <button onClick={(e) => handleDelete(w, e)} style={styles.deleteBtn}>
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -140,9 +222,27 @@ export default function Wallpapers() {
                 {selectedWallpaper.member && (
                   <p style={styles.member}>💜 {selectedWallpaper.member}</p>
                 )}
-                <button style={styles.downloadBtn} onClick={() => handleDownload(selectedWallpaper)}>
-                  ⬇️ Download
-                </button>
+                <p style={styles.meta}>👤 {selectedWallpaper.uploaded_by_username || "Unknown"} · 📅 {formatDate(selectedWallpaper.created_at)}</p>
+                <p style={styles.likes}>💜 {selectedWallpaper.likes_count || 0} likes</p>
+                <div style={styles.modalActions}>
+                  <button
+                    style={styles.likeBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      selectedWallpaper.liked_by_current_user ? handleUnlike(selectedWallpaper, e) : handleLike(selectedWallpaper, e);
+                    }}
+                  >
+                    {selectedWallpaper.liked_by_current_user ? "❤️ Liked" : "🤍 Like"}
+                  </button>
+                  <button style={styles.downloadBtn} onClick={() => handleDownload(selectedWallpaper)}>
+                    ⬇️ Download
+                  </button>
+                  {canDeleteWallpaper(selectedWallpaper) && (
+                    <button style={styles.deleteBtn} onClick={(e) => handleDelete(selectedWallpaper, e)}>
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -232,6 +332,28 @@ const styles = {
   cardInfo: { padding: "1rem" },
   cardTitle: { color: "#2d0a4e", margin: "0 0 0.5rem" },
   member: { color: "#888888", fontSize: "0.9rem", margin: "0 0 0.5rem" },
+  meta: { color: "#666", fontSize: "0.85rem", margin: "0 0 0.5rem" },
+  likes: { color: "#7c3aed", fontSize: "0.9rem", margin: "0 0 1rem", fontWeight: 600 },
+  actionRow: { display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center", marginTop: "0.75rem" },
+  likeBtn: {
+    padding: "8px 14px",
+    borderRadius: "10px",
+    background: "#f3e8ff",
+    color: "#7c3aed",
+    border: "1px solid #7c3aed",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+  deleteBtn: {
+    padding: "8px 14px",
+    borderRadius: "10px",
+    background: "#fee2e2",
+    color: "#991b1b",
+    border: "1px solid #fca5a5",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+  modalActions: { display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center", marginTop: "1rem" },
   downloadBtn: {
     display: "inline-block",
     padding: "6px 16px",

@@ -118,8 +118,76 @@ def upload_wallpaper(
     return wallpaper
 
 @app.get("/wallpapers")
-def get_wallpapers(db: Session = Depends(get_db)):
-    return db.query(models.Wallpaper).order_by(models.Wallpaper.created_at.desc()).all()
+def get_wallpapers(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    wallpapers = db.query(models.Wallpaper).order_by(models.Wallpaper.created_at.desc()).all()
+    return [
+        {
+            "id": w.id,
+            "title": w.title,
+            "file_path": w.file_path,
+            "member": w.member,
+            "created_at": w.created_at,
+            "uploaded_by_id": w.uploaded_by_id,
+            "uploaded_by_username": w.uploaded_by.username if w.uploaded_by else None,
+            "likes_count": db.query(models.WallpaperLike).filter(models.WallpaperLike.wallpaper_id == w.id).count(),
+            "liked_by_current_user": db.query(models.WallpaperLike).filter(
+                models.WallpaperLike.wallpaper_id == w.id,
+                models.WallpaperLike.user_id == current_user.id
+            ).first() is not None,
+        }
+        for w in wallpapers
+    ]
+
+
+@app.delete("/wallpapers/{wallpaper_id}")
+def delete_wallpaper(wallpaper_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    wallpaper = db.query(models.Wallpaper).filter(models.Wallpaper.id == wallpaper_id).first()
+    if not wallpaper:
+        raise HTTPException(status_code=404, detail="Wallpaper not found")
+    if not current_user.is_admin and wallpaper.uploaded_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this wallpaper")
+
+    file_path = wallpaper.file_path
+    if file_path and os.path.exists(file_path):
+        os.remove(file_path)
+
+    db.query(models.WallpaperLike).filter(models.WallpaperLike.wallpaper_id == wallpaper_id).delete()
+    db.delete(wallpaper)
+    db.commit()
+    return {"detail": "Wallpaper deleted"}
+
+
+@app.post("/wallpapers/{wallpaper_id}/like")
+def like_wallpaper(wallpaper_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    wallpaper = db.query(models.Wallpaper).filter(models.Wallpaper.id == wallpaper_id).first()
+    if not wallpaper:
+        raise HTTPException(status_code=404, detail="Wallpaper not found")
+
+    existing_like = db.query(models.WallpaperLike).filter(
+        models.WallpaperLike.wallpaper_id == wallpaper_id,
+        models.WallpaperLike.user_id == current_user.id
+    ).first()
+    if existing_like:
+        raise HTTPException(status_code=400, detail="Wallpaper already liked")
+
+    new_like = models.WallpaperLike(wallpaper_id=wallpaper_id, user_id=current_user.id)
+    db.add(new_like)
+    db.commit()
+    return {"detail": "Wallpaper liked"}
+
+
+@app.delete("/wallpapers/{wallpaper_id}/like")
+def unlike_wallpaper(wallpaper_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    like_record = db.query(models.WallpaperLike).filter(
+        models.WallpaperLike.wallpaper_id == wallpaper_id,
+        models.WallpaperLike.user_id == current_user.id
+    ).first()
+    if not like_record:
+        raise HTTPException(status_code=404, detail="Like record not found")
+
+    db.delete(like_record)
+    db.commit()
+    return {"detail": "Like removed"}
 
 
 @app.get("/wallpapers/{wallpaper_id}/download")
