@@ -19,6 +19,8 @@ class User(Base):
     posts = relationship("Post", back_populates="owner")
     wallpapers = relationship("Wallpaper", back_populates="uploaded_by")
     wallpaper_likes = relationship("WallpaperLike", back_populates="user", cascade="all, delete-orphan")
+    songs = relationship("Song", back_populates="added_by")
+    song_favorites = relationship("SongFavorite", back_populates="user", cascade="all, delete-orphan")
 
 class Post(Base):
     __tablename__ = "posts"
@@ -64,8 +66,26 @@ class Song(Base):
     artist = Column(String)
     lyrics = Column(String)
     youtube_url = Column(String)
+    release_year = Column(Integer, nullable=True)
+    album = Column(String, nullable=True)
+    song_type = Column(String, nullable=True)
     added_by_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, server_default=func.now())
+
+    added_by = relationship("User", back_populates="songs")
+    favorites = relationship("SongFavorite", back_populates="song", cascade="all, delete-orphan")
+
+class SongFavorite(Base):
+    __tablename__ = "song_favorites"
+    __table_args__ = (UniqueConstraint("song_id", "user_id", name="uix_song_user"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    song_id = Column(Integer, ForeignKey("songs.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    song = relationship("Song", back_populates="favorites")
+    user = relationship("User", back_populates="song_favorites")
 
 class BirthdayPost(Base):
     __tablename__ = "birthday_posts"

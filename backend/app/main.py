@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, F
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import Optional
 import shutil
@@ -13,6 +14,20 @@ from .database import engine, get_db
 from . import models, schemas, auth
 
 models.Base.metadata.create_all(bind=engine)
+
+with engine.connect() as conn:
+    for statement in [
+        "ALTER TABLE songs ADD COLUMN release_year INTEGER",
+        "ALTER TABLE songs ADD COLUMN album VARCHAR",
+        "ALTER TABLE songs ADD COLUMN song_type VARCHAR",
+        "CREATE TABLE IF NOT EXISTS song_favorites (id INTEGER PRIMARY KEY AUTOINCREMENT, song_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(song_id, user_id))"
+    ]:
+        try:
+            conn.execute(text(statement))
+            conn.commit()
+            print(f"Migration executed: {statement}")
+        except Exception as e:
+            print("Migration skipped or already applied:", statement, e)
 
 app = FastAPI(title="Purple Family API 💜")
 
@@ -28,6 +43,28 @@ app.add_middleware(
 # Static files for wallpapers
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+def serialize_song(song: models.Song, current_user: models.User, db: Session):
+    favorites_count = db.query(models.SongFavorite).filter(models.SongFavorite.song_id == song.id).count()
+    favorited_by_current_user = db.query(models.SongFavorite).filter(
+        models.SongFavorite.song_id == song.id,
+        models.SongFavorite.user_id == current_user.id
+    ).first() is not None
+    return {
+        "id": song.id,
+        "title": song.title,
+        "artist": song.artist,
+        "lyrics": song.lyrics,
+        "youtube_url": song.youtube_url,
+        "release_year": song.release_year,
+        "album": song.album,
+        "song_type": song.song_type,
+        "added_by_id": song.added_by_id,
+        "added_by_username": song.added_by.username if song.added_by else None,
+        "created_at": song.created_at,
+        "favorites_count": favorites_count,
+        "favorited_by_current_user": favorited_by_current_user,
+    }
 
 # ─── AUTH ROUTES ───────────────────────────────────────────
 
@@ -239,17 +276,81 @@ def get_members(db: Session = Depends(get_db)):
 @app.post("/songs")
 def create_song(song: schemas.SongCreate, db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)):
-    if not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
     new_song = models.Song(**song.model_dump(), added_by_id=current_user.id)
     db.add(new_song)
     db.commit()
     db.refresh(new_song)
-    return new_song
+    return serialize_song(new_song, current_user, db)
 
 @app.get("/songs")
-def get_songs(db: Session = Depends(get_db)):
-    return db.query(models.Song).order_by(models.Song.created_at.desc()).all()
+def get_songs(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    songs = db.query(models.Song).order_by(models.Song.created_at.desc()).all()
+    return [serialize_song(song, current_user, db) for song in songs]
+
+@app.post("/songs/{song_id}/favorite")
+def favorite_song(song_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    song = db.query(models.Song).filter(models.Song.id == song_id).first()
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+
+    existing = db.query(models.SongFavorite).filter(
+        models.SongFavorite.song_id == song_id,
+        models.SongFavorite.user_id == current_user.id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Song already favorited")
+
+    favorite = models.SongFavorite(song_id=song_id, user_id=current_user.id)
+    db.add(favorite)
+    db.commit()
+    return serialize_song(song, current_user, db)
+
+@app.delete("/songs/{song_id}/favorite")
+def unfavorite_song(song_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    favorite = db.query(models.SongFavorite).filter(
+        models.SongFavorite.song_id == song_id,
+        models.SongFavorite.user_id == current_user.id
+    ).first()
+    if not favorite:
+        raise HTTPException(status_code=404, detail="Favorite not found")
+
+    db.delete(favorite)
+    db.commit()
+
+    song = db.query(models.Song).filter(models.Song.id == song_id).first()
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+    return serialize_song(song, current_user, db)
+
+@app.put("/songs/{song_id}")
+def update_song(song_id: int, song_data: schemas.SongUpdate, db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)):
+    song = db.query(models.Song).filter(models.Song.id == song_id).first()
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+    if not current_user.is_admin and song.added_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this song")
+
+    update_data = song_data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(song, key, value)
+
+    db.commit()
+    db.refresh(song)
+    return serialize_song(song, current_user, db)
+
+@app.delete("/songs/{song_id}")
+def delete_song(song_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    song = db.query(models.Song).filter(models.Song.id == song_id).first()
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+    if not current_user.is_admin and song.added_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this song")
+
+    db.query(models.SongFavorite).filter(models.SongFavorite.song_id == song_id).delete()
+    db.delete(song)
+    db.commit()
+    return {"detail": "Song deleted"}
 
 # ─── EDIT PROFILE ──────────────────────────────────────────
 

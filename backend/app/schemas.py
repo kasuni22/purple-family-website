@@ -67,4 +67,16 @@ class SongCreate(BaseModel):
     title: str
     artist: str
     lyrics: str
-    youtube_url: str        
+    youtube_url: str
+    release_year: Optional[int] = None
+    album: Optional[str] = None
+    song_type: Optional[str] = None
+
+class SongUpdate(BaseModel):
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    lyrics: Optional[str] = None
+    youtube_url: Optional[str] = None
+    release_year: Optional[int] = None
+    album: Optional[str] = None
+    song_type: Optional[str] = None

@@ -8,25 +8,51 @@ export default function Singalong() {
   const [songs, setSongs] = useState([]);
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: "", artist: "", lyrics: "", youtube_url: "" });
+  const [form, setForm] = useState({ title: "", artist: "", lyrics: "", youtube_url: "", release_year: "", album: "", song_type: "BTS" });
   const [search, setSearch] = useState("");
+  const [yearFilter, setYearFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
+  const [albumFilter, setAlbumFilter] = useState("All");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [editingSong, setEditingSong] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    API.get("/auth/me").catch(() => navigate("/login"));
+    API.get("/auth/me")
+      .then(res => setCurrentUser(res.data))
+      .catch(() => navigate("/login"));
     API.get("/songs").then(res => setSongs(res.data));
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const payload = {
+      ...form,
+      release_year: form.release_year ? Number(form.release_year) : null,
+    };
+
     try {
-      const res = await API.post("/songs", form);
-      setSongs([res.data, ...songs]);
-      setForm({ title: "", artist: "", lyrics: "", youtube_url: "" });
+      const res = editingSong
+        ? await API.put(`/songs/${editingSong.id}`, payload)
+        : await API.post("/songs", payload);
+
+      const updatedSong = res.data;
+      setSongs(prevSongs => {
+        if (editingSong) {
+          return prevSongs.map(song => song.id === updatedSong.id ? updatedSong : song);
+        }
+        return [updatedSong, ...prevSongs];
+      });
+
+      setSelected(updatedSong);
+      setForm({ title: "", artist: "", lyrics: "", youtube_url: "", release_year: "", album: "", song_type: "BTS" });
       setShowForm(false);
-      alert("Song added! 💜");
+      setEditingSong(null);
+      alert(editingSong ? "Song updated! 💜" : "Song added! 💜");
     } catch (err) {
-      alert(err.response?.data?.detail || "Failed to add song");
+      console.error(err.response?.data || err);
+      const detail = err.response?.data?.detail;
+      alert(typeof detail === "string" ? detail : JSON.stringify(detail || "Failed to add song"));
     }
   };
 
@@ -35,10 +61,25 @@ export default function Singalong() {
     return match ? match[1] : null;
   };
 
-  const filtered = songs.filter(s =>
-    s.title.toLowerCase().includes(search.toLowerCase()) ||
-    s.artist.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = songs.filter(song => {
+    const searchMatch =
+      song.title.toLowerCase().includes(search.toLowerCase()) ||
+      song.artist.toLowerCase().includes(search.toLowerCase());
+
+    const yearMatch =
+      yearFilter === "All" ||
+      String(song.release_year) === yearFilter;
+
+    const typeMatch =
+      typeFilter === "All" ||
+      song.song_type === typeFilter;
+
+    const albumMatch =
+      albumFilter === "All" ||
+      song.album === albumFilter;
+
+    return searchMatch && yearMatch && typeMatch && albumMatch;
+  });
 
   return (
     <div style={styles.container}>
@@ -50,15 +91,21 @@ export default function Singalong() {
             <h2 style={styles.title}>🎵 BTS Sing-Along</h2>
             <p style={styles.subtitle}>Sing your heart out ARMY! 💜</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} style={styles.addBtn}>
+          <button onClick={() => {
+            if (showForm) {
+              setEditingSong(null);
+              setForm({ title: "", artist: "", lyrics: "", youtube_url: "", release_year: "", album: "", song_type: "BTS" });
+            }
+            setShowForm(!showForm);
+          }} style={styles.addBtn}>
             {showForm ? "Cancel" : "🎵 Add Song"}
           </button>
         </div>
 
-        {/* Add Song Form - Admin Only */}
+        {/* Add Song Form - All ARMY */}
         {showForm && (
           <div style={styles.formCard}>
-            <h3 style={styles.cardTitle}>Add New Song</h3>
+            <h3 style={styles.cardTitle}>{editingSong ? "Edit Song" : "Add New Song"}</h3>
             <form onSubmit={handleSubmit} style={styles.form}>
               <input style={styles.input} placeholder="Song Title"
                 value={form.title}
@@ -66,20 +113,91 @@ export default function Singalong() {
               <input style={styles.input} placeholder="Artist (e.g. BTS, Jungkook)"
                 value={form.artist}
                 onChange={e => setForm({ ...form, artist: e.target.value })} required />
+              <select style={styles.select} value={form.song_type} onChange={e => setForm({ ...form, song_type: e.target.value })}>
+                <option value="BTS">BTS</option>
+                <option value="Solo">Solo</option>
+              </select>
+              <select style={styles.select} value={form.album} onChange={e => setForm({ ...form, album: e.target.value })}>
+                <option value="">Select Album</option>
+                <option value="Dark & Wild">Dark & Wild</option>
+                <option value="Wings">Wings</option>
+                <option value="Love Yourself">Love Yourself</option>
+                <option value="Map of the Soul">Map of the Soul</option>
+                <option value="BE">BE</option>
+                <option value="Proof">Proof</option>
+                <option value="Golden">Golden</option>
+                <option value="Layover">Layover</option>
+                <option value="D-Day">D-Day</option>
+                <option value="Jack In The Box">Jack In The Box</option>
+                <option value="Indigo">Indigo</option>
+                <option value="Face">Face</option>
+                <option value="Muse">Muse</option>
+                <option value="Happy">Happy</option>
+              </select>
+              <select
+                style={styles.select}
+                value={form.release_year}
+                onChange={(e) => setForm({ ...form, release_year: e.target.value })}
+              >
+                <option value="">Select Year</option>
+                {Array.from({ length: 14 }, (_, i) => 2013 + i).map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
               <input style={styles.input} placeholder="YouTube URL"
                 value={form.youtube_url}
                 onChange={e => setForm({ ...form, youtube_url: e.target.value })} required />
               <textarea style={styles.textarea} placeholder="Paste lyrics here..."
                 value={form.lyrics} rows={8}
                 onChange={e => setForm({ ...form, lyrics: e.target.value })} required />
-              <button style={styles.button} type="submit">Add Song 💜</button>
+              <button style={styles.button} type="submit">{editingSong ? "Update Song 💜" : "Add Song 💜"}</button>
             </form>
           </div>
         )}
 
-        {/* Search */}
-        <input style={styles.search} placeholder="Search songs..."
-          value={search} onChange={e => setSearch(e.target.value)} />
+        <div style={styles.filterToolbar}>
+          <div style={styles.filterTopRow}>
+            <input style={styles.search} placeholder="Search songs..."
+              value={search} onChange={e => setSearch(e.target.value)} />
+            <select style={styles.select} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+              <option value="All">All Types</option>
+              <option value="BTS">BTS</option>
+              <option value="Solo">Solo</option>
+            </select>
+            <select style={styles.select} value={albumFilter} onChange={e => setAlbumFilter(e.target.value)}>
+              <option value="All">All Albums</option>
+              <option value="Dark & Wild">Dark & Wild</option>
+              <option value="Wings">Wings</option>
+              <option value="Love Yourself">Love Yourself</option>
+              <option value="Map of the Soul">Map of the Soul</option>
+              <option value="BE">BE</option>
+              <option value="Proof">Proof</option>
+              <option value="Golden">Golden</option>
+              <option value="Layover">Layover</option>
+              <option value="D-Day">D-Day</option>
+              <option value="Jack In The Box">Jack In The Box</option>
+              <option value="Indigo">Indigo</option>
+              <option value="Face">Face</option>
+              <option value="Muse">Muse</option>
+              <option value="Happy">Happy</option>
+            </select>
+          </div>
+          <div style={styles.pillRow}>
+            {['All', ...Array.from({ length: 14 }, (_, i) => String(2013 + i))].map(year => (
+              <button
+                key={year}
+                type="button"
+                onClick={() => setYearFilter(year)}
+                style={{
+                  ...styles.pillButton,
+                  ...(yearFilter === year ? styles.pillActive : {})
+                }}
+              >
+                {year}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div style={styles.layout}>
           {/* Song List */}
@@ -99,6 +217,75 @@ export default function Singalong() {
                   }}>
                   <h3 style={styles.songTitle}>{song.title}</h3>
                   <p style={styles.songArtist}>🎤 {song.artist}</p>
+                  <p style={styles.songMeta}>📅 {song.release_year || "Unknown"} · 🎤 {song.song_type || "BTS"} · 💿 {song.album || "Unknown Album"}</p>
+                  <p style={styles.songMeta}>👤 Added by: {song.added_by_username || "Unknown"}</p>
+                  <p style={styles.songMeta}>❤️ {song.favorites_count || 0} favorites</p>
+                  <div style={styles.cardActions}>
+                    <button
+                      type="button"
+                      style={styles.favoriteBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (song.favorited_by_current_user) {
+                          API.delete(`/songs/${song.id}/favorite`).then(res => {
+                            setSongs(prev => prev.map(s => s.id === song.id ? res.data : s));
+                            if (selected?.id === song.id) setSelected(res.data);
+                          }).catch(err => {
+                            console.error(err.response?.data || err);
+                          });
+                        } else {
+                          API.post(`/songs/${song.id}/favorite`).then(res => {
+                            setSongs(prev => prev.map(s => s.id === song.id ? res.data : s));
+                            if (selected?.id === song.id) setSelected(res.data);
+                          }).catch(err => {
+                            console.error(err.response?.data || err);
+                          });
+                        }
+                      }}
+                    >
+                      {song.favorited_by_current_user ? "❤️ Favorited" : "🤍 Favorite"}
+                    </button>
+                    {(currentUser?.is_admin || currentUser?.id === song.added_by_id) && (
+                      <>
+                        <button
+                          type="button"
+                          style={styles.editBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingSong(song);
+                            setShowForm(true);
+                            setForm({
+                              title: song.title || "",
+                              artist: song.artist || "",
+                              lyrics: song.lyrics || "",
+                              youtube_url: song.youtube_url || "",
+                              release_year: song.release_year ? String(song.release_year) : "",
+                              album: song.album || "",
+                              song_type: song.song_type || "BTS"
+                            });
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          style={styles.deleteBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!window.confirm("Delete this song?")) return;
+                            API.delete(`/songs/${song.id}`).then(() => {
+                              setSongs(prev => prev.filter(s => s.id !== song.id));
+                              if (selected?.id === song.id) setSelected(null);
+                            }).catch(err => {
+                              console.error(err.response?.data || err);
+                            });
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))
             )}
@@ -109,6 +296,12 @@ export default function Singalong() {
             <div style={styles.songDetail}>
               <h2 style={styles.detailTitle}>{selected.title}</h2>
               <p style={styles.detailArtist}>🎤 {selected.artist}</p>
+              <p style={styles.detailMeta}>📅 Release Year: {selected.release_year || "Unknown"}</p>
+              <p style={styles.detailMeta}>🎤 Type: {selected.song_type || "BTS"}</p>
+              <p style={styles.detailMeta}>💿 Album: {selected.album || "Unknown"}</p>
+              <p style={styles.detailMeta}>👤 Added by: {selected.added_by_username || "Unknown"}</p>
+              <p style={styles.detailMeta}>🕒 Added on: {new Date(selected.created_at).toLocaleDateString()}</p>
+              <p style={styles.detailMeta}>❤️ Favorites: {selected.favorites_count || 0}</p>
 
               {/* YouTube Player */}
               {selected.youtube_url && getYoutubeId(selected.youtube_url) && (
@@ -183,15 +376,81 @@ const styles = {
     color: "white", fontSize: "1rem", cursor: "pointer", border: "none"
   },
   search: {
-    width: "100%", padding: "12px", borderRadius: "8px",
+    flex: 1,
+    padding: "12px", borderRadius: "8px",
     border: "1px solid #d4b8ff", background: "white", color: "#2d0a4e",
-    fontSize: "1rem", marginBottom: "1.5rem"
+    fontSize: "1rem"
+  },
+  filterToolbar: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+    marginBottom: "1.5rem"
+  },
+  filterTopRow: {
+    display: "flex",
+    gap: "1rem",
+    flexWrap: "wrap"
+  },
+  pillRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "0.5rem"
+  },
+  pillButton: {
+    padding: "8px 14px",
+    borderRadius: "999px",
+    border: "1px solid #d4b8ff",
+    background: "white",
+    color: "#2d0a4e",
+    cursor: "pointer"
+  },
+  pillActive: {
+    background: "#7c3aed",
+    color: "white",
+    borderColor: "#7c3aed"
+  },
+  select: {
+    minWidth: "180px",
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #d4b8ff",
+    background: "white",
+    color: "#2d0a4e",
+    fontSize: "1rem"
   },
   layout: { display: "grid", gridTemplateColumns: "300px 1fr", gap: "1.5rem" },
   songList: { display: "flex", flexDirection: "column", gap: "0.75rem" },
   songCard: { padding: "1rem 1.25rem", borderRadius: "10px", cursor: "pointer" },
   songTitle: { color: "#2d0a4e", marginBottom: "0.25rem", fontSize: "1rem" },
   songArtist: { color: "#7c3aed", fontSize: "0.85rem" },
+  songMeta: { color: "#4b2777", fontSize: "0.8rem", marginTop: "0.4rem" },
+  cardActions: { display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.75rem" },
+  favoriteBtn: {
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "1px solid #d4b8ff",
+    background: "white",
+    color: "#2d0a4e",
+    cursor: "pointer"
+  },
+  editBtn: {
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "1px solid #7c3aed",
+    background: "#7c3aed",
+    color: "white",
+    cursor: "pointer"
+  },
+  deleteBtn: {
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "1px solid #f97316",
+    background: "#f97316",
+    color: "white",
+    cursor: "pointer"
+  },
+  detailMeta: { color: "#4b2777", fontSize: "0.95rem", marginBottom: "0.6rem" },
   emptyCard: {
     background: "white", borderRadius: "12px", padding: "2rem",
     textAlign: "center", border: "1px solid #d4b8ff"
