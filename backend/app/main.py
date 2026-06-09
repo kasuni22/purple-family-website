@@ -25,7 +25,8 @@ with engine.connect() as conn:
         "ALTER TABLE songs ADD COLUMN image_url VARCHAR",
         "CREATE TABLE IF NOT EXISTS song_favorites (id INTEGER PRIMARY KEY AUTOINCREMENT, song_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(song_id, user_id))",
         "CREATE TABLE IF NOT EXISTS solo_albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, image_url VARCHAR, youtube_url VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, album_type VARCHAR NOT NULL DEFAULT 'BTS', image_url VARCHAR, playlist_url VARCHAR, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(name, artist, album_type))"
+        "CREATE TABLE IF NOT EXISTS albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, album_type VARCHAR NOT NULL DEFAULT 'BTS', image_url VARCHAR, playlist_url VARCHAR, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(name, artist, album_type))",
+        "CREATE TABLE IF NOT EXISTS quiz_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, question VARCHAR NOT NULL, option_a VARCHAR NOT NULL, option_b VARCHAR NOT NULL, option_c VARCHAR NOT NULL, option_d VARCHAR NOT NULL, correct_answer VARCHAR NOT NULL, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
     ]:
         try:
             conn.execute(text(statement))
@@ -790,3 +791,96 @@ def add_comment(
     db.refresh(comment)
     return {"id": comment.id, "content": comment.content,
             "owner": current_user.username, "created_at": comment.created_at}
+
+@app.get("/quiz/questions")
+def get_quiz_questions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    questions = db.query(models.QuizQuestion)\
+        .order_by(models.QuizQuestion.created_at.desc())\
+        .all()
+
+    return [
+        {
+            "id": q.id,
+            "question": q.question,
+            "option_a": q.option_a,
+            "option_b": q.option_b,
+            "option_c": q.option_c,
+            "option_d": q.option_d,
+            "correct_answer": q.correct_answer,
+            "created_by_id": q.created_by_id,
+            "created_by_username": q.created_by.username if q.created_by else None,
+            "created_at": q.created_at,
+            "can_edit": current_user.is_admin or q.created_by_id == current_user.id,
+            "can_delete": current_user.is_admin
+        }
+        for q in questions
+    ]
+
+@app.post("/quiz/questions")
+def create_quiz_question(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    question = models.QuizQuestion(
+        question=data["question"],
+        option_a=data["option_a"],
+        option_b=data["option_b"],
+        option_c=data["option_c"],
+        option_d=data["option_d"],
+        correct_answer=data["correct_answer"],
+        created_by_id=current_user.id
+    )
+
+    db.add(question)
+    db.commit()
+    db.refresh(question)
+
+    return {"message": "Question added"}
+
+@app.put("/quiz/questions/{question_id}")
+def update_quiz_question(
+    question_id: int,
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    question = db.query(models.QuizQuestion)\
+        .filter(models.QuizQuestion.id == question_id)\
+        .first()
+
+    if not question:
+        raise HTTPException(404, "Question not found")
+
+    if not current_user.is_admin and question.created_by_id != current_user.id:
+        raise HTTPException(403, "Not authorized")
+
+    for key, value in data.items():
+        setattr(question, key, value)
+
+    db.commit()
+    return {"message": "Updated"}
+
+@app.delete("/quiz/questions/{question_id}")
+def delete_quiz_question(
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    if not current_user.is_admin:
+        raise HTTPException(403, "Admins only")
+
+    question = db.query(models.QuizQuestion)\
+        .filter(models.QuizQuestion.id == question_id)\
+        .first()
+
+    if not question:
+        raise HTTPException(404, "Question not found")
+
+    db.delete(question)
+    db.commit()
+
+    return {"message": "Deleted"}
