@@ -2,7 +2,6 @@ from pydantic import BaseModel, EmailStr
 from datetime import date, datetime
 from typing import Optional
 
-# User schemas
 class UserCreate(BaseModel):
     username: str
     email: str
@@ -28,12 +27,10 @@ class UserOut(BaseModel):
     class Config:
         from_attributes = True
 
-# Token schemas
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-# Post schemas
 class PostCreate(BaseModel):
     title: str
     content: str
@@ -48,7 +45,6 @@ class PostOut(BaseModel):
     class Config:
         from_attributes = True
 
-# Wallpaper schemas
 class WallpaperOut(BaseModel):
     id: int
     title: str
@@ -63,6 +59,23 @@ class WallpaperOut(BaseModel):
     class Config:
         from_attributes = True
 
+class AlbumOut(BaseModel):
+    id: int
+    name: str
+    artist: str
+    year: Optional[int] = None
+    album_type: str
+    image_url: Optional[str] = None
+    playlist_url: Optional[str] = None
+    created_by_id: Optional[int] = None
+    created_by_username: Optional[str] = None
+    created_at: datetime
+    can_edit: bool = False
+    can_delete: bool = False
+
+    class Config:
+        from_attributes = True
+
 class SongCreate(BaseModel):
     title: str
     artist: str
@@ -70,7 +83,10 @@ class SongCreate(BaseModel):
     youtube_url: str
     release_year: Optional[int] = None
     album: Optional[str] = None
+    album_id: Optional[int] = None
     song_type: Optional[str] = None
+    solo_artist: Optional[str] = None
+    image_url: Optional[str] = None
 
 class SongUpdate(BaseModel):
     title: Optional[str] = None
@@ -79,4 +95,19 @@ class SongUpdate(BaseModel):
     youtube_url: Optional[str] = None
     release_year: Optional[int] = None
     album: Optional[str] = None
+    album_id: Optional[int] = None
     song_type: Optional[str] = None
+    solo_artist: Optional[str] = None
+    image_url: Optional[str] = None
+
+class SoloAlbumOut(BaseModel):
+    id: int
+    name: str
+    artist: str
+    year: Optional[int] = None
+    image_url: Optional[str] = None
+    youtube_url: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

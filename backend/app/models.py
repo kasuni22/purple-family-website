@@ -21,6 +21,7 @@ class User(Base):
     wallpaper_likes = relationship("WallpaperLike", back_populates="user", cascade="all, delete-orphan")
     songs = relationship("Song", back_populates="added_by")
     song_favorites = relationship("SongFavorite", back_populates="user", cascade="all, delete-orphan")
+    albums = relationship("Album", back_populates="created_by")
 
 class Post(Base):
     __tablename__ = "posts"
@@ -58,6 +59,23 @@ class WallpaperLike(Base):
     wallpaper = relationship("Wallpaper", back_populates="likes")
     user = relationship("User", back_populates="wallpaper_likes")
 
+class Album(Base):
+    __tablename__ = "albums"
+    __table_args__ = (UniqueConstraint("name", "artist", "album_type", name="uix_album_name_artist_type"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    artist = Column(String, nullable=False)
+    year = Column(Integer, nullable=True)
+    album_type = Column(String, nullable=False, default="BTS")  # BTS or Solo
+    image_url = Column(String, nullable=True)
+    playlist_url = Column(String, nullable=True)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    created_by = relationship("User", back_populates="albums")
+    songs = relationship("Song", back_populates="album_ref")
+
 class Song(Base):
     __tablename__ = "songs"
 
@@ -68,12 +86,16 @@ class Song(Base):
     youtube_url = Column(String)
     release_year = Column(Integer, nullable=True)
     album = Column(String, nullable=True)
+    album_id = Column(Integer, ForeignKey("albums.id"), nullable=True)
     song_type = Column(String, nullable=True)
+    solo_artist = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)
     added_by_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, server_default=func.now())
 
     added_by = relationship("User", back_populates="songs")
     favorites = relationship("SongFavorite", back_populates="song", cascade="all, delete-orphan")
+    album_ref = relationship("Album", back_populates="songs")
 
 class SongFavorite(Base):
     __tablename__ = "song_favorites"
@@ -86,6 +108,18 @@ class SongFavorite(Base):
 
     song = relationship("Song", back_populates="favorites")
     user = relationship("User", back_populates="song_favorites")
+
+# Kept for old DB compatibility. New Sing-Along uses Album.
+class SoloAlbum(Base):
+    __tablename__ = "solo_albums"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    artist = Column(String, nullable=False)
+    year = Column(Integer, nullable=True)
+    image_url = Column(String, nullable=True)
+    youtube_url = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
 
 class BirthdayPost(Base):
     __tablename__ = "birthday_posts"

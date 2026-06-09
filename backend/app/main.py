@@ -20,7 +20,12 @@ with engine.connect() as conn:
         "ALTER TABLE songs ADD COLUMN release_year INTEGER",
         "ALTER TABLE songs ADD COLUMN album VARCHAR",
         "ALTER TABLE songs ADD COLUMN song_type VARCHAR",
-        "CREATE TABLE IF NOT EXISTS song_favorites (id INTEGER PRIMARY KEY AUTOINCREMENT, song_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(song_id, user_id))"
+        "ALTER TABLE songs ADD COLUMN solo_artist VARCHAR",
+        "ALTER TABLE songs ADD COLUMN album_id INTEGER",
+        "ALTER TABLE songs ADD COLUMN image_url VARCHAR",
+        "CREATE TABLE IF NOT EXISTS song_favorites (id INTEGER PRIMARY KEY AUTOINCREMENT, song_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(song_id, user_id))",
+        "CREATE TABLE IF NOT EXISTS solo_albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, image_url VARCHAR, youtube_url VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+        "CREATE TABLE IF NOT EXISTS albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, album_type VARCHAR NOT NULL DEFAULT 'BTS', image_url VARCHAR, playlist_url VARCHAR, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(name, artist, album_type))"
     ]:
         try:
             conn.execute(text(statement))
@@ -44,6 +49,162 @@ app.add_middleware(
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+
+BTS_ALBUMS_SEED = [
+    {"name": "ARIRANG", "year": 2025},
+    {"name": "PERMISSION TO DANCE ON STAGE - LIVE", "year": 2024},
+    {"name": "Take Two", "year": 2023},
+    {"name": "Proof", "year": 2022},
+    {"name": "butter", "year": 2021},
+    {"name": "BUTTER", "year": 2021},
+    {"name": "BE", "year": 2020},
+    {"name": "DYNAMITE", "year": 2020},
+    {"name": "MAP OF THE SOUL : 7", "year": 2020},
+    {"name": "MAP OF THE SOUL : PERSONA", "year": 2019},
+    {"name": "LOVE YOURSELF 結 'ANSWER'", "year": 2018},
+    {"name": "LOVE YOURSELF 轉 'TEAR'", "year": 2018},
+    {"name": "LOVE YOURSELF 承 'HER'", "year": 2017},
+    {"name": "YOU NEVER WALK ALONE", "year": 2017},
+    {"name": "WINGS", "year": 2016},
+    {"name": "THE MOST BEAUTIFUL MOMENT IN LIFE : YOUNG FOREVER", "year": 2016},
+    {"name": "THE MOST BEAUTIFUL MOMENT IN LIFE PT.2", "year": 2015},
+    {"name": "THE MOST BEAUTIFUL MOMENT IN LIFE PT.1", "year": 2015},
+    {"name": "DARK & WILD", "year": 2014},
+    {"name": "SKOOL LUV AFFAIR", "year": 2014},
+    {"name": "O!RUL8,2?", "year": 2013},
+    {"name": "2 COOL 4 SKOOL", "year": 2013},
+]
+
+
+SOLO_ALBUMS_SEED = {
+    "RM": [
+        {"name": "Right Place, Wrong Person", "year": 2024, "youtube_url": "https://youtube.com/playlist?list=PL5hrGMysD_GsXxbdeZzbaXioGe27vRsdp&si=g0lvjWwd8ny5AQRO"},
+        {"name": "Indigo", "year": 2022, "youtube_url": ""},
+        {"name": "Bicycle", "year": 2021, "youtube_url": ""},
+        {"name": "MONO.", "year": 2018, "youtube_url": ""},
+    ],
+    "Jin": [
+        {"name": "ECHO", "year": 2025, "youtube_url": ""},
+        {"name": "HAPPY", "year": 2024, "youtube_url": ""},
+        {"name": "The Astronaut", "year": 2022, "youtube_url": ""},
+        {"name": "Super Tuna", "year": 2021, "youtube_url": ""},
+        {"name": "Abyss", "year": 2020, "youtube_url": ""},
+        {"name": "TONIGHT", "year": 2019, "youtube_url": ""},
+    ],
+    "SUGA": [
+        {"name": "D-DAY", "year": 2023, "youtube_url": ""},
+        {"name": "D-2", "year": 2020, "youtube_url": ""},
+        {"name": "Agust D", "year": 2016, "youtube_url": ""},
+    ],
+    "j-hope": [
+        {"name": "Killin' It Girl", "year": 2025, "youtube_url": ""},
+        {"name": "MONA LISA", "year": 2025, "youtube_url": ""},
+        {"name": "Sweet Dreams (feat. Miguel)", "year": 2025, "youtube_url": ""},
+        {"name": "HOPE ON THE STREET VOL.1", "year": 2024, "youtube_url": ""},
+        {"name": "Jack In The Box (HOPE Edition)", "year": 2023, "youtube_url": ""},
+        {"name": "on the street", "year": 2023, "youtube_url": ""},
+        {"name": "Jack In The Box", "year": 2022, "youtube_url": ""},
+        {"name": "Blue Side", "year": 2021, "youtube_url": ""},
+        {"name": "Chicken Noodle Soup", "year": 2019, "youtube_url": ""},
+        {"name": "Hope World", "year": 2018, "youtube_url": ""},
+    ],
+    "Jimin": [
+        {"name": "MUSE", "year": 2024, "youtube_url": ""},
+        {"name": "Closer Than This", "year": 2023, "youtube_url": ""},
+        {"name": "Face", "year": 2023, "youtube_url": ""},
+        {"name": "Christmas Love", "year": 2020, "youtube_url": ""},
+        {"name": "Promise", "year": 2018, "youtube_url": ""},
+    ],
+    "V": [
+        {"name": "Winter Ahead", "year": 2024, "youtube_url": ""},
+        {"name": "FRI(END)S", "year": 2024, "youtube_url": ""},
+        {"name": "Layover", "year": 2023, "youtube_url": ""},
+        {"name": "Snow Flower", "year": 2020, "youtube_url": ""},
+        {"name": "Winter Bear", "year": 2019, "youtube_url": ""},
+        {"name": "Scenery", "year": 2019, "youtube_url": ""},
+    ],
+    "Jung Kook": [
+        {"name": "Never Let Go", "year": 2024, "youtube_url": ""},
+        {"name": "GOLDEN", "year": 2023, "youtube_url": ""},
+        {"name": "3D", "year": 2023, "youtube_url": ""},
+        {"name": "Seven", "year": 2023, "youtube_url": ""},
+        {"name": "My You", "year": 2022, "youtube_url": ""},
+        {"name": "Still With You", "year": 2020, "youtube_url": ""},
+    ],
+}
+
+def serialize_album(album: models.Album, current_user: Optional[models.User] = None):
+    can_edit = bool(current_user and (current_user.is_admin or album.created_by_id == current_user.id))
+    can_delete = bool(current_user and current_user.is_admin)
+    return {
+        "id": album.id,
+        "name": album.name,
+        "artist": album.artist,
+        "year": album.year,
+        "album_type": album.album_type,
+        "image_url": album.image_url,
+        "playlist_url": album.playlist_url,
+        "created_by_id": album.created_by_id,
+        "created_by_username": album.created_by.username if album.created_by else None,
+        "created_at": album.created_at,
+        "can_edit": can_edit,
+        "can_delete": can_delete,
+    }
+
+def seed_albums(db: Session):
+    if db.query(models.Album).first():
+        return
+
+    for album in BTS_ALBUMS_SEED:
+        db.add(models.Album(
+            name=album["name"],
+            artist="BTS",
+            year=album.get("year"),
+            album_type="BTS",
+            image_url="",
+            playlist_url="",
+            created_by_id=None,
+        ))
+
+    for artist, albums in SOLO_ALBUMS_SEED.items():
+        for album in albums:
+            db.add(models.Album(
+                name=album["name"],
+                artist=artist,
+                year=album.get("year"),
+                album_type="Solo",
+                image_url="",
+                playlist_url=album.get("youtube_url", ""),
+                created_by_id=None,
+            ))
+    db.commit()
+
+# Old solo album serializer kept only for old /solo-albums compatibility.
+def serialize_solo_album(album: models.SoloAlbum):
+    return {
+        "id": album.id,
+        "name": album.name,
+        "artist": album.artist,
+        "year": album.year,
+        "image_url": album.image_url,
+        "youtube_url": album.youtube_url,
+        "created_at": album.created_at,
+    }
+
+def seed_solo_albums(db: Session):
+    if db.query(models.SoloAlbum).first():
+        return
+    for artist, albums in SOLO_ALBUMS_SEED.items():
+        for album in albums:
+            db.add(models.SoloAlbum(
+                name=album["name"],
+                artist=artist,
+                year=album.get("year"),
+                image_url="",
+                youtube_url=album.get("youtube_url", ""),
+            ))
+    db.commit()
+
 def serialize_song(song: models.Song, current_user: models.User, db: Session):
     favorites_count = db.query(models.SongFavorite).filter(models.SongFavorite.song_id == song.id).count()
     favorited_by_current_user = db.query(models.SongFavorite).filter(
@@ -58,12 +219,17 @@ def serialize_song(song: models.Song, current_user: models.User, db: Session):
         "youtube_url": song.youtube_url,
         "release_year": song.release_year,
         "album": song.album,
+        "album_id": song.album_id,
         "song_type": song.song_type,
+        "solo_artist": song.solo_artist,
+        "image_url": song.image_url,
         "added_by_id": song.added_by_id,
         "added_by_username": song.added_by.username if song.added_by else None,
         "created_at": song.created_at,
         "favorites_count": favorites_count,
         "favorited_by_current_user": favorited_by_current_user,
+        "can_edit": bool(current_user and (current_user.is_admin or song.added_by_id == current_user.id)),
+        "can_delete": bool(current_user and current_user.is_admin),
     }
 
 # ─── AUTH ROUTES ───────────────────────────────────────────
@@ -276,7 +442,12 @@ def get_members(db: Session = Depends(get_db)):
 @app.post("/songs")
 def create_song(song: schemas.SongCreate, db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)):
-    new_song = models.Song(**song.model_dump(), added_by_id=current_user.id)
+    data = song.model_dump()
+    if not data.get("album_id") and data.get("album"):
+        album = db.query(models.Album).filter(models.Album.name == data.get("album")).first()
+        if album:
+            data["album_id"] = album.id
+    new_song = models.Song(**data, added_by_id=current_user.id)
     db.add(new_song)
     db.commit()
     db.refresh(new_song)
@@ -284,6 +455,7 @@ def create_song(song: schemas.SongCreate, db: Session = Depends(get_db),
 
 @app.get("/songs")
 def get_songs(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    seed_albums(db)
     songs = db.query(models.Song).order_by(models.Song.created_at.desc()).all()
     return [serialize_song(song, current_user, db) for song in songs]
 
@@ -332,6 +504,10 @@ def update_song(song_id: int, song_data: schemas.SongUpdate, db: Session = Depen
         raise HTTPException(status_code=403, detail="Not authorized to edit this song")
 
     update_data = song_data.model_dump(exclude_unset=True)
+    if not update_data.get("album_id") and update_data.get("album"):
+        album = db.query(models.Album).filter(models.Album.name == update_data.get("album")).first()
+        if album:
+            update_data["album_id"] = album.id
     for key, value in update_data.items():
         setattr(song, key, value)
 
@@ -344,13 +520,185 @@ def delete_song(song_id: int, db: Session = Depends(get_db), current_user: model
     song = db.query(models.Song).filter(models.Song.id == song_id).first()
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
-    if not current_user.is_admin and song.added_by_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this song")
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Only admins can delete songs")
 
     db.query(models.SongFavorite).filter(models.SongFavorite.song_id == song_id).delete()
     db.delete(song)
     db.commit()
     return {"detail": "Song deleted"}
+
+
+# ─── ALBUM ROUTES ──────────────────────────────────────────
+
+@app.get("/albums")
+def get_albums(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    seed_albums(db)
+    albums = db.query(models.Album).order_by(models.Album.year.desc(), models.Album.name.asc()).all()
+    return [serialize_album(album, current_user) for album in albums]
+
+@app.post("/albums")
+def create_album(
+    name: str = Form(...),
+    artist: str = Form(...),
+    year: Optional[int] = Form(None),
+    album_type: str = Form("BTS"),
+    playlist_url: Optional[str] = Form(""),
+    image_url: Optional[str] = Form(""),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    album = models.Album(
+        name=name,
+        artist=artist,
+        year=year,
+        album_type=album_type,
+        playlist_url=playlist_url or "",
+        image_url=image_url or "",
+        created_by_id=current_user.id,
+    )
+    db.add(album)
+    db.commit()
+    db.refresh(album)
+
+    if file and file.filename:
+        os.makedirs("uploads/albums", exist_ok=True)
+        safe_name = f"album_{album.id}_{file.filename}".replace(" ", "_")
+        file_path = f"uploads/albums/{safe_name}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        album.image_url = file_path
+        db.commit()
+        db.refresh(album)
+
+    return serialize_album(album, current_user)
+
+@app.put("/albums/{album_id}")
+def update_album(
+    album_id: int,
+    name: str = Form(...),
+    artist: str = Form(...),
+    year: Optional[int] = Form(None),
+    album_type: str = Form("BTS"),
+    playlist_url: Optional[str] = Form(""),
+    image_url: Optional[str] = Form(""),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    album = db.query(models.Album).filter(models.Album.id == album_id).first()
+    if not album:
+        raise HTTPException(status_code=404, detail="Album not found")
+    if not current_user.is_admin and album.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this album")
+
+    album.name = name
+    album.artist = artist
+    album.year = year
+    album.album_type = album_type
+    album.playlist_url = playlist_url or ""
+    album.image_url = image_url or album.image_url or ""
+
+    if file and file.filename:
+        os.makedirs("uploads/albums", exist_ok=True)
+        safe_name = f"album_{album_id}_{file.filename}".replace(" ", "_")
+        file_path = f"uploads/albums/{safe_name}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        album.image_url = file_path
+
+    db.commit()
+    db.refresh(album)
+
+    # Keep songs connected when album name/year changes.
+    db.query(models.Song).filter(models.Song.album_id == album.id).update({
+        models.Song.album: album.name,
+        models.Song.release_year: album.year,
+        models.Song.song_type: album.album_type,
+    }, synchronize_session=False)
+    db.commit()
+
+    return serialize_album(album, current_user)
+
+@app.delete("/albums/{album_id}")
+def delete_album(album_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Only admins can delete albums")
+
+    album = db.query(models.Album).filter(models.Album.id == album_id).first()
+    if not album:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    if album.image_url and album.image_url.startswith("uploads/") and os.path.exists(album.image_url):
+        os.remove(album.image_url)
+
+    # Do not delete songs automatically; just disconnect them.
+    db.query(models.Song).filter(models.Song.album_id == album.id).update({models.Song.album_id: None}, synchronize_session=False)
+    db.delete(album)
+    db.commit()
+    return {"detail": "Album deleted"}
+
+# ─── SOLO ALBUM ROUTES ─────────────────────────────────────
+
+@app.get("/solo-albums")
+def get_solo_albums(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    seed_solo_albums(db)
+    albums = db.query(models.SoloAlbum).order_by(models.SoloAlbum.artist.asc(), models.SoloAlbum.year.desc()).all()
+    return [serialize_solo_album(album) for album in albums]
+
+@app.put("/solo-albums/{album_id}")
+def update_solo_album(
+    album_id: int,
+    name: str = Form(...),
+    artist: str = Form(...),
+    year: Optional[int] = Form(None),
+    youtube_url: Optional[str] = Form(""),
+    image_url: Optional[str] = Form(""),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    album = db.query(models.SoloAlbum).filter(models.SoloAlbum.id == album_id).first()
+    if not album:
+        raise HTTPException(status_code=404, detail="Solo album not found")
+
+    album.name = name
+    album.artist = artist
+    album.year = year
+    album.youtube_url = youtube_url or ""
+    album.image_url = image_url or album.image_url or ""
+
+    if file and file.filename:
+        os.makedirs("uploads/solo_albums", exist_ok=True)
+        safe_name = f"solo_album_{album_id}_{file.filename}".replace(" ", "_")
+        file_path = f"uploads/solo_albums/{safe_name}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        album.image_url = file_path
+
+    db.commit()
+    db.refresh(album)
+    return serialize_solo_album(album)
+
+@app.delete("/solo-albums/{album_id}")
+def delete_solo_album(album_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    album = db.query(models.SoloAlbum).filter(models.SoloAlbum.id == album_id).first()
+    if not album:
+        raise HTTPException(status_code=404, detail="Solo album not found")
+
+    if album.image_url and album.image_url.startswith("uploads/") and os.path.exists(album.image_url):
+        os.remove(album.image_url)
+
+    db.delete(album)
+    db.commit()
+    return {"detail": "Solo album deleted"}
 
 # ─── EDIT PROFILE ──────────────────────────────────────────
 
