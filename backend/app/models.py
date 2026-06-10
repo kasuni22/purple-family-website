@@ -146,11 +146,26 @@ class BirthdayComment(Base):
     post = relationship("BirthdayPost", back_populates="comments")
     owner = relationship("User", foreign_keys=[owner_id])
 
+class QuizTopic(Base):
+    __tablename__ = "quiz_topics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, unique=True)
+    icon = Column(String, nullable=True, default="📚")
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    created_by = relationship("User")
+    questions = relationship("QuizQuestion", back_populates="topic", cascade="all, delete-orphan")
+
 class QuizQuestion(Base):
     __tablename__ = "quiz_questions"
 
     id = Column(Integer, primary_key=True, index=True)
+    category = Column(String, nullable=True, default="knowledge")  # old compatibility
+    topic_id = Column(Integer, ForeignKey("quiz_topics.id"), nullable=True)
     question = Column(String, nullable=False)
+    image_url = Column(String, nullable=True)
     option_a = Column(String, nullable=False)
     option_b = Column(String, nullable=False)
     option_c = Column(String, nullable=False)
@@ -161,3 +176,4 @@ class QuizQuestion(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     created_by = relationship("User")
+    topic = relationship("QuizTopic", back_populates="questions")

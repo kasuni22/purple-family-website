@@ -26,7 +26,12 @@ with engine.connect() as conn:
         "CREATE TABLE IF NOT EXISTS song_favorites (id INTEGER PRIMARY KEY AUTOINCREMENT, song_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(song_id, user_id))",
         "CREATE TABLE IF NOT EXISTS solo_albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, image_url VARCHAR, youtube_url VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
         "CREATE TABLE IF NOT EXISTS albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, album_type VARCHAR NOT NULL DEFAULT 'BTS', image_url VARCHAR, playlist_url VARCHAR, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(name, artist, album_type))",
-        "CREATE TABLE IF NOT EXISTS quiz_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, question VARCHAR NOT NULL, option_a VARCHAR NOT NULL, option_b VARCHAR NOT NULL, option_c VARCHAR NOT NULL, option_d VARCHAR NOT NULL, correct_answer VARCHAR NOT NULL, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
+        "CREATE TABLE IF NOT EXISTS quiz_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, category VARCHAR NOT NULL DEFAULT 'knowledge', question VARCHAR NOT NULL, image_url VARCHAR, option_a VARCHAR NOT NULL, option_b VARCHAR NOT NULL, option_c VARCHAR NOT NULL, option_d VARCHAR NOT NULL, correct_answer VARCHAR NOT NULL, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+        "CREATE TABLE IF NOT EXISTS quiz_topics (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL UNIQUE, icon VARCHAR DEFAULT '📚', created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+        "ALTER TABLE quiz_questions ADD COLUMN category VARCHAR DEFAULT 'knowledge'",
+        "ALTER TABLE quiz_questions ADD COLUMN image_url VARCHAR",
+        "ALTER TABLE quiz_questions ADD COLUMN topic_id INTEGER",
+        "CREATE INDEX IF NOT EXISTS idx_quiz_questions_topic_id ON quiz_questions(topic_id)"
     ]:
         try:
             conn.execute(text(statement))
@@ -792,77 +797,263 @@ def add_comment(
     return {"id": comment.id, "content": comment.content,
             "owner": current_user.username, "created_at": comment.created_at}
 
-@app.get("/quiz/questions")
-def get_quiz_questions(
+
+# ─── QUIZ ROUTES ───────────────────────────────────────────
+
+DEFAULT_QUIZ_TOPICS = [
+    {"name": "Guess the BTS Member by Eyes", "icon": "👀", "category": "eyes"},
+    {"name": "Guess the BTS Member by Lips", "icon": "💋", "category": "lips"},
+    {"name": "BTS Knowledge Challenge", "icon": "🎤", "category": "knowledge"},
+]
+
+def seed_quiz_topics(db: Session):
+    for item in DEFAULT_QUIZ_TOPICS:
+        topic = db.query(models.QuizTopic).filter(
+            models.QuizTopic.name == item["name"]
+        ).first()
+
+        if not topic:
+            try:
+                topic = models.QuizTopic(
+                    name=item["name"],
+                    icon=item["icon"],
+                    created_by_id=None
+                )
+                db.add(topic)
+                db.commit()
+                db.refresh(topic)
+            except Exception:
+                db.rollback()
+                topic = db.query(models.QuizTopic).filter(
+                    models.QuizTopic.name == item["name"]
+                ).first()
+
+        if topic:
+            db.query(models.QuizQuestion).filter(
+                models.QuizQuestion.topic_id == None,
+                models.QuizQuestion.category == item["category"]
+            ).update(
+                {models.QuizQuestion.topic_id: topic.id},
+                synchronize_session=False
+            )
+            db.commit()
+
+def serialize_quiz_topic(topic: models.QuizTopic, current_user: models.User, db: Session):
+    return {
+        "id": topic.id,
+        "name": topic.name,
+        "icon": topic.icon or "📚",
+        "created_by_id": topic.created_by_id,
+        "created_by_username": topic.created_by.username if topic.created_by else "System",
+        "created_at": topic.created_at,
+        "question_count": db.query(models.QuizQuestion).filter(models.QuizQuestion.topic_id == topic.id).count(),
+        "can_edit": bool(current_user and (current_user.is_admin or topic.created_by_id == current_user.id)),
+        "can_delete": bool(current_user and current_user.is_admin),
+    }
+
+def serialize_quiz_question(q: models.QuizQuestion, current_user: models.User):
+    return {
+        "id": q.id,
+        "category": q.category or "custom",
+        "topic_id": q.topic_id,
+        "topic_name": q.topic.name if q.topic else None,
+        "topic_icon": q.topic.icon if q.topic else None,
+        "question": q.question,
+        "image_url": q.image_url,
+        "option_a": q.option_a,
+        "option_b": q.option_b,
+        "option_c": q.option_c,
+        "option_d": q.option_d,
+        "correct_answer": q.correct_answer,
+        "created_by_id": q.created_by_id,
+        "created_by_username": q.created_by.username if q.created_by else None,
+        "created_at": q.created_at,
+        "can_edit": bool(current_user and (current_user.is_admin or q.created_by_id == current_user.id)),
+        "can_delete": bool(current_user and current_user.is_admin),
+    }
+
+@app.on_event("startup")
+def startup_seed():
+    db = next(get_db())
+    try:
+        seed_quiz_topics(db)
+    finally:
+        db.close()
+
+@app.get("/quiz/topics")
+def get_quiz_topics(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    questions = db.query(models.QuizQuestion)\
-        .order_by(models.QuizQuestion.created_at.desc())\
+    topics = db.query(models.QuizTopic)\
+        .order_by(models.QuizTopic.created_at.asc())\
         .all()
 
     return [
-        {
-            "id": q.id,
-            "question": q.question,
-            "option_a": q.option_a,
-            "option_b": q.option_b,
-            "option_c": q.option_c,
-            "option_d": q.option_d,
-            "correct_answer": q.correct_answer,
-            "created_by_id": q.created_by_id,
-            "created_by_username": q.created_by.username if q.created_by else None,
-            "created_at": q.created_at,
-            "can_edit": current_user.is_admin or q.created_by_id == current_user.id,
-            "can_delete": current_user.is_admin
-        }
+        serialize_quiz_topic(t, current_user, db)
+        for t in topics
+    ]
+
+@app.post("/quiz/topics")
+def create_quiz_topic(
+    name: str = Form(...),
+    icon: Optional[str] = Form("📚"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    clean_name = name.strip()
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Topic name is required")
+    existing = db.query(models.QuizTopic).filter(models.QuizTopic.name == clean_name).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Topic already exists")
+    topic = models.QuizTopic(name=clean_name, icon=icon or "📚", created_by_id=current_user.id)
+    db.add(topic)
+    db.commit()
+    db.refresh(topic)
+    return serialize_quiz_topic(topic, current_user, db)
+
+@app.put("/quiz/topics/{topic_id}")
+def update_quiz_topic(
+    topic_id: int,
+    name: str = Form(...),
+    icon: Optional[str] = Form("📚"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    topic = db.query(models.QuizTopic).filter(models.QuizTopic.id == topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    if not current_user.is_admin and topic.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this topic")
+    topic.name = name.strip()
+    topic.icon = icon or "📚"
+    db.commit()
+    db.refresh(topic)
+    return serialize_quiz_topic(topic, current_user, db)
+
+@app.delete("/quiz/topics/{topic_id}")
+def delete_quiz_topic(topic_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+    topic = db.query(models.QuizTopic).filter(models.QuizTopic.id == topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    db.delete(topic)
+    db.commit()
+    return {"detail": "Topic deleted"}
+
+@app.get("/quiz/questions")
+def get_quiz_questions(
+    topic_id: Optional[int] = None,
+    category: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    query = db.query(models.QuizQuestion)
+
+    if topic_id:
+        query = query.filter(
+            models.QuizQuestion.topic_id == topic_id
+        )
+    elif category and category != "all":
+        query = query.filter(
+            models.QuizQuestion.category == category
+        )
+
+    questions = query.order_by(
+        models.QuizQuestion.created_at.asc()
+    ).all()
+
+    return [
+        serialize_quiz_question(q, current_user)
         for q in questions
     ]
 
 @app.post("/quiz/questions")
 def create_quiz_question(
-    data: dict,
+    topic_id: int = Form(...),
+    question: str = Form(...),
+    option_a: str = Form(...),
+    option_b: str = Form(...),
+    option_c: str = Form(...),
+    option_d: str = Form(...),
+    correct_answer: str = Form(...),
+    image_url: Optional[str] = Form(""),
+    file: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    question = models.QuizQuestion(
-        question=data["question"],
-        option_a=data["option_a"],
-        option_b=data["option_b"],
-        option_c=data["option_c"],
-        option_d=data["option_d"],
-        correct_answer=data["correct_answer"],
-        created_by_id=current_user.id
+    topic = db.query(models.QuizTopic).filter(models.QuizTopic.id == topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    new_question = models.QuizQuestion(
+        topic_id=topic.id,
+        category="custom",
+        question=question,
+        option_a=option_a,
+        option_b=option_b,
+        option_c=option_c,
+        option_d=option_d,
+        correct_answer=correct_answer,
+        image_url=image_url or "",
+        created_by_id=current_user.id,
     )
-
-    db.add(question)
+    db.add(new_question)
     db.commit()
-    db.refresh(question)
-
-    return {"message": "Question added"}
+    db.refresh(new_question)
+    if file and file.filename:
+        os.makedirs("uploads/quiz", exist_ok=True)
+        safe_name = f"quiz_{new_question.id}_{file.filename}".replace(" ", "_")
+        file_path = f"uploads/quiz/{safe_name}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        new_question.image_url = file_path
+        db.commit()
+        db.refresh(new_question)
+    return serialize_quiz_question(new_question, current_user)
 
 @app.put("/quiz/questions/{question_id}")
 def update_quiz_question(
     question_id: int,
-    data: dict,
+    topic_id: int = Form(...),
+    question: str = Form(...),
+    option_a: str = Form(...),
+    option_b: str = Form(...),
+    option_c: str = Form(...),
+    option_d: str = Form(...),
+    correct_answer: str = Form(...),
+    image_url: Optional[str] = Form(""),
+    file: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    question = db.query(models.QuizQuestion)\
-        .filter(models.QuizQuestion.id == question_id)\
-        .first()
-
-    if not question:
-        raise HTTPException(404, "Question not found")
-
-    if not current_user.is_admin and question.created_by_id != current_user.id:
-        raise HTTPException(403, "Not authorized")
-
-    for key, value in data.items():
-        setattr(question, key, value)
-
+    quiz_question = db.query(models.QuizQuestion).filter(models.QuizQuestion.id == question_id).first()
+    if not quiz_question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    if not current_user.is_admin and quiz_question.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this question")
+    topic = db.query(models.QuizTopic).filter(models.QuizTopic.id == topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    quiz_question.topic_id = topic.id
+    quiz_question.question = question
+    quiz_question.option_a = option_a
+    quiz_question.option_b = option_b
+    quiz_question.option_c = option_c
+    quiz_question.option_d = option_d
+    quiz_question.correct_answer = correct_answer
+    quiz_question.image_url = image_url or quiz_question.image_url or ""
+    if file and file.filename:
+        os.makedirs("uploads/quiz", exist_ok=True)
+        safe_name = f"quiz_{question_id}_{file.filename}".replace(" ", "_")
+        file_path = f"uploads/quiz/{safe_name}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        quiz_question.image_url = file_path
     db.commit()
-    return {"message": "Updated"}
+    db.refresh(quiz_question)
+    return serialize_quiz_question(quiz_question, current_user)
 
 @app.delete("/quiz/questions/{question_id}")
 def delete_quiz_question(
@@ -871,16 +1062,12 @@ def delete_quiz_question(
     current_user: models.User = Depends(auth.get_current_user)
 ):
     if not current_user.is_admin:
-        raise HTTPException(403, "Admins only")
-
-    question = db.query(models.QuizQuestion)\
-        .filter(models.QuizQuestion.id == question_id)\
-        .first()
-
-    if not question:
-        raise HTTPException(404, "Question not found")
-
-    db.delete(question)
+        raise HTTPException(status_code=403, detail="Admins only")
+    quiz_question = db.query(models.QuizQuestion).filter(models.QuizQuestion.id == question_id).first()
+    if not quiz_question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    if quiz_question.image_url and quiz_question.image_url.startswith("uploads/") and os.path.exists(quiz_question.image_url):
+        os.remove(quiz_question.image_url)
+    db.delete(quiz_question)
     db.commit()
-
-    return {"message": "Deleted"}
+    return {"detail": "Question deleted"}

@@ -111,3 +111,41 @@ class SoloAlbumOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class QuizQuestionOut(BaseModel):
+    id: int
+    category: Optional[str] = None
+    topic_id: Optional[int] = None
+    topic_name: Optional[str] = None
+    topic_icon: Optional[str] = None
+    question: str
+    image_url: Optional[str] = None
+    option_a: str
+    option_b: str
+    option_c: str
+    option_d: str
+    correct_answer: str
+    created_by_id: Optional[int] = None
+    created_by_username: Optional[str] = None
+    created_at: datetime
+    can_edit: bool = False
+    can_delete: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+class QuizTopicOut(BaseModel):
+    id: int
+    name: str
+    icon: Optional[str] = None
+    created_by_id: Optional[int] = None
+    created_by_username: Optional[str] = None
+    created_at: datetime
+    question_count: int = 0
+    can_edit: bool = False
+    can_delete: bool = False
+
+    class Config:
+        from_attributes = True
