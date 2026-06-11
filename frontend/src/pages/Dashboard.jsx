@@ -1,255 +1,437 @@
-import { useState, useEffect } from "react";
-import API from "../api/axios";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../api/axios";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import btsHero from "../assets/bts-hero.jpeg";
+import btsHero from "../assets/bts-hero1.jpg";
 
 export default function Dashboard() {
-  const [posts, setPosts] = useState([]);
-  const [todayBirthdays, setTodayBirthdays] = useState([]);
-  const [showBirthdayNotice, setShowBirthdayNotice] = useState(true);
-  const [newPost, setNewPost] = useState({ title: "", content: "" });
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [birthdays, setBirthdays] = useState([]);
+  const [members, setMembers] = useState([]);
 
   useEffect(() => {
-    API.get("/auth/me").catch(() => navigate("/login"));
-    API.get("/posts").then(res => setPosts(res.data));
-    API.get("/birthdays/today").then(res => setTodayBirthdays(res.data || [])).catch(() => { });
-  }, []);
+    API.get("/auth/me")
+      .then((res) => setUser(res.data))
+      .catch(() => navigate("/login"));
 
-  const handlePost = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await API.post("/posts", newPost);
-      setPosts([res.data, ...posts]);
-      setNewPost({ title: "", content: "" });
-    } catch (err) {
-      alert("Failed to post");
-    }
-  };
+    API.get("/birthdays/today")
+      .then((res) => setBirthdays(res.data || []))
+      .catch(() => setBirthdays([]));
+
+    API.get("/members")
+      .then((res) => setMembers(res.data || []))
+      .catch(() => setMembers([]));
+  }, [navigate]);
+
+  const cards = [
+    {
+      title: "Birthday Calendar",
+      icon: "🎂",
+      text: "Celebrate ARMY birthdays and post wishes.",
+      path: "/birthdays",
+      color: "linear-gradient(135deg,#f472b6,#a855f7)",
+    },
+    {
+      title: "Wallpaper Gallery",
+      icon: "🖼️",
+      text: "Upload, like and download beautiful BTS wallpapers.",
+      path: "/wallpapers",
+      color: "linear-gradient(135deg,#8b5cf6,#6366f1)",
+    },
+    {
+      title: "Members",
+      icon: "👥",
+      text: "See Purple Family members, countries and bias.",
+      path: "/members",
+      color: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    },
+    {
+      title: "Sing-Along",
+      icon: "🎵",
+      text: "Add BTS songs, lyrics, albums and YouTube links.",
+      path: "/singalong",
+      color: "linear-gradient(135deg,#4f46e5,#7c3aed)",
+    },
+    {
+      title: "BTS Quiz",
+      icon: "🎮",
+      text: "Create quiz topics and test ARMY knowledge.",
+      path: "/quiz",
+      color: "linear-gradient(135deg,#ec4899,#f97316)",
+    },
+    {
+      title: "Edit Profile",
+      icon: "👤",
+      text: "Update nickname, profile photo, country and bias.",
+      path: "/edit-profile",
+      color: "linear-gradient(135deg,#9333ea,#db2777)",
+    },
+  ];
+
+  const displayName = user?.nickname || user?.username || "ARMY";
 
   return (
-    <div style={styles.container}>
-      {/* BTS Background */}
-      <div style={styles.bgWrapper}>
-        <img src={btsHero} alt="" style={styles.bgImg}
-          onError={(e) => e.target.style.display = "none"} />
-      </div>
-
+    <>
       <Navbar />
 
-      {/* Content */}
-      <div style={styles.content}>
-        {showBirthdayNotice && todayBirthdays.length > 0 && (
-          <div style={styles.birthdayNotice}>
-            <div style={styles.birthdayNoticeHeader}>
-              <div>
-                <h2 style={styles.birthdayTitle}>🎂 Today's Birthday Notification</h2>
-                <p style={styles.birthdaySubtitle}>
-                  Let's send love to our ARMY family today 💜
-                </p>
-              </div>
+      <main style={styles.page}>
+        <section style={styles.hero}>
+          <div style={styles.heroContent}>
+            <div style={styles.badge}>💜 Welcome back, {displayName}</div>
+
+            <h1 style={styles.title}>
+              Your Purple Family dashboard
+            </h1>
+
+            <p style={styles.subtitle}>
+              Manage birthdays, wallpapers, members, BTS songs, quizzes and your
+              ARMY profile from one beautiful place.
+            </p>
+
+            <div style={styles.heroActions}>
               <button
-                style={styles.closeNoticeBtn}
-                onClick={() => setShowBirthdayNotice(false)}
+                style={styles.primaryBtn}
+                onClick={() => navigate("/wallpapers")}
               >
-                ×
+                Explore Wallpapers
               </button>
+
+              <button
+                style={styles.secondaryBtn}
+                onClick={() => navigate("/quiz")}
+              >
+                Play Quiz 🎮
+              </button>
+            </div>
+          </div>
+
+          <div style={styles.heroPanel}>
+            <h2 style={styles.panelTitle}>SL BTS ARMY</h2>
+            <p style={styles.panelText}>
+              A soft, modern and loving space for your purple community.
+            </p>
+          </div>
+        </section>
+
+        <section style={styles.statsGrid}>
+          <div style={styles.statCard}>
+            <span style={styles.statIcon}>👥</span>
+            <h3 style={styles.statNumber}>{members.length}</h3>
+            <p style={styles.statText}>Total Members</p>
+          </div>
+
+          <div style={styles.statCard}>
+            <span style={styles.statIcon}>🎂</span>
+            <h3 style={styles.statNumber}>{birthdays.length}</h3>
+            <p style={styles.statText}>Today Birthdays</p>
+          </div>
+
+          <div style={styles.statCard}>
+            <span style={styles.statIcon}>⭐</span>
+            <h3 style={styles.statNumber}>OT7</h3>
+            <p style={styles.statText}>Forever BTS</p>
+          </div>
+        </section>
+
+        {birthdays.length > 0 && (
+          <section style={styles.birthdayBox}>
+            <div>
+              <h2 style={styles.boxTitle}>🎉 Today&apos;s Birthday</h2>
+              <p style={styles.boxText}>
+                Don&apos;t forget to send purple wishes!
+              </p>
             </div>
 
             <div style={styles.birthdayList}>
-              {todayBirthdays.map((member) => (
-                <div key={member.id} style={styles.birthdayPerson}>
-                  <div style={styles.birthdayAvatar}>
-                    {member.profile_picture ? (
-                      <img
-                        src={`http://127.0.0.1:8000/${member.profile_picture}`}
-                        alt={member.nickname || member.username}
-                        style={styles.birthdayAvatarImg}
-                      />
-                    ) : (
-                      (member.nickname || member.username || "?")[0].toUpperCase()
-                    )}
-                  </div>
-
-                  <div>
-                    <strong style={styles.birthdayName}>
-                      Happy Birthday {member.nickname || member.username}! 🎉
-                    </strong>
-                    {member.bias && (
-                      <p style={styles.birthdayBias}>Bias: {member.bias} 💜</p>
-                    )}
-                  </div>
-                </div>
+              {birthdays.map((b) => (
+                <span key={b.id} style={styles.birthdayPill}>
+                  💜 {b.nickname || b.username}
+                </span>
               ))}
             </div>
-
-            <button
-              style={styles.wishBtn}
-              onClick={() => navigate("/birthdays")}
-            >
-              Send Birthday Wishes 💜
-            </button>
-          </div>
+          </section>
         )}
 
-        {/* Post Form */}
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>📢 Share with the Family</h2>
-          <form onSubmit={handlePost} style={styles.form}>
-            <input style={styles.input} placeholder="Title"
-              value={newPost.title}
-              onChange={e => setNewPost({ ...newPost, title: e.target.value })} required />
-            <textarea style={styles.textarea} placeholder="What's on your mind ARMY? 💜"
-              value={newPost.content} rows={4}
-              onChange={e => setNewPost({ ...newPost, content: e.target.value })} required />
-            <button style={styles.button} type="submit">Post 💜</button>
-          </form>
-        </div>
+        <section style={styles.sectionHeader}>
+          <p style={styles.kicker}>Explore</p>
+          <h2 style={styles.sectionTitle}>What do you want to do?</h2>
+        </section>
 
-        {/* Posts Feed */}
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>💜 Family Updates</h2>
-          {posts.length === 0 && (
-            <p style={{ color: "#888" }}>No posts yet. Be the first! 💜</p>
-          )}
-          {posts.map(post => (
-            <div key={post.id} style={styles.post}>
-              <h3 style={styles.postTitle}>{post.title}</h3>
-              <p style={styles.postContent}>{post.content}</p>
-              <div style={styles.postFooter}>
-                <span style={styles.postUsername}>
-                  💜 {post.username || "ARMY"}
-                </span>
-                <small style={styles.postDate}>
-                  {new Date(post.created_at).toLocaleDateString()}
-                </small>
+        <section style={styles.cardGrid}>
+          {cards.map((card) => (
+            <article key={card.title} style={styles.featureCard}>
+              <div style={{ ...styles.cardIcon, background: card.color }}>
+                {card.icon}
               </div>
-            </div>
+
+              <h3 style={styles.cardTitle}>{card.title}</h3>
+              <p style={styles.cardText}>{card.text}</p>
+
+              <button
+                style={styles.cardButton}
+                onClick={() => navigate(card.path)}
+              >
+                Open →
+              </button>
+            </article>
           ))}
-        </div>
-      </div>
+        </section>
+      </main>
 
       <Footer />
-    </div>
+    </>
   );
 }
 
 const styles = {
-  container: {
-    minHeight: "100vh", background: "#f8f5ff",
-    display: "flex", flexDirection: "column", position: "relative"
+  page: {
+    width: "100%",
+    padding: "40px clamp(16px, 4vw, 64px)",
   },
-  bgWrapper: {
-    position: "fixed", top: 0, right: 0, width: "100%",
-    height: "100%", zIndex: 0, pointerEvents: "none"
+
+  hero: {
+    width: "min(1280px,100%)",
+    margin: "0 auto",
+    display: "grid",
+    gridTemplateColumns: "1.35fr 0.75fr",
+    gap: "28px",
+    alignItems: "stretch",
   },
-  bgImg: { width: "100%", height: "100%", objectFit: "cover", opacity: 0.50 },
-  content: {
-    maxWidth: "800px", margin: "2rem auto", padding: "0 1rem",
-    flex: 1, position: "relative", zIndex: 1, width: "100%"
+
+  heroContent: {
+    padding: "54px",
+    borderRadius: "34px",
+    background:
+      "linear-gradient(135deg,rgba(255,255,255,0.9),rgba(243,232,255,0.9))",
+    border: "1px solid rgba(124,58,237,0.16)",
+    boxShadow: "0 25px 70px rgba(76,29,149,0.14)",
   },
-  birthdayNotice: {
-    background: "linear-gradient(135deg, #fff7d6, #f3e8ff)",
-    border: "2px solid #facc15",
-    borderRadius: "16px",
-    padding: "1.5rem",
-    marginBottom: "1.5rem",
-    boxShadow: "0 8px 22px rgba(124, 58, 237, 0.16)"
+
+  badge: {
+    display: "inline-flex",
+    padding: "10px 16px",
+    borderRadius: "999px",
+    background: "rgba(124,58,237,0.1)",
+    color: "#6d28d9",
+    fontWeight: 900,
+    marginBottom: "18px",
   },
-  birthdayNoticeHeader: {
+
+  title: {
+    fontSize: "clamp(2.4rem,5vw,4.8rem)",
+    lineHeight: 0.95,
+    letterSpacing: "-0.06em",
+    color: "#241039",
+    maxWidth: "780px",
+    marginBottom: "20px",
+  },
+
+  subtitle: {
+    color: "#6b5a80",
+    lineHeight: 1.8,
+    fontSize: "1.05rem",
+    maxWidth: "650px",
+  },
+
+  heroActions: {
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "1rem",
-    marginBottom: "1rem"
+    gap: "14px",
+    marginTop: "30px",
+    flexWrap: "wrap",
   },
-  birthdayTitle: { color: "#2d0a4e", margin: 0 },
-  birthdaySubtitle: { color: "#7c3aed", margin: "0.3rem 0 0" },
-  closeNoticeBtn: {
-    width: "34px",
-    height: "34px",
-    borderRadius: "50%",
+
+  primaryBtn: {
     border: "none",
-    background: "white",
-    color: "#7c3aed",
+    borderRadius: "999px",
+    padding: "14px 25px",
     cursor: "pointer",
-    fontSize: "1.4rem",
-    fontWeight: "bold"
+    color: "white",
+    fontWeight: 900,
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    boxShadow: "0 16px 32px rgba(124,58,237,0.25)",
   },
-  birthdayList: {
+
+  secondaryBtn: {
+    border: "1px solid rgba(124,58,237,0.2)",
+    borderRadius: "999px",
+    padding: "14px 25px",
+    cursor: "pointer",
+    color: "#5b21b6",
+    fontWeight: 900,
+    background: "rgba(255,255,255,0.72)",
+  },
+
+  heroPanel: {
+    minHeight: "330px",
+    borderRadius: "34px",
+    padding: "34px",
+    color: "white",
+    position: "relative",
+    overflow: "hidden",
     display: "flex",
     flexDirection: "column",
-    gap: "0.75rem",
-    marginBottom: "1rem"
+    justifyContent: "flex-end",
+    border: "1px solid rgba(255,255,255,0.15)",
+
+    backgroundImage: `
+    linear-gradient(
+      to top,
+      rgba(0,0,0,0.75),
+      rgba(0,0,0,0.15)
+    ),
+    url(${btsHero})
+  `,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    boxShadow: "0 25px 70px rgba(76,29,149,0.18)",
   },
-  birthdayPerson: {
+
+  panelTitle: {
+    fontSize: "2rem",
+    marginBottom: "10px",
+  },
+
+  panelText: {
+    color: "rgba(255,255,255,0.82)",
+    lineHeight: 1.7,
+  },
+
+  statsGrid: {
+    width: "min(1280px,100%)",
+    margin: "26px auto 0",
+    display: "grid",
+    gridTemplateColumns: "repeat(3,1fr)",
+    gap: "18px",
+  },
+
+  statCard: {
+    padding: "26px",
+    borderRadius: "28px",
+    background: "rgba(255,255,255,0.82)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 16px 36px rgba(76,29,149,0.08)",
+  },
+
+  statIcon: {
+    fontSize: "2rem",
+  },
+
+  statNumber: {
+    color: "#4c1d95",
+    fontSize: "2.1rem",
+    marginTop: "10px",
+  },
+
+  statText: {
+    color: "#7c6a92",
+    fontWeight: 700,
+  },
+
+  birthdayBox: {
+    width: "min(1280px,100%)",
+    margin: "26px auto 0",
+    padding: "28px",
+    borderRadius: "28px",
+    background: "linear-gradient(135deg,#fdf2f8,#f3e8ff)",
+    border: "1px solid rgba(236,72,153,0.2)",
     display: "flex",
-    alignItems: "center",
-    gap: "0.9rem",
-    background: "rgba(255,255,255,0.75)",
-    borderRadius: "12px",
-    padding: "0.75rem"
+    justifyContent: "space-between",
+    gap: "20px",
+    flexWrap: "wrap",
+    boxShadow: "0 16px 36px rgba(76,29,149,0.08)",
   },
-  birthdayAvatar: {
-    width: "52px",
-    height: "52px",
-    borderRadius: "50%",
-    background: "#7c3aed",
-    color: "white",
+
+  boxTitle: {
+    color: "#831843",
+    marginBottom: "6px",
+  },
+
+  boxText: {
+    color: "#9d174d",
+  },
+
+  birthdayList: {
     display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
     alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "bold",
-    fontSize: "1.2rem",
-    overflow: "hidden",
-    flexShrink: 0
   },
-  birthdayAvatarImg: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover"
+
+  birthdayPill: {
+    padding: "10px 15px",
+    borderRadius: "999px",
+    background: "white",
+    color: "#7c3aed",
+    fontWeight: 900,
   },
-  birthdayName: { color: "#2d0a4e" },
-  birthdayBias: { color: "#7c3aed", margin: "0.25rem 0 0", fontSize: "0.9rem" },
-  wishBtn: {
-    padding: "12px 18px",
-    borderRadius: "10px",
-    background: "#7c3aed",
-    color: "white",
+
+  sectionHeader: {
+    width: "min(1280px,100%)",
+    margin: "55px auto 24px",
+  },
+
+  kicker: {
+    color: "#ec4899",
+    textTransform: "uppercase",
+    letterSpacing: "0.16em",
+    fontWeight: 900,
+    marginBottom: "8px",
+  },
+
+  sectionTitle: {
+    fontSize: "clamp(2rem,4vw,3.2rem)",
+    letterSpacing: "-0.04em",
+    color: "#241039",
+  },
+
+  cardGrid: {
+    width: "min(1280px,100%)",
+    margin: "0 auto",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+    gap: "22px",
+  },
+
+  featureCard: {
+    padding: "28px",
+    borderRadius: "30px",
+    background: "rgba(255,255,255,0.84)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 18px 40px rgba(76,29,149,0.08)",
+  },
+
+  cardIcon: {
+    width: "58px",
+    height: "58px",
+    borderRadius: "20px",
+    display: "grid",
+    placeItems: "center",
+    fontSize: "1.8rem",
+    marginBottom: "22px",
+    boxShadow: "0 12px 24px rgba(124,58,237,0.22)",
+  },
+
+  cardTitle: {
+    color: "#4c1d95",
+    marginBottom: "10px",
+    fontSize: "1.25rem",
+  },
+
+  cardText: {
+    color: "#7c6a92",
+    lineHeight: 1.7,
+    marginBottom: "22px",
+  },
+
+  cardButton: {
     border: "none",
+    background: "#f3e8ff",
+    color: "#6d28d9",
+    padding: "11px 17px",
+    borderRadius: "999px",
     cursor: "pointer",
-    fontWeight: "bold"
+    fontWeight: 900,
   },
-  card: {
-    background: "white", borderRadius: "12px", padding: "1.5rem",
-    marginBottom: "1.5rem", border: "1px solid #d4b8ff"
-  },
-  cardTitle: { color: "#2d0a4e", marginTop: 0 },
-  form: { display: "flex", flexDirection: "column", gap: "1rem" },
-  input: {
-    padding: "12px", borderRadius: "8px", border: "1px solid #d4b8ff",
-    background: "#f8f5ff", color: "#2d0a4e", fontSize: "1rem"
-  },
-  textarea: {
-    padding: "12px", borderRadius: "8px", border: "1px solid #d4b8ff",
-    background: "#f8f5ff", color: "#2d0a4e", fontSize: "1rem", resize: "vertical"
-  },
-  button: {
-    padding: "12px", borderRadius: "8px", background: "#7c3aed",
-    color: "white", fontSize: "1rem", cursor: "pointer", border: "none"
-  },
-  post: {
-    borderBottom: "1px solid #e0d0ff", paddingBottom: "1rem",
-    marginBottom: "1rem"
-  },
-  postTitle: { color: "#2d0a4e", margin: "0 0 0.5rem 0" },
-  postContent: { color: "#444", margin: "0 0 0.5rem 0" },
-  postFooter: {
-    display: "flex", justifyContent: "space-between",
-    alignItems: "center"
-  },
-  postUsername: { color: "#7c3aed", fontSize: "0.85rem", fontWeight: "500" },
-  postDate: { color: "#888" },
 };
