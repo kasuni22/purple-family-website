@@ -18,6 +18,8 @@ class UserOut(BaseModel):
     id: int
     username: str
     email: str
+    nickname: Optional[str] = None
+    profile_picture: Optional[str] = None
     birthday: Optional[date] = None
     country: Optional[str] = None
     bias: Optional[str] = None

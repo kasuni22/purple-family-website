@@ -31,7 +31,9 @@ with engine.connect() as conn:
         "ALTER TABLE quiz_questions ADD COLUMN category VARCHAR DEFAULT 'knowledge'",
         "ALTER TABLE quiz_questions ADD COLUMN image_url VARCHAR",
         "ALTER TABLE quiz_questions ADD COLUMN topic_id INTEGER",
-        "CREATE INDEX IF NOT EXISTS idx_quiz_questions_topic_id ON quiz_questions(topic_id)"
+        "CREATE INDEX IF NOT EXISTS idx_quiz_questions_topic_id ON quiz_questions(topic_id)",
+        "ALTER TABLE users ADD COLUMN nickname VARCHAR",
+        "ALTER TABLE users ADD COLUMN profile_picture VARCHAR",
     ]:
         try:
             conn.execute(text(statement))
@@ -709,22 +711,48 @@ def delete_solo_album(album_id: int, db: Session = Depends(get_db), current_user
 # ─── EDIT PROFILE ──────────────────────────────────────────
 
 class ProfileUpdate(BaseModel):
+    nickname: Optional[str] = None
     bias: Optional[str] = None
     country: Optional[str] = None
     birthday: Optional[str] = None
 
 @app.put("/auth/profile")
-def update_profile(data: ProfileUpdate, db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)):
-    if data.bias is not None:
-        current_user.bias = data.bias
-    if data.country is not None:
-        current_user.country = data.country
-    if data.birthday is not None:
+def update_profile(
+    nickname: str = Form(None),
+    bias: str = Form(None),
+    country: str = Form(None),
+    birthday: str = Form(None),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    if nickname is not None:
+        current_user.nickname = nickname
+
+    if bias is not None:
+        current_user.bias = bias
+
+    if country is not None:
+        current_user.country = country
+
+    if birthday:
         from datetime import date
-        current_user.birthday = date.fromisoformat(data.birthday)
+        current_user.birthday = date.fromisoformat(birthday)
+
+    if file and file.filename:
+        os.makedirs("uploads/profile", exist_ok=True)
+
+        filename = f"user_{current_user.id}_{file.filename}"
+        filepath = f"uploads/profile/{filename}"
+
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        current_user.profile_picture = filepath
+
     db.commit()
     db.refresh(current_user)
+
     return current_user
 
 # ─── BIRTHDAY POSTS & COMMENTS ─────────────────────────────

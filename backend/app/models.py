@@ -13,6 +13,8 @@ class User(Base):
     birthday = Column(Date, nullable=True)
     country = Column(String, nullable=True)
     bias = Column(String, nullable=True)
+    nickname = Column(String, nullable=True)
+    profile_picture = Column(String, nullable=True)
     is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
 

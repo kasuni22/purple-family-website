@@ -5,7 +5,14 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 export default function EditProfile() {
-  const [form, setForm] = useState({ bias: "", country: "", birthday: "" });
+  const [form, setForm] = useState({
+    nickname: "",
+    bias: "",
+    country: "",
+    birthday: ""
+  });
+
+  const [profileImage, setProfileImage] = useState(null);
   const [user, setUser] = useState(null);
   const [saved, setSaved] = useState(false);
   const navigate = useNavigate();
@@ -16,6 +23,7 @@ export default function EditProfile() {
     API.get("/auth/me").then(res => {
       setUser(res.data);
       setForm({
+        nickname: res.data.nickname || "",
         bias: res.data.bias || "",
         country: res.data.country || "",
         birthday: res.data.birthday || ""
@@ -25,12 +33,29 @@ export default function EditProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await API.put("/auth/profile", form);
+      const formData = new FormData();
+
+      formData.append("nickname", form.nickname);
+      formData.append("bias", form.bias);
+      formData.append("country", form.country);
+      formData.append("birthday", form.birthday);
+
+      if (profileImage) {
+        formData.append("file", profileImage);
+      }
+
+      await API.put("/auth/profile", formData);
+
       setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+
+      setTimeout(() => {
+        setSaved(false);
+      }, 3000);
+
     } catch (err) {
-      alert(err.response?.data?.detail || "Update failed");
+      alert("Update failed");
     }
   };
 
@@ -42,9 +67,22 @@ export default function EditProfile() {
         <div style={styles.card}>
           {/* Avatar */}
           <div style={styles.avatarSection}>
-            <div style={styles.avatar}>
-              {user?.username?.[0]?.toUpperCase()}
-            </div>
+            {user?.profile_picture ? (
+              <img
+                src={`http://127.0.0.1:8000/${user.profile_picture}`}
+                alt=""
+                style={{
+                  width: "120px",
+                  height: "120px",
+                  borderRadius: "50%",
+                  objectFit: "cover"
+                }}
+              />
+            ) : (
+              <div style={styles.avatar}>
+                {(user?.nickname || user?.username)?.[0]?.toUpperCase()}
+              </div>
+            )}
             <h2 style={styles.username}>{user?.username}</h2>
             <p style={styles.email}>{user?.email}</p>
             {user?.is_admin && (
@@ -55,6 +93,20 @@ export default function EditProfile() {
           {/* Form */}
           <form onSubmit={handleSubmit} style={styles.form}>
             <h3 style={styles.formTitle}>✏️ Edit Your Profile</h3>
+            <label style={styles.label}>
+              Nickname 💜
+            </label>
+
+            <input
+              style={styles.input}
+              value={form.nickname}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  nickname: e.target.value
+                })
+              }
+            />
 
             <label style={styles.label}>Your Bias 💜</label>
             <select style={styles.input}
@@ -75,6 +127,18 @@ export default function EditProfile() {
             <input style={styles.input} type="date"
               value={form.birthday}
               onChange={e => setForm({ ...form, birthday: e.target.value })} />
+
+            <label style={styles.label}>
+              Profile Picture 📷
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                setProfileImage(e.target.files[0])
+              }
+            />
 
             {saved && (
               <div style={styles.successMsg}>
