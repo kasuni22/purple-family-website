@@ -34,6 +34,8 @@ with engine.connect() as conn:
         "CREATE INDEX IF NOT EXISTS idx_quiz_questions_topic_id ON quiz_questions(topic_id)",
         "ALTER TABLE users ADD COLUMN nickname VARCHAR",
         "ALTER TABLE users ADD COLUMN profile_picture VARCHAR",
+        "CREATE TABLE IF NOT EXISTS bts_member_descriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, member_name VARCHAR NOT NULL, content VARCHAR NOT NULL, created_by_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+        "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR PRIMARY KEY, value VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
     ]:
         try:
             conn.execute(text(statement))
@@ -828,6 +830,118 @@ def add_comment(
             "owner": current_user.username, "created_at": comment.created_at}
 
 
+
+
+# ─── BTS MEMBER DESCRIPTIONS ROUTES ────────────────────────
+
+def serialize_bts_member_description(desc: models.BtsMemberDescription, current_user: models.User):
+    creator = desc.created_by
+    return {
+        "id": desc.id,
+        "member_name": desc.member_name,
+        "content": desc.content,
+        "created_by_id": desc.created_by_id,
+        "created_by_username": creator.username if creator else None,
+        "created_by_nickname": creator.nickname if creator else None,
+        "created_by_profile_picture": creator.profile_picture if creator else None,
+        "created_at": desc.created_at,
+        "can_edit": bool(current_user and (current_user.is_admin or desc.created_by_id == current_user.id)),
+        "can_delete": bool(current_user and current_user.is_admin),
+    }
+
+@app.get("/bts-descriptions")
+def get_bts_descriptions(
+    member_name: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    query = db.query(models.BtsMemberDescription)
+
+    if member_name:
+        query = query.filter(models.BtsMemberDescription.member_name == member_name)
+
+    descriptions = query.order_by(models.BtsMemberDescription.created_at.desc()).all()
+
+    return [
+        serialize_bts_member_description(desc, current_user)
+        for desc in descriptions
+    ]
+
+@app.post("/bts-descriptions")
+def create_bts_description(
+    member_name: str = Form(...),
+    content: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    clean_member = member_name.strip()
+    clean_content = content.strip()
+
+    if not clean_member:
+        raise HTTPException(status_code=400, detail="Member name is required")
+    if not clean_content:
+        raise HTTPException(status_code=400, detail="Description is required")
+
+    desc = models.BtsMemberDescription(
+        member_name=clean_member,
+        content=clean_content,
+        created_by_id=current_user.id,
+    )
+
+    db.add(desc)
+    db.commit()
+    db.refresh(desc)
+
+    return serialize_bts_member_description(desc, current_user)
+
+@app.put("/bts-descriptions/{description_id}")
+def update_bts_description(
+    description_id: int,
+    content: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    desc = db.query(models.BtsMemberDescription).filter(
+        models.BtsMemberDescription.id == description_id
+    ).first()
+
+    if not desc:
+        raise HTTPException(status_code=404, detail="Description not found")
+
+    if not current_user.is_admin and desc.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this description")
+
+    clean_content = content.strip()
+    if not clean_content:
+        raise HTTPException(status_code=400, detail="Description is required")
+
+    desc.content = clean_content
+    db.commit()
+    db.refresh(desc)
+
+    return serialize_bts_member_description(desc, current_user)
+
+@app.delete("/bts-descriptions/{description_id}")
+def delete_bts_description(
+    description_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    desc = db.query(models.BtsMemberDescription).filter(
+        models.BtsMemberDescription.id == description_id
+    ).first()
+
+    if not desc:
+        raise HTTPException(status_code=404, detail="Description not found")
+
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    db.delete(desc)
+    db.commit()
+
+    return {"detail": "Description deleted"}
+
 # ─── QUIZ ROUTES ───────────────────────────────────────────
 
 DEFAULT_QUIZ_TOPICS = [
@@ -837,36 +951,48 @@ DEFAULT_QUIZ_TOPICS = [
 ]
 
 def seed_quiz_topics(db: Session):
+    """Seed default quiz topics only once.
+
+    Important:
+    - This function runs on backend startup only.
+    - After first seed, deleting default topics will NOT recreate them.
+    - Existing old category-based questions are linked to the default topics during the first seed.
+    """
+    seeded = db.execute(
+        text("SELECT value FROM app_settings WHERE key = 'quiz_default_topics_seeded'")
+    ).first()
+
+    if seeded:
+        return
+
     for item in DEFAULT_QUIZ_TOPICS:
         topic = db.query(models.QuizTopic).filter(
             models.QuizTopic.name == item["name"]
         ).first()
 
         if not topic:
-            try:
-                topic = models.QuizTopic(
-                    name=item["name"],
-                    icon=item["icon"],
-                    created_by_id=None
-                )
-                db.add(topic)
-                db.commit()
-                db.refresh(topic)
-            except Exception:
-                db.rollback()
-                topic = db.query(models.QuizTopic).filter(
-                    models.QuizTopic.name == item["name"]
-                ).first()
-
-        if topic:
-            db.query(models.QuizQuestion).filter(
-                models.QuizQuestion.topic_id == None,
-                models.QuizQuestion.category == item["category"]
-            ).update(
-                {models.QuizQuestion.topic_id: topic.id},
-                synchronize_session=False
+            topic = models.QuizTopic(
+                name=item["name"],
+                icon=item["icon"],
+                created_by_id=None,
             )
+            db.add(topic)
             db.commit()
+            db.refresh(topic)
+
+        db.query(models.QuizQuestion).filter(
+            models.QuizQuestion.topic_id == None,
+            models.QuizQuestion.category == item["category"],
+        ).update(
+            {models.QuizQuestion.topic_id: topic.id},
+            synchronize_session=False,
+        )
+        db.commit()
+
+    db.execute(
+        text("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('quiz_default_topics_seeded', 'true')")
+    )
+    db.commit()
 
 def serialize_quiz_topic(topic: models.QuizTopic, current_user: models.User, db: Session):
     return {

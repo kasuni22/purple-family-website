@@ -307,11 +307,19 @@ export default function Quiz() {
 
   const deleteTopic = async (topic) => {
     if (!window.confirm(`Delete topic "${topic.name}" and its questions?`)) return;
+
     try {
       await API.delete(`/quiz/topics/${topic.id}`);
-      await loadData();
-      const remaining = topics.filter((t) => t.id !== topic.id);
-      setActiveTopicId(remaining[0]?.id || null);
+
+      const [topicsRes, qRes] = await Promise.all([
+        API.get("/quiz/topics"),
+        API.get("/quiz/questions"),
+      ]);
+
+      const nextTopics = topicsRes.data || [];
+      setTopics(nextTopics);
+      setQuestions(qRes.data || []);
+      setActiveTopicId(nextTopics[0]?.id || null);
       resetPlayState();
     } catch (err) {
       console.error("Delete topic error:", err.response?.data || err.message);

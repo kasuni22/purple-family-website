@@ -9,7 +9,7 @@ export default function Navbar() {
 
   useEffect(() => {
     API.get("/auth/me")
-      .then(res => setUser(res.data))
+      .then((res) => setUser(res.data))
       .catch(() => navigate("/login"));
   }, [navigate]);
 
@@ -18,40 +18,67 @@ export default function Navbar() {
     navigate("/login");
   };
 
+  const profileImage =
+    user?.profile_picture
+      ? `http://127.0.0.1:8000/${user.profile_picture}`
+      : null;
+
   return (
     <div style={styles.header}>
-      {/* Left - Logo */}
+      {/* Logo */}
       <img src={logo} alt="Purple Family" style={{ height: "40px" }} />
 
-      {/* Center - Nav Links */}
+      {/* Center Navigation */}
       <div style={styles.navCenter}>
         <button onClick={() => navigate("/dashboard")} style={styles.navBtn}>
           🏠 Dashboard
         </button>
+
         <button onClick={() => navigate("/birthdays")} style={styles.navBtn}>
           🎂 Birthdays
         </button>
+
         <button onClick={() => navigate("/wallpapers")} style={styles.navBtn}>
           🖼️ Wallpapers
         </button>
+
         <button onClick={() => navigate("/members")} style={styles.navBtn}>
           👥 Members
         </button>
+
         <button onClick={() => navigate("/singalong")} style={styles.navBtn}>
           🎵 Sing-Along
         </button>
+
         <button onClick={() => navigate("/quiz")} style={styles.navBtn}>
           🎮 Quiz
         </button>
       </div>
 
-      {/* Right - Profile, Welcome, Logout */}
+      {/* Right Side */}
       {user && (
         <div style={styles.navRight}>
-          <button onClick={() => navigate("/edit-profile")} style={styles.profileBtn}>
-            👤 Profile
+          <button
+            onClick={() => navigate("/edit-profile")}
+            style={styles.profileBtn}
+          >
+            {profileImage ? (
+              <img
+                src={profileImage}
+                alt="profile"
+                style={styles.profileImage}
+              />
+            ) : (
+              <span style={styles.avatarFallback}>👤</span>
+            )}
+
+            <span>Profile</span>
           </button>
-          <span style={styles.welcome}>Welcome {user.username}! 💜</span>
+
+          <span style={styles.welcome}>
+            Welcome {user.nickname || user.username}! 💜
+          </span>
+
           <button onClick={handleLogout} style={styles.logoutBtn}>
             Logout
           </button>
@@ -73,16 +100,19 @@ const styles = {
     top: 0,
     zIndex: 100,
   },
+
   navCenter: {
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
   },
+
   navRight: {
     display: "flex",
     alignItems: "center",
     gap: "1rem",
   },
+
   navBtn: {
     padding: "6px 14px",
     background: "transparent",
@@ -92,7 +122,11 @@ const styles = {
     cursor: "pointer",
     fontSize: "0.9rem",
   },
+
   profileBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
     padding: "6px 14px",
     background: "#f0e6ff",
     border: "1px solid #d4b8ff",
@@ -101,11 +135,25 @@ const styles = {
     cursor: "pointer",
     fontSize: "0.9rem",
   },
+
+  profileImage: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "2px solid #9333ea",
+  },
+
+  avatarFallback: {
+    fontSize: "1.1rem",
+  },
+
   welcome: {
     color: "#2d0a4e",
-    fontWeight: "500",
+    fontWeight: "600",
     fontSize: "0.95rem",
   },
+
   logoutBtn: {
     padding: "6px 16px",
     background: "transparent",

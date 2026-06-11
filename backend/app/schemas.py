@@ -151,3 +151,19 @@ class QuizTopicOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class BtsMemberDescriptionOut(BaseModel):
+    id: int
+    member_name: str
+    content: str
+    created_by_id: int
+    created_by_username: Optional[str] = None
+    created_by_nickname: Optional[str] = None
+    created_by_profile_picture: Optional[str] = None
+    created_at: datetime
+    can_edit: bool = False
+    can_delete: bool = False
+
+    class Config:
+        from_attributes = True

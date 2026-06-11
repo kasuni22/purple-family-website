@@ -24,6 +24,7 @@ class User(Base):
     songs = relationship("Song", back_populates="added_by")
     song_favorites = relationship("SongFavorite", back_populates="user", cascade="all, delete-orphan")
     albums = relationship("Album", back_populates="created_by")
+    bts_descriptions = relationship("BtsMemberDescription", back_populates="created_by", cascade="all, delete-orphan")
 
 class Post(Base):
     __tablename__ = "posts"
@@ -147,6 +148,18 @@ class BirthdayComment(Base):
 
     post = relationship("BirthdayPost", back_populates="comments")
     owner = relationship("User", foreign_keys=[owner_id])
+
+
+class BtsMemberDescription(Base):
+    __tablename__ = "bts_member_descriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    member_name = Column(String, nullable=False, index=True)
+    content = Column(String, nullable=False)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    created_by = relationship("User", back_populates="bts_descriptions")
 
 class QuizTopic(Base):
     __tablename__ = "quiz_topics"
