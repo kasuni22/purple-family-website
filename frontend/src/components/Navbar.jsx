@@ -5,12 +5,17 @@ import logo from "../assets/logo.svg";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
+  const [todayBirthdays, setTodayBirthdays] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     API.get("/auth/me")
       .then((res) => setUser(res.data))
       .catch(() => navigate("/login"));
+
+    API.get("/birthdays/today")
+      .then((res) => setTodayBirthdays(res.data || []))
+      .catch(() => setTodayBirthdays([]));
   }, [navigate]);
 
   const handleLogout = () => {
@@ -34,8 +39,11 @@ export default function Navbar() {
           🏠 Dashboard
         </button>
 
-        <button onClick={() => navigate("/birthdays")} style={styles.navBtn}>
+        <button onClick={() => navigate("/birthdays")} style={styles.navBtnWithBadge}>
           🎂 Birthdays
+          {todayBirthdays.length > 0 && (
+            <span style={styles.birthdayBadge}>{todayBirthdays.length}</span>
+          )}
         </button>
 
         <button onClick={() => navigate("/wallpapers")} style={styles.navBtn}>
@@ -121,6 +129,35 @@ const styles = {
     borderRadius: "20px",
     cursor: "pointer",
     fontSize: "0.9rem",
+  },
+
+  navBtnWithBadge: {
+    position: "relative",
+    padding: "6px 18px 6px 14px",
+    background: "transparent",
+    border: "1px solid #d4b8ff",
+    color: "#7c3aed",
+    borderRadius: "20px",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+  },
+
+  birthdayBadge: {
+    position: "absolute",
+    top: "-8px",
+    right: "-8px",
+    minWidth: "20px",
+    height: "20px",
+    padding: "0 5px",
+    borderRadius: "999px",
+    background: "#ef4444",
+    color: "white",
+    fontSize: "0.72rem",
+    fontWeight: "bold",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "2px solid white",
   },
 
   profileBtn: {

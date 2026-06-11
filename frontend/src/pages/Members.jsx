@@ -92,6 +92,7 @@ export default function Members() {
   const [members, setMembers] = useState([]);
   const [search, setSearch] = useState("");
   const [filterBias, setFilterBias] = useState("All");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [activeTab, setActiveTab] = useState("ot7");
   const [selectedMember, setSelectedMember] = useState(null);
   const [descriptions, setDescriptions] = useState({});
@@ -139,16 +140,28 @@ export default function Members() {
     loadPageData();
   }, [navigate]);
 
-  const filtered = members.filter((m) => {
-    const displayName = m.nickname || m.username || "";
-    const matchSearch =
-      displayName.toLowerCase().includes(search.toLowerCase()) ||
-      (m.username && m.username.toLowerCase().includes(search.toLowerCase())) ||
-      (m.country && m.country.toLowerCase().includes(search.toLowerCase()));
+  const filtered = members
+    .filter((m) => {
+      const displayName = m.nickname || m.username || "";
+      const matchSearch =
+        displayName.toLowerCase().includes(search.toLowerCase()) ||
+        (m.username && m.username.toLowerCase().includes(search.toLowerCase())) ||
+        (m.country && m.country.toLowerCase().includes(search.toLowerCase()));
 
-    const matchBias = filterBias === "All" || m.bias === filterBias;
-    return matchSearch && matchBias;
-  });
+      const matchBias = filterBias === "All" || m.bias === filterBias;
+      return matchSearch && matchBias;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
+
+      if (sortOrder === "newest") return dateB - dateA;
+      if (sortOrder === "oldest") return dateA - dateB;
+
+      const nameA = (a.nickname || a.username || "").toLowerCase();
+      const nameB = (b.nickname || b.username || "").toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
 
   const handleAddDesc = async (memberName) => {
     if (!newDesc.trim()) return;
@@ -412,15 +425,36 @@ export default function Members() {
                 onChange={(e) => setSearch(e.target.value)}
               />
 
-              <select
-                style={styles.select}
-                value={filterBias}
-                onChange={(e) => setFilterBias(e.target.value)}
-              >
-                {biasOptions.map((b) => (
-                  <option key={b}>{b}</option>
-                ))}
-              </select>
+              <div style={styles.filterBox}>
+                <label style={styles.filterLabel}>Bias</label>
+                <select
+                  style={styles.select}
+                  value={filterBias}
+                  onChange={(e) => setFilterBias(e.target.value)}
+                >
+                  {biasOptions.map((b) => (
+                    <option key={b}>{b}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={styles.filterBox}>
+                <label style={styles.filterLabel}>Sort</label>
+                <select
+                  style={styles.select}
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                >
+                  <option value="newest">Newest Members First</option>
+                  <option value="oldest">Oldest Members First</option>
+                  <option value="name">Name A-Z</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={styles.filterSummary}>
+              Showing {filtered.length} of {members.length} members
+              {filterBias !== "All" ? ` • Bias: ${filterBias}` : ""}
             </div>
 
             {filtered.length === 0 ? (
@@ -801,9 +835,27 @@ const styles = {
     border: "none",
   },
   controls: {
-    display: "flex",
+    display: "grid",
+    gridTemplateColumns: "1fr 190px 230px",
     gap: "1rem",
+    marginBottom: "0.75rem",
+    alignItems: "end",
+  },
+  filterBox: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.35rem",
+  },
+  filterLabel: {
+    color: "#7c3aed",
+    fontSize: "0.85rem",
+    fontWeight: "700",
+  },
+  filterSummary: {
+    color: "#7c3aed",
+    fontSize: "0.9rem",
     marginBottom: "1.5rem",
+    fontWeight: "600",
   },
   search: {
     flex: 1,

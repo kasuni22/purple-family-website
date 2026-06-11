@@ -428,7 +428,42 @@ def download_wallpaper(wallpaper_id: int, db: Session = Depends(get_db)):
 @app.get("/birthdays")
 def get_birthdays(db: Session = Depends(get_db)):
     users = db.query(models.User).filter(models.User.birthday != None).all()
-    return [{"username": u.username, "birthday": u.birthday, "bias": u.bias} for u in users]
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "nickname": u.nickname,
+            "profile_picture": u.profile_picture,
+            "birthday": u.birthday,
+            "bias": u.bias
+        }
+        for u in users
+    ]
+
+
+@app.get("/birthdays/today")
+def get_today_birthdays(db: Session = Depends(get_db)):
+    from datetime import date
+
+    today = date.today()
+    users = db.query(models.User).filter(models.User.birthday != None).all()
+
+    today_birthdays = [
+        u for u in users
+        if u.birthday and u.birthday.month == today.month and u.birthday.day == today.day
+    ]
+
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "nickname": u.nickname,
+            "profile_picture": u.profile_picture,
+            "birthday": u.birthday,
+            "bias": u.bias
+        }
+        for u in today_birthdays
+    ]
 
     # ─── MEMBERS ROUTE ─────────────────────────────────────────
 
