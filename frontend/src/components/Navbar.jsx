@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import logo from "../assets/logo.svg";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [todayBirthdays, setTodayBirthdays] = useState([]);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,180 +24,210 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  const profileImage =
-    user?.profile_picture
-      ? `http://127.0.0.1:8000/${user.profile_picture}`
-      : null;
+  const profileImage = user?.profile_picture
+    ? `http://127.0.0.1:8000/${user.profile_picture}`
+    : null;
+
+  const links = [
+    { to: "/dashboard", label: "Dashboard", icon: "🏠" },
+    { to: "/birthdays", label: "Birthdays", icon: "🎂", badge: todayBirthdays.length },
+    { to: "/wallpapers", label: "Wallpapers", icon: "🖼️" },
+    { to: "/members", label: "Members", icon: "👥" },
+    { to: "/singalong", label: "Sing-Along", icon: "🎵" },
+    { to: "/quiz", label: "Quiz", icon: "🎮" },
+  ];
 
   return (
-    <div style={styles.header}>
-      {/* Logo */}
-      <img src={logo} alt="Purple Family" style={{ height: "40px" }} />
-
-      {/* Center Navigation */}
-      <div style={styles.navCenter}>
-        <button onClick={() => navigate("/dashboard")} style={styles.navBtn}>
-          🏠 Dashboard
-        </button>
-
-        <button onClick={() => navigate("/birthdays")} style={styles.navBtnWithBadge}>
-          🎂 Birthdays
-          {todayBirthdays.length > 0 && (
-            <span style={styles.birthdayBadge}>{todayBirthdays.length}</span>
-          )}
-        </button>
-
-        <button onClick={() => navigate("/wallpapers")} style={styles.navBtn}>
-          🖼️ Wallpapers
-        </button>
-
-        <button onClick={() => navigate("/members")} style={styles.navBtn}>
-          👥 Members
-        </button>
-
-        <button onClick={() => navigate("/singalong")} style={styles.navBtn}>
-          🎵 Sing-Along
-        </button>
-
-        <button onClick={() => navigate("/quiz")} style={styles.navBtn}>
-          🎮 Quiz
-        </button>
+    <header style={styles.header}>
+      <div style={styles.brand} onClick={() => navigate("/dashboard")}>
+        <img src={logo} alt="Purple Family" style={styles.logo} />
+        <div>
+          <strong style={styles.brandTitle}>Purple Family</strong>
+          <span style={styles.brandSub}>SL BTS ARMY</span>
+        </div>
       </div>
 
-      {/* Right Side */}
+      <button style={styles.menuBtn} onClick={() => setOpen(!open)}>
+        ☰
+      </button>
+
+      <nav style={{ ...styles.navCenter, ...(open ? styles.navOpen : {}) }}>
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            onClick={() => setOpen(false)}
+            style={({ isActive }) => ({
+              ...styles.navBtn,
+              ...(isActive ? styles.activeNavBtn : {}),
+            })}
+          >
+            <span>{link.icon}</span>
+            {link.label}
+            {link.badge > 0 && <span style={styles.badge}>{link.badge}</span>}
+          </NavLink>
+        ))}
+      </nav>
+
       {user && (
         <div style={styles.navRight}>
-          <button
-            onClick={() => navigate("/edit-profile")}
-            style={styles.profileBtn}
-          >
+          <button onClick={() => navigate("/edit-profile")} style={styles.profileBtn}>
             {profileImage ? (
-              <img
-                src={profileImage}
-                alt="profile"
-                style={styles.profileImage}
-              />
+              <img src={profileImage} alt="profile" style={styles.profileImage} />
             ) : (
               <span style={styles.avatarFallback}>👤</span>
             )}
-
-            <span>Profile</span>
+            <span>{user.nickname || user.username}</span>
           </button>
-
-          <span style={styles.welcome}>
-            Welcome {user.nickname || user.username}! 💜
-          </span>
 
           <button onClick={handleLogout} style={styles.logoutBtn}>
             Logout
           </button>
         </div>
       )}
-    </div>
+    </header>
   );
 }
 
 const styles = {
   header: {
-    background: "white",
-    padding: "0.75rem 2rem",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottom: "2px solid #e0d0ff",
     position: "sticky",
     top: 0,
     zIndex: 100,
+    minHeight: "76px",
+    padding: "14px clamp(16px, 4vw, 46px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "18px",
+    background: "rgba(255,255,255,0.78)",
+    backdropFilter: "blur(18px)",
+    borderBottom: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 12px 35px rgba(76,29,149,0.08)",
+  },
+
+  brand: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    cursor: "pointer",
+    minWidth: "190px",
+  },
+
+  logo: {
+    width: "44px",
+    height: "44px",
+  },
+
+  brandTitle: {
+    display: "block",
+    color: "#4c1d95",
+    fontSize: "1rem",
+    lineHeight: 1.1,
+  },
+
+  brandSub: {
+    color: "#8b5cf6",
+    fontSize: "0.75rem",
+    fontWeight: 700,
   },
 
   navCenter: {
     display: "flex",
     alignItems: "center",
-    gap: "0.5rem",
+    justifyContent: "center",
+    gap: "8px",
+    flexWrap: "wrap",
+  },
+
+  navBtn: {
+    position: "relative",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "7px",
+    padding: "10px 14px",
+    borderRadius: "999px",
+    color: "#5b21b6",
+    fontWeight: 700,
+    fontSize: "0.88rem",
+    border: "1px solid rgba(124,58,237,0.14)",
+    background: "rgba(255,255,255,0.55)",
+  },
+
+  activeNavBtn: {
+    color: "white",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    boxShadow: "0 10px 22px rgba(124,58,237,0.24)",
+  },
+
+  badge: {
+    minWidth: "20px",
+    height: "20px",
+    padding: "0 6px",
+    borderRadius: "999px",
+    background: "#ef4444",
+    color: "white",
+    fontSize: "0.72rem",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   navRight: {
     display: "flex",
     alignItems: "center",
-    gap: "1rem",
-  },
-
-  navBtn: {
-    padding: "6px 14px",
-    background: "transparent",
-    border: "1px solid #d4b8ff",
-    color: "#7c3aed",
-    borderRadius: "20px",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-  },
-
-  navBtnWithBadge: {
-    position: "relative",
-    padding: "6px 18px 6px 14px",
-    background: "transparent",
-    border: "1px solid #d4b8ff",
-    color: "#7c3aed",
-    borderRadius: "20px",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-  },
-
-  birthdayBadge: {
-    position: "absolute",
-    top: "-8px",
-    right: "-8px",
-    minWidth: "20px",
-    height: "20px",
-    padding: "0 5px",
-    borderRadius: "999px",
-    background: "#ef4444",
-    color: "white",
-    fontSize: "0.72rem",
-    fontWeight: "bold",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "2px solid white",
+    gap: "10px",
+    minWidth: "210px",
+    justifyContent: "flex-end",
   },
 
   profileBtn: {
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    padding: "6px 14px",
-    background: "#f0e6ff",
-    border: "1px solid #d4b8ff",
-    color: "#7c3aed",
-    borderRadius: "20px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    background: "rgba(255,255,255,0.75)",
+    color: "#4c1d95",
+    borderRadius: "999px",
+    padding: "7px 12px",
     cursor: "pointer",
-    fontSize: "0.9rem",
+    fontWeight: 800,
   },
 
   profileImage: {
-    width: "32px",
-    height: "32px",
+    width: "34px",
+    height: "34px",
     borderRadius: "50%",
     objectFit: "cover",
-    border: "2px solid #9333ea",
+    border: "2px solid #a855f7",
   },
 
   avatarFallback: {
     fontSize: "1.1rem",
   },
 
-  welcome: {
-    color: "#2d0a4e",
-    fontWeight: "600",
-    fontSize: "0.95rem",
+  logoutBtn: {
+    border: "none",
+    background: "#241039",
+    color: "white",
+    borderRadius: "999px",
+    padding: "10px 15px",
+    cursor: "pointer",
+    fontWeight: 800,
   },
 
-  logoutBtn: {
-    padding: "6px 16px",
-    background: "transparent",
-    border: "1px solid #d4b8ff",
-    color: "#7c3aed",
-    borderRadius: "20px",
+  menuBtn: {
+    display: "none",
+    border: "1px solid rgba(124,58,237,0.18)",
+    background: "white",
+    color: "#4c1d95",
+    borderRadius: "12px",
+    padding: "9px 12px",
+    fontSize: "1.1rem",
     cursor: "pointer",
+  },
+
+  navOpen: {
+    display: "flex",
   },
 };

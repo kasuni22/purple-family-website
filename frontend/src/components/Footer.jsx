@@ -1,10 +1,45 @@
+import { Heart, Music2, Users } from "lucide-react";
+
 export default function Footer() {
   return (
     <footer style={styles.footer}>
-      <div style={styles.footerContent}>
-        <p style={styles.footerText}>Made by 💜 Kasuni Kariyawasam</p>
-        <p style={styles.footerText}>© 2026 Purple Family. All rights reserved.</p>
-        <p style={styles.footerSmall}>Built with 🐍 Python & ⚛️ React</p>
+      <div style={styles.container}>
+        <div>
+          <h2 style={styles.logo}>💜 Purple Family</h2>
+          <p style={styles.description}>
+            A beautiful home for BTS ARMYs to share birthdays, wallpapers,
+            songs, quizzes and memories.
+          </p>
+
+          <div style={styles.stats}>
+            <div style={styles.statCard}>
+              <Users size={18} />
+              <span>ARMY Community</span>
+            </div>
+
+            <div style={styles.statCard}>
+              <Music2 size={18} />
+              <span>BTS Music</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.links}>
+          <a href="/dashboard">Dashboard</a>
+          <a href="/birthdays">Birthdays</a>
+          <a href="/wallpapers">Wallpapers</a>
+          <a href="/members">Members</a>
+          <a href="/singalong">Sing Along</a>
+          <a href="/quiz">Quiz</a>
+        </div>
+      </div>
+
+      <div style={styles.bottom}>
+        <p style={styles.made}>
+          Made by <Heart size={14} fill="currentColor" /> Kasuni Kariyawasam
+        </p>
+        <p>Built with 🐍 Python & ⚛️ React</p>
+        <p>© {new Date().getFullYear()} Purple Family. All rights reserved.</p>
       </div>
     </footer>
   );
@@ -12,24 +47,70 @@ export default function Footer() {
 
 const styles = {
   footer: {
-    background: "#2d0a4e",
-    padding: "1.5rem",
-    textAlign: "center",
-    position: "relative",
-    zIndex: 1,
-  },
-  footerContent: {
-    maxWidth: "800px",
-    margin: "0 auto",
-  },
-  footerText: {
+    marginTop: "80px",
+    background: "linear-gradient(135deg,#1e1b4b,#581c87)",
     color: "white",
-    margin: "0.5rem 0",
-    fontSize: "0.95rem",
   },
-  footerSmall: {
-    color: "#d4b8ff",
-    margin: "0.5rem 0",
-    fontSize: "0.85rem",
+
+  container: {
+    maxWidth: "1300px",
+    margin: "0 auto",
+    padding: "55px 24px 35px",
+    display: "grid",
+    gridTemplateColumns: "1.4fr 1fr",
+    gap: "40px",
+  },
+
+  logo: {
+    fontSize: "2rem",
+    fontWeight: "800",
+    marginBottom: "14px",
+  },
+
+  description: {
+    maxWidth: "560px",
+    color: "rgba(255,255,255,0.78)",
+    lineHeight: "1.8",
+  },
+
+  stats: {
+    display: "flex",
+    gap: "12px",
+    flexWrap: "wrap",
+    marginTop: "22px",
+  },
+
+  statCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "12px 16px",
+    borderRadius: "16px",
+    background: "rgba(255,255,255,0.1)",
+  },
+
+  links: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2,1fr)",
+    gap: "14px",
+    alignContent: "start",
+  },
+
+  bottom: {
+    borderTop: "1px solid rgba(255,255,255,0.12)",
+    maxWidth: "1300px",
+    margin: "0 auto",
+    padding: "20px 24px",
+    display: "flex",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "10px",
+    color: "rgba(255,255,255,0.72)",
+  },
+
+  made: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
   },
 };
