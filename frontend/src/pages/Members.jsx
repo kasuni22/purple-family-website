@@ -15,76 +15,13 @@ import jungkookImg from "../assets/bts-members/jungkook.jpg";
 const API_BASE = "http://127.0.0.1:8000";
 
 const BTS_MEMBERS = [
-  {
-    name: "RM",
-    emoji: "🐨",
-    photo: rmImg,
-    role: "Leader & Rapper",
-    born: "September 12, 1994",
-    from: "Ilsan, South Korea",
-    desc: "Kim Namjoon is BTS's leader and the voice of the group. A deep thinker, art lover, and self-taught English speaker with incredible lyrical skills.",
-    color: "#e8f5e0",
-  },
-  {
-    name: "Jin",
-    emoji: "🐹",
-    photo: jinImg,
-    role: "Vocalist",
-    born: "December 4, 1992",
-    from: "Gwacheon, South Korea",
-    desc: "Kim Seokjin, known as Jin, is BTS's oldest member and worldwide handsome! Known for his dad jokes, pink princess energy, and powerful vocals.",
-    color: "#ffe0e0",
-  },
-  {
-    name: "Suga",
-    emoji: "🐱",
-    photo: sugaImg,
-    role: "Rapper & Producer",
-    born: "March 9, 1993",
-    from: "Daegu, South Korea",
-    desc: "Min Yoongi, known as Suga or Agust D. A genius music producer and rapper known for his honest, emotional lyrics and sleepy cat energy.",
-    color: "#e0e8ff",
-  },
-  {
-    name: "J-Hope",
-    emoji: "🐿️",
-    photo: jhopeImg,
-    role: "Rapper & Dancer",
-    born: "February 18, 1994",
-    from: "Gwangju, South Korea",
-    desc: "Jung Hoseok is BTS's sunshine! Known for his incredible dancing, bright energy, and powerful rap. He is your hope, he is J-Hope!",
-    color: "#fff8e0",
-  },
-  {
-    name: "Jimin",
-    emoji: "🐥",
-    photo: jiminImg,
-    role: "Vocalist & Dancer",
-    born: "October 13, 1995",
-    from: "Busan, South Korea",
-    desc: "Park Jimin is known for his stunning dance skills, sweet vocals, and charming personality. He puts his heart into every performance.",
-    color: "#f0e0ff",
-  },
-  {
-    name: "Taehyung",
-    emoji: "🐯",
-    photo: vImg,
-    role: "Vocalist",
-    born: "December 30, 1995",
-    from: "Daegu, South Korea",
-    desc: "Kim Taehyung, also known as V, is known for his deep baritone voice, artistic soul, and unique 4D personality. A true renaissance man.",
-    color: "#e0f5ff",
-  },
-  {
-    name: "Jungkook",
-    emoji: "🐰",
-    photo: jungkookImg,
-    role: "Main Vocalist",
-    born: "September 1, 1997",
-    from: "Busan, South Korea",
-    desc: "Jeon Jungkook is the Golden Maknae — the youngest member who excels at everything. Singing, dancing, drawing, sports — he does it all!",
-    color: "#fff0e0",
-  },
+  { name: "RM", emoji: "🐨", photo: rmImg, role: "Leader & Rapper", born: "September 12, 1994", from: "Ilsan, South Korea", desc: "Kim Namjoon is BTS's leader and the voice of the group. A deep thinker, art lover, and self-taught English speaker with incredible lyrical skills." },
+  { name: "Jin", emoji: "🐹", photo: jinImg, role: "Vocalist", born: "December 4, 1992", from: "Gwacheon, South Korea", desc: "Kim Seokjin, known as Jin, is BTS's oldest member and worldwide handsome. Known for his dad jokes, pink princess energy, and powerful vocals." },
+  { name: "Suga", emoji: "🐱", photo: sugaImg, role: "Rapper & Producer", born: "March 9, 1993", from: "Daegu, South Korea", desc: "Min Yoongi, known as Suga or Agust D, is a genius producer and rapper loved for honest, emotional lyrics." },
+  { name: "J-Hope", emoji: "🐿️", photo: jhopeImg, role: "Rapper & Dancer", born: "February 18, 1994", from: "Gwangju, South Korea", desc: "Jung Hoseok is BTS's sunshine, known for incredible dancing, bright energy and powerful rap." },
+  { name: "Jimin", emoji: "🐥", photo: jiminImg, role: "Vocalist & Dancer", born: "October 13, 1995", from: "Busan, South Korea", desc: "Park Jimin is known for stunning dance skills, sweet vocals and charming personality." },
+  { name: "Taehyung", emoji: "🐯", photo: vImg, role: "Vocalist", born: "December 30, 1995", from: "Daegu, South Korea", desc: "Kim Taehyung, also known as V, is loved for his deep voice, artistic soul and unique personality." },
+  { name: "Jungkook", emoji: "🐰", photo: jungkookImg, role: "Main Vocalist", born: "September 1, 1997", from: "Busan, South Korea", desc: "Jeon Jungkook is the Golden Maknae, talented in singing, dancing, drawing, sports and more." },
 ];
 
 export default function Members() {
@@ -113,41 +50,33 @@ export default function Members() {
   };
 
   const loadDescriptions = async () => {
-    try {
-      const res = await API.get("/bts-descriptions");
-      groupDescriptions(res.data);
-    } catch (err) {
-      console.error("Failed to load BTS descriptions", err);
-    }
-  };
-
-  const loadPageData = async () => {
-    try {
-      const [meRes, membersRes] = await Promise.all([
-        API.get("/auth/me"),
-        API.get("/members"),
-      ]);
-
-      setCurrentUser(meRes.data);
-      setMembers(membersRes.data);
-      await loadDescriptions();
-    } catch (err) {
-      navigate("/login");
-    }
+    const res = await API.get("/bts-descriptions");
+    groupDescriptions(res.data || []);
   };
 
   useEffect(() => {
+    const loadPageData = async () => {
+      try {
+        const [meRes, membersRes] = await Promise.all([
+          API.get("/auth/me"),
+          API.get("/members"),
+        ]);
+
+        setCurrentUser(meRes.data);
+        setMembers(membersRes.data || []);
+        await loadDescriptions();
+      } catch {
+        navigate("/login");
+      }
+    };
+
     loadPageData();
   }, [navigate]);
 
   const filtered = members
     .filter((m) => {
-      const displayName = m.nickname || m.username || "";
-      const matchSearch =
-        displayName.toLowerCase().includes(search.toLowerCase()) ||
-        (m.username && m.username.toLowerCase().includes(search.toLowerCase())) ||
-        (m.country && m.country.toLowerCase().includes(search.toLowerCase()));
-
+      const displayName = `${m.nickname || ""} ${m.username || ""} ${m.country || ""}`.toLowerCase();
+      const matchSearch = displayName.includes(search.toLowerCase());
       const matchBias = filterBias === "All" || m.bias === filterBias;
       return matchSearch && matchBias;
     })
@@ -158,9 +87,7 @@ export default function Members() {
       if (sortOrder === "newest") return dateB - dateA;
       if (sortOrder === "oldest") return dateA - dateB;
 
-      const nameA = (a.nickname || a.username || "").toLowerCase();
-      const nameB = (b.nickname || b.username || "").toLowerCase();
-      return nameA.localeCompare(nameB);
+      return (a.nickname || a.username || "").localeCompare(b.nickname || b.username || "");
     });
 
   const handleAddDesc = async (memberName) => {
@@ -174,20 +101,9 @@ export default function Members() {
       await API.post("/bts-descriptions", formData);
       setNewDesc("");
       await loadDescriptions();
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Description save failed");
     }
-  };
-
-  const startEditDesc = (desc) => {
-    setEditingDescId(desc.id);
-    setEditingText(desc.content);
-  };
-
-  const cancelEditDesc = () => {
-    setEditingDescId(null);
-    setEditingText("");
   };
 
   const saveEditDesc = async (descriptionId) => {
@@ -198,10 +114,10 @@ export default function Members() {
       formData.append("content", editingText.trim());
 
       await API.put(`/bts-descriptions/${descriptionId}`, formData);
-      cancelEditDesc();
+      setEditingDescId(null);
+      setEditingText("");
       await loadDescriptions();
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Description update failed");
     }
   };
@@ -212,27 +128,40 @@ export default function Members() {
     try {
       await API.delete(`/bts-descriptions/${descriptionId}`);
       await loadDescriptions();
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Only admin can delete descriptions");
     }
   };
 
-  const getAuthorPhoto = (desc) => {
-    if (!desc.created_by_profile_picture) return null;
-    return `${API_BASE}/${desc.created_by_profile_picture}`;
-  };
+  const getAuthorPhoto = (desc) =>
+    desc.created_by_profile_picture ? `${API_BASE}/${desc.created_by_profile_picture}` : null;
 
-  const getAuthorName = (desc) => {
-    return desc.created_by_nickname || desc.created_by_username || "ARMY";
-  };
+  const getAuthorName = (desc) =>
+    desc.created_by_nickname || desc.created_by_username || "ARMY";
 
   return (
-    <div style={styles.container}>
+    <>
       <Navbar />
 
-      <div style={styles.content}>
-        <div style={styles.tabs}>
+      <main style={styles.page}>
+        <section style={styles.hero}>
+          <div>
+            <div style={styles.badge}>👥 Purple Family Members</div>
+            <h1 style={styles.title}>Meet OT7 and our SL ARMY family</h1>
+            <p style={styles.subtitle}>
+              Learn about BTS members, share your thoughts, and discover ARMY
+              friends by bias, country and join date.
+            </p>
+          </div>
+
+          <div style={styles.heroCard}>
+            <span style={styles.heroIcon}>💜</span>
+            <h2>{members.length}</h2>
+            <p>Total Members</p>
+          </div>
+        </section>
+
+        <section style={styles.tabs}>
           <button
             onClick={() => {
               setActiveTab("ot7");
@@ -240,8 +169,7 @@ export default function Members() {
             }}
             style={{
               ...styles.tabBtn,
-              background: activeTab === "ot7" ? "#7c3aed" : "white",
-              color: activeTab === "ot7" ? "white" : "#7c3aed",
+              ...(activeTab === "ot7" ? styles.activeTab : {}),
             }}
           >
             💜 Know About OT7
@@ -254,82 +182,93 @@ export default function Members() {
             }}
             style={{
               ...styles.tabBtn,
-              background: activeTab === "army" ? "#7c3aed" : "white",
-              color: activeTab === "army" ? "white" : "#7c3aed",
+              ...(activeTab === "army" ? styles.activeTab : {}),
             }}
           >
             👥 SL ARMY Family
           </button>
-        </div>
+        </section>
 
         {activeTab === "ot7" && (
-          <>
-            <h2 style={styles.title}>💜 Know About OT7</h2>
-            <p style={styles.subtitle}>Learn about all 7 BTS members 💜</p>
-
+          <section style={styles.panel}>
             {!selectedMember ? (
-              <div style={styles.ot7Grid}>
-                {BTS_MEMBERS.map((m) => (
-                  <div
-                    key={m.name}
-                    style={{ ...styles.btsCard, background: m.color }}
-                    onClick={() => setSelectedMember(m)}
-                  >
-                    <div style={styles.btsPhotoBox}>
-                      <img src={m.photo} alt={m.name} style={styles.btsPhoto} />
-                      <div style={styles.photoNameTag}>{m.name}</div>
-                    </div>
-
-                    <div style={styles.memberEmoji}>{m.emoji}</div>
-                    <h3 style={styles.btsName}>{m.name}</h3>
-                    <p style={styles.btsRole}>{m.role}</p>
-                    <p style={styles.btsFrom}>📍 {m.from}</p>
-                    <div style={styles.viewBtn}>View Profile →</div>
+              <>
+                <div style={styles.sectionHead}>
+                  <div>
+                    <h2 style={styles.sectionTitle}>Know About OT7</h2>
+                    <p style={styles.sectionText}>
+                      Beautiful BTS member cards with ARMY descriptions.
+                    </p>
                   </div>
-                ))}
-              </div>
+                </div>
+
+                <div style={styles.ot7Grid}>
+                  {BTS_MEMBERS.map((m) => (
+                    <article
+                      key={m.name}
+                      style={styles.btsCard}
+                      onClick={() => setSelectedMember(m)}
+                    >
+                      <div style={styles.btsPhotoBox}>
+                        <img src={m.photo} alt={m.name} style={styles.btsPhoto} />
+                        <span style={styles.photoTag}>{m.name}</span>
+                      </div>
+
+                      <div style={styles.btsInfo}>
+                        <span style={styles.memberEmoji}>{m.emoji}</span>
+                        <h3 style={styles.btsName}>{m.name}</h3>
+                        <p style={styles.btsRole}>{m.role}</p>
+                        <p style={styles.btsFrom}>📍 {m.from}</p>
+                        <button style={styles.viewBtn}>View Profile →</button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
             ) : (
-              <div style={styles.memberDetail}>
-                <button onClick={() => setSelectedMember(null)} style={styles.backBtn}>
+              <section style={styles.memberDetail}>
+                <button
+                  onClick={() => setSelectedMember(null)}
+                  style={styles.backBtn}
+                >
                   ← Back to OT7
                 </button>
 
-                <div style={{ ...styles.detailCard, background: selectedMember.color }}>
-                  <div style={styles.detailHero}>
-                    <div style={styles.detailPhotoBox}>
-                      <img
-                        src={selectedMember.photo}
-                        alt={selectedMember.name}
-                        style={styles.detailPhoto}
-                      />
-                      <div style={styles.detailPhotoTag}>{selectedMember.name}</div>
+                <div style={styles.detailCard}>
+                  <div style={styles.detailPhotoBox}>
+                    <img
+                      src={selectedMember.photo}
+                      alt={selectedMember.name}
+                      style={styles.detailPhoto}
+                    />
+                  </div>
+
+                  <div style={styles.detailContent}>
+                    <div style={styles.detailEmoji}>{selectedMember.emoji}</div>
+                    <h2 style={styles.detailName}>{selectedMember.name}</h2>
+                    <div style={styles.detailBadge}>{selectedMember.role}</div>
+
+                    <div style={styles.detailInfo}>
+                      <span>🎂 {selectedMember.born}</span>
+                      <span>📍 {selectedMember.from}</span>
                     </div>
 
-                    <div style={styles.detailTextBox}>
-                      <div style={styles.detailEmoji}>{selectedMember.emoji}</div>
-                      <h2 style={styles.detailName}>{selectedMember.name}</h2>
-                      <div style={styles.detailBadge}>{selectedMember.role}</div>
-
-                      <div style={styles.detailInfo}>
-                        <span>🎂 {selectedMember.born}</span>
-                        <span>📍 {selectedMember.from}</span>
-                      </div>
-
-                      <p style={styles.detailDesc}>{selectedMember.desc}</p>
-                    </div>
+                    <p style={styles.detailDesc}>{selectedMember.desc}</p>
                   </div>
                 </div>
 
                 <div style={styles.descSection}>
-                  <h3 style={styles.descTitle}>💜 What ARMY says about {selectedMember.name}</h3>
+                  <h3 style={styles.descTitle}>
+                    💜 What ARMY says about {selectedMember.name}
+                  </h3>
 
                   {(descriptions[selectedMember.name] || []).length === 0 ? (
-                    <p style={{ color: "#888" }}>No descriptions yet! Be the first 💜</p>
+                    <div style={styles.emptyMini}>No descriptions yet. Be the first 💜</div>
                   ) : (
                     (descriptions[selectedMember.name] || []).map((d) => (
-                      <div key={d.id} style={styles.descCard}>
+                      <article key={d.id} style={styles.descCard}>
                         <div style={styles.descHeader}>
-                          <div style={styles.descAuthorBox}>
+                          <div style={styles.authorBox}>
                             <div style={styles.descAvatar}>
                               {getAuthorPhoto(d) ? (
                                 <img
@@ -343,22 +282,33 @@ export default function Members() {
                             </div>
 
                             <div>
-                              <div style={styles.descAuthor}>💜 {getAuthorName(d)}</div>
-                              <div style={styles.descDate}>
+                              <strong style={styles.descAuthor}>
+                                {getAuthorName(d)}
+                              </strong>
+                              <p style={styles.descDate}>
                                 {new Date(d.created_at).toLocaleDateString()}
-                              </div>
+                              </p>
                             </div>
                           </div>
 
                           <div style={styles.descActions}>
                             {d.can_edit && editingDescId !== d.id && (
-                              <button style={styles.smallEditBtn} onClick={() => startEditDesc(d)}>
+                              <button
+                                style={styles.smallEditBtn}
+                                onClick={() => {
+                                  setEditingDescId(d.id);
+                                  setEditingText(d.content);
+                                }}
+                              >
                                 Edit
                               </button>
                             )}
 
                             {d.can_delete && (
-                              <button style={styles.smallDeleteBtn} onClick={() => deleteDesc(d.id)}>
+                              <button
+                                style={styles.smallDeleteBtn}
+                                onClick={() => deleteDesc(d.id)}
+                              >
                                 Delete
                               </button>
                             )}
@@ -375,10 +325,20 @@ export default function Members() {
                             />
 
                             <div style={styles.editBtns}>
-                              <button style={styles.descBtn} onClick={() => saveEditDesc(d.id)}>
+                              <button
+                                style={styles.descBtn}
+                                onClick={() => saveEditDesc(d.id)}
+                              >
                                 Save
                               </button>
-                              <button style={styles.cancelBtn} onClick={cancelEditDesc}>
+
+                              <button
+                                style={styles.cancelBtn}
+                                onClick={() => {
+                                  setEditingDescId(null);
+                                  setEditingText("");
+                                }}
+                              >
                                 Cancel
                               </button>
                             </div>
@@ -386,7 +346,7 @@ export default function Members() {
                         ) : (
                           <p style={styles.descText}>{d.content}</p>
                         )}
-                      </div>
+                      </article>
                     ))
                   )}
 
@@ -403,68 +363,61 @@ export default function Members() {
                       style={styles.descBtn}
                       onClick={() => handleAddDesc(selectedMember.name)}
                     >
-                      Add 💜
+                      Add Description 💜
                     </button>
                   </div>
                 </div>
-              </div>
+              </section>
             )}
-          </>
+          </section>
         )}
 
         {activeTab === "army" && (
-          <>
-            <h2 style={styles.title}>👥 Our SL ARMY Family</h2>
-            <p style={styles.subtitle}>{members.length} members and growing! 💜</p>
+          <section style={styles.panel}>
+            <div style={styles.sectionHead}>
+              <div>
+                <h2 style={styles.sectionTitle}>Our SL ARMY Family</h2>
+                <p style={styles.sectionText}>
+                  Showing {filtered.length} of {members.length} members.
+                </p>
+              </div>
+            </div>
 
             <div style={styles.controls}>
               <input
                 style={styles.search}
-                placeholder="Search by name, nickname or country..."
+                placeholder="Search name, nickname or country..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
 
-              <div style={styles.filterBox}>
-                <label style={styles.filterLabel}>Bias</label>
-                <select
-                  style={styles.select}
-                  value={filterBias}
-                  onChange={(e) => setFilterBias(e.target.value)}
-                >
-                  {biasOptions.map((b) => (
-                    <option key={b}>{b}</option>
-                  ))}
-                </select>
-              </div>
+              <select
+                style={styles.select}
+                value={filterBias}
+                onChange={(e) => setFilterBias(e.target.value)}
+              >
+                {biasOptions.map((b) => (
+                  <option key={b}>{b}</option>
+                ))}
+              </select>
 
-              <div style={styles.filterBox}>
-                <label style={styles.filterLabel}>Sort</label>
-                <select
-                  style={styles.select}
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                >
-                  <option value="newest">Newest Members First</option>
-                  <option value="oldest">Oldest Members First</option>
-                  <option value="name">Name A-Z</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={styles.filterSummary}>
-              Showing {filtered.length} of {members.length} members
-              {filterBias !== "All" ? ` • Bias: ${filterBias}` : ""}
+              <select
+                style={styles.select}
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="name">Name A-Z</option>
+              </select>
             </div>
 
             {filtered.length === 0 ? (
-              <div style={styles.emptyCard}>
-                <p style={{ color: "#888" }}>No members found 💜</p>
-              </div>
+              <div style={styles.emptyMini}>No members found 💜</div>
             ) : (
-              <div style={styles.grid}>
+              <div style={styles.armyGrid}>
                 {filtered.map((member) => (
-                  <div key={member.id} style={styles.card}>
+                  <article key={member.id} style={styles.armyCard}>
                     <div style={styles.avatar}>
                       {member.profile_picture ? (
                         <img
@@ -477,472 +430,565 @@ export default function Members() {
                       )}
                     </div>
 
-                    <h3 style={styles.username}>{member.nickname || member.username}</h3>
+                    <h3 style={styles.username}>
+                      {member.nickname || member.username}
+                    </h3>
 
                     {member.nickname && member.username && (
                       <p style={styles.realUsername}>@{member.username}</p>
                     )}
 
-                    {member.country && <p style={styles.country}>🌍 {member.country}</p>}
+                    {member.country && (
+                      <p style={styles.country}>🌍 {member.country}</p>
+                    )}
 
-                    {member.bias && <div style={styles.biasBadge}>💜 {member.bias}</div>}
+                    <div style={styles.pills}>
+                      {member.bias && (
+                        <span style={styles.biasBadge}>💜 {member.bias}</span>
+                      )}
 
-                    {member.is_admin && <div style={styles.adminBadge}>👑 Admin</div>}
+                      {member.is_admin && (
+                        <span style={styles.adminBadge}>👑 Admin</span>
+                      )}
+                    </div>
 
                     <p style={styles.joined}>
                       Joined {new Date(member.created_at).toLocaleDateString()}
                     </p>
-                  </div>
+                  </article>
                 ))}
               </div>
             )}
-          </>
+          </section>
         )}
-      </div>
+      </main>
 
       <Footer />
-    </div>
+    </>
   );
 }
 
 const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "#f8f5ff",
-    display: "flex",
-    flexDirection: "column",
-  },
-  content: {
+  page: {
     width: "100%",
-    padding: "2rem 3rem",
-    flex: 1,
-    boxSizing: "border-box",
-    maxWidth: "100%",
+    padding: "40px clamp(16px,4vw,64px)",
   },
+
+  hero: {
+    width: "min(1280px,100%)",
+    margin: "0 auto 24px",
+    padding: "50px",
+    borderRadius: "36px",
+    background:
+      "linear-gradient(135deg,rgba(255,255,255,0.92),rgba(243,232,255,0.9))",
+    border: "1px solid rgba(124,58,237,0.16)",
+    boxShadow: "0 25px 70px rgba(76,29,149,0.14)",
+    display: "grid",
+    gridTemplateColumns: "1fr 250px",
+    gap: "24px",
+    alignItems: "center",
+  },
+
+  badge: {
+    display: "inline-flex",
+    padding: "10px 16px",
+    borderRadius: "999px",
+    background: "rgba(124,58,237,0.1)",
+    color: "#6d28d9",
+    fontWeight: 900,
+    marginBottom: "18px",
+  },
+
+  title: {
+    fontSize: "clamp(2.3rem,5vw,4.6rem)",
+    lineHeight: 0.95,
+    letterSpacing: "-0.06em",
+    color: "#241039",
+    marginBottom: "18px",
+  },
+
+  subtitle: {
+    color: "#6b5a80",
+    lineHeight: 1.8,
+    maxWidth: "720px",
+  },
+
+  heroCard: {
+    minHeight: "220px",
+    borderRadius: "30px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    display: "grid",
+    placeItems: "center",
+    textAlign: "center",
+    boxShadow: "0 20px 45px rgba(124,58,237,0.25)",
+  },
+
+  heroIcon: {
+    fontSize: "3rem",
+  },
+
   tabs: {
+    width: "min(1280px,100%)",
+    margin: "0 auto 24px",
     display: "flex",
-    gap: "1rem",
-    marginBottom: "2rem",
+    gap: "12px",
+    justifyContent: "center",
     flexWrap: "wrap",
   },
+
   tabBtn: {
-    padding: "10px 24px",
-    border: "1px solid #7c3aed",
-    borderRadius: "20px",
+    border: "1px solid rgba(124,58,237,0.18)",
+    background: "rgba(255,255,255,0.82)",
+    color: "#6d28d9",
+    padding: "12px 20px",
+    borderRadius: "999px",
+    fontWeight: 900,
     cursor: "pointer",
-    fontSize: "1rem",
-    fontWeight: "500",
   },
-  title: {
-    color: "#2d0a4e",
-    fontSize: "2rem",
-    marginBottom: "0.5rem",
+
+  activeTab: {
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    boxShadow: "0 14px 28px rgba(124,58,237,0.22)",
   },
-  subtitle: {
-    color: "#7c3aed",
-    marginBottom: "1.5rem",
+
+  panel: {
+    width: "min(1280px,100%)",
+    margin: "0 auto",
+    padding: "30px",
+    borderRadius: "34px",
+    background: "rgba(255,255,255,0.72)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 18px 45px rgba(76,29,149,0.08)",
   },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-    gap: "1.5rem",
-    width: "100%",
+
+  sectionHead: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "16px",
+    flexWrap: "wrap",
+    marginBottom: "24px",
   },
+
+  sectionTitle: {
+    color: "#241039",
+    fontSize: "clamp(1.7rem,3vw,2.5rem)",
+    letterSpacing: "-0.04em",
+    marginBottom: "6px",
+  },
+
+  sectionText: {
+    color: "#7c6a92",
+  },
+
   ot7Grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-    gap: "1.6rem",
-    width: "100%",
+    gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))",
+    gap: "22px",
   },
+
   btsCard: {
-    borderRadius: "18px",
-    padding: "1rem",
-    textAlign: "center",
-    border: "1px solid #d4b8ff",
+    overflow: "hidden",
+    borderRadius: "30px",
+    background: "white",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 18px 42px rgba(76,29,149,0.1)",
     cursor: "pointer",
-    overflow: "hidden",
-    boxShadow: "0 8px 22px rgba(124, 58, 237, 0.12)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
+
   btsPhotoBox: {
-    width: "100%",
-    height: "360px",
-    borderRadius: "14px",
-    overflow: "hidden",
     position: "relative",
-    background: "#eee",
-    marginBottom: "1rem",
-    border: "3px solid white",
-    boxShadow: "0 8px 20px rgba(45, 10, 78, 0.18)",
+    height: "350px",
+    background: "#f3e8ff",
   },
+
   btsPhoto: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
     objectPosition: "center top",
-    display: "block",
   },
-  photoNameTag: {
+
+  photoTag: {
     position: "absolute",
-    left: "12px",
-    top: "12px",
-    background: "rgba(45, 10, 78, 0.85)",
-    color: "white",
-    padding: "6px 12px",
-    borderRadius: "10px",
-    fontWeight: "800",
-    fontSize: "1rem",
-    letterSpacing: "0.5px",
+    top: "14px",
+    left: "14px",
+    padding: "8px 14px",
+    borderRadius: "999px",
+    background: "rgba(255,255,255,0.86)",
+    color: "#6d28d9",
+    fontWeight: 900,
   },
+
+  btsInfo: {
+    padding: "22px",
+    textAlign: "center",
+  },
+
   memberEmoji: {
-    fontSize: "2.2rem",
-    marginBottom: "0.25rem",
+    fontSize: "2.4rem",
   },
+
   btsName: {
-    color: "#2d0a4e",
+    color: "#4c1d95",
     fontSize: "1.45rem",
-    marginBottom: "0.25rem",
+    marginTop: "8px",
   },
+
   btsRole: {
     color: "#7c3aed",
-    fontSize: "0.95rem",
-    marginBottom: "0.25rem",
+    fontWeight: 800,
+    marginTop: "4px",
   },
+
   btsFrom: {
-    color: "#777",
-    fontSize: "0.9rem",
-    marginBottom: "0.75rem",
+    color: "#7c6a92",
+    marginTop: "8px",
   },
+
   viewBtn: {
-    color: "#7c3aed",
-    fontWeight: "700",
-    fontSize: "0.95rem",
-  },
-  memberDetail: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.5rem",
-  },
-  backBtn: {
-    padding: "8px 16px",
-    background: "white",
-    border: "1px solid #d4b8ff",
-    color: "#7c3aed",
-    borderRadius: "8px",
+    marginTop: "16px",
+    border: "none",
+    borderRadius: "999px",
+    padding: "10px 16px",
+    background: "#f3e8ff",
+    color: "#6d28d9",
+    fontWeight: 900,
     cursor: "pointer",
-    width: "fit-content",
   },
-  detailCard: {
-    borderRadius: "18px",
-    padding: "1.5rem",
-    border: "1px solid #d4b8ff",
-    boxShadow: "0 8px 22px rgba(124, 58, 237, 0.12)",
-  },
-  detailHero: {
+
+  memberDetail: {
     display: "grid",
-    gridTemplateColumns: "minmax(280px, 420px) 1fr",
-    gap: "2rem",
-    alignItems: "center",
+    gap: "20px",
   },
+
+  backBtn: {
+    width: "fit-content",
+    border: "1px solid rgba(124,58,237,0.2)",
+    borderRadius: "999px",
+    background: "white",
+    color: "#6d28d9",
+    padding: "11px 18px",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+
+  detailCard: {
+    display: "grid",
+    gridTemplateColumns: "420px 1fr",
+    gap: "28px",
+    padding: "24px",
+    borderRadius: "32px",
+    background: "linear-gradient(135deg,#f3e8ff,#fdf2f8)",
+    border: "1px solid rgba(124,58,237,0.16)",
+  },
+
   detailPhotoBox: {
-    width: "100%",
     height: "520px",
-    borderRadius: "18px",
+    borderRadius: "26px",
     overflow: "hidden",
-    position: "relative",
-    background: "#eee",
-    border: "4px solid white",
-    boxShadow: "0 10px 28px rgba(45, 10, 78, 0.22)",
+    boxShadow: "0 18px 42px rgba(76,29,149,0.14)",
   },
+
   detailPhoto: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
     objectPosition: "center top",
-    display: "block",
   },
-  detailPhotoTag: {
-    position: "absolute",
-    left: "14px",
-    top: "14px",
-    background: "rgba(0, 0, 0, 0.78)",
-    color: "white",
-    padding: "8px 14px",
-    borderRadius: "10px",
-    fontWeight: "900",
-    fontSize: "1.1rem",
+
+  detailContent: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
   },
-  detailTextBox: {
-    textAlign: "center",
-  },
+
   detailEmoji: {
     fontSize: "4rem",
-    marginBottom: "0.5rem",
+    marginBottom: "8px",
   },
+
   detailName: {
-    color: "#2d0a4e",
-    fontSize: "2.4rem",
-    marginBottom: "0.5rem",
+    color: "#241039",
+    fontSize: "clamp(2.4rem,5vw,4rem)",
+    letterSpacing: "-0.05em",
+    marginBottom: "10px",
   },
+
   detailBadge: {
-    display: "inline-block",
-    padding: "6px 20px",
-    background: "#7c3aed",
+    width: "fit-content",
+    padding: "9px 16px",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
     color: "white",
-    borderRadius: "20px",
-    fontSize: "0.95rem",
-    marginBottom: "1rem",
+    fontWeight: 900,
+    marginBottom: "16px",
   },
+
   detailInfo: {
     display: "flex",
-    justifyContent: "center",
-    gap: "1.5rem",
-    color: "#555",
-    marginBottom: "1rem",
+    gap: "12px",
     flexWrap: "wrap",
+    color: "#6b5a80",
+    marginBottom: "18px",
   },
+
   detailDesc: {
-    color: "#444",
-    lineHeight: 1.7,
-    maxWidth: "700px",
-    margin: "0 auto",
-    fontSize: "1rem",
+    color: "#4b3b5f",
+    lineHeight: 1.8,
+    maxWidth: "720px",
   },
+
   descSection: {
+    padding: "24px",
+    borderRadius: "30px",
     background: "white",
-    borderRadius: "12px",
-    padding: "1.5rem",
-    border: "1px solid #d4b8ff",
+    border: "1px solid rgba(124,58,237,0.14)",
   },
+
   descTitle: {
-    color: "#2d0a4e",
-    marginBottom: "1rem",
+    color: "#4c1d95",
+    marginBottom: "16px",
   },
+
   descCard: {
-    background: "#f8f5ff",
-    borderRadius: "10px",
-    padding: "1rem",
-    marginBottom: "0.75rem",
-    border: "1px solid #e0d0ff",
+    padding: "18px",
+    borderRadius: "22px",
+    background: "#faf7ff",
+    border: "1px solid rgba(124,58,237,0.12)",
+    marginBottom: "14px",
   },
+
   descHeader: {
     display: "flex",
     justifyContent: "space-between",
-    gap: "0.75rem",
-    alignItems: "center",
-    marginBottom: "0.7rem",
+    gap: "12px",
     flexWrap: "wrap",
+    marginBottom: "12px",
   },
-  descAuthorBox: {
+
+  authorBox: {
     display: "flex",
     alignItems: "center",
-    gap: "0.75rem",
+    gap: "12px",
   },
+
   descAvatar: {
-    width: "42px",
-    height: "42px",
+    width: "44px",
+    height: "44px",
     borderRadius: "50%",
-    background: "#7c3aed",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
     color: "white",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "800",
+    display: "grid",
+    placeItems: "center",
+    fontWeight: 900,
     overflow: "hidden",
-    flexShrink: 0,
   },
+
   descAvatarImg: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
   },
+
+  descAuthor: {
+    color: "#4c1d95",
+  },
+
+  descDate: {
+    color: "#9ca3af",
+    fontSize: "0.85rem",
+  },
+
   descActions: {
     display: "flex",
-    gap: "0.5rem",
+    gap: "8px",
   },
+
   smallEditBtn: {
-    padding: "6px 12px",
-    borderRadius: "8px",
     border: "none",
-    background: "#0ea5e9",
-    color: "white",
+    borderRadius: "999px",
+    background: "#e0f2fe",
+    color: "#0369a1",
+    padding: "8px 12px",
+    fontWeight: 900,
     cursor: "pointer",
-    fontWeight: "700",
   },
+
   smallDeleteBtn: {
-    padding: "6px 12px",
-    borderRadius: "8px",
     border: "none",
-    background: "#ef4444",
-    color: "white",
+    borderRadius: "999px",
+    background: "#fee2e2",
+    color: "#991b1b",
+    padding: "8px 12px",
+    fontWeight: 900,
     cursor: "pointer",
-    fontWeight: "700",
   },
+
+  descText: {
+    color: "#4b3b5f",
+    lineHeight: 1.7,
+  },
+
+  descForm: {
+    display: "grid",
+    gap: "12px",
+    marginTop: "18px",
+  },
+
   editDescBox: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.75rem",
+    display: "grid",
+    gap: "12px",
   },
+
   editBtns: {
     display: "flex",
-    gap: "0.75rem",
+    gap: "10px",
+    flexWrap: "wrap",
   },
-  cancelBtn: {
-    padding: "10px",
-    borderRadius: "8px",
-    background: "#ddd",
-    color: "#2d0a4e",
-    fontSize: "1rem",
-    cursor: "pointer",
-    border: "none",
-  },
-  descText: {
-    color: "#2d0a4e",
-    marginBottom: "0.5rem",
-    lineHeight: 1.6,
-  },
-  descAuthor: {
-    color: "#7c3aed",
-    fontSize: "0.9rem",
-    fontWeight: "700",
-  },
-  descDate: {
-    color: "#aaa",
-    fontSize: "0.8rem",
-  },
-  descForm: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.75rem",
-    marginTop: "1rem",
-  },
+
   descInput: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #d4b8ff",
-    background: "#f8f5ff",
-    color: "#2d0a4e",
-    fontSize: "1rem",
+    padding: "14px 16px",
+    borderRadius: "16px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    background: "white",
+    outline: "none",
     resize: "vertical",
   },
+
   descBtn: {
-    padding: "10px",
-    borderRadius: "8px",
-    background: "#7c3aed",
-    color: "white",
-    fontSize: "1rem",
-    cursor: "pointer",
     border: "none",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    padding: "12px 18px",
+    fontWeight: 900,
+    cursor: "pointer",
   },
+
+  cancelBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "#e5e7eb",
+    color: "#374151",
+    padding: "12px 18px",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+
   controls: {
     display: "grid",
-    gridTemplateColumns: "1fr 190px 230px",
-    gap: "1rem",
-    marginBottom: "0.75rem",
-    alignItems: "end",
+    gridTemplateColumns: "1fr 200px 210px",
+    gap: "14px",
+    marginBottom: "24px",
   },
-  filterBox: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.35rem",
-  },
-  filterLabel: {
-    color: "#7c3aed",
-    fontSize: "0.85rem",
-    fontWeight: "700",
-  },
-  filterSummary: {
-    color: "#7c3aed",
-    fontSize: "0.9rem",
-    marginBottom: "1.5rem",
-    fontWeight: "600",
-  },
+
   search: {
-    flex: 1,
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #d4b8ff",
+    padding: "14px 16px",
+    borderRadius: "16px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    outline: "none",
     background: "white",
-    color: "#2d0a4e",
-    fontSize: "1rem",
   },
+
   select: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #d4b8ff",
+    padding: "14px 16px",
+    borderRadius: "16px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    outline: "none",
     background: "white",
-    color: "#2d0a4e",
-    fontSize: "1rem",
+    color: "#4c1d95",
+    fontWeight: 800,
   },
-  emptyCard: {
+
+  armyGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))",
+    gap: "20px",
+  },
+
+  armyCard: {
+    padding: "26px",
+    borderRadius: "28px",
     background: "white",
-    borderRadius: "12px",
-    padding: "3rem",
+    border: "1px solid rgba(124,58,237,0.14)",
     textAlign: "center",
-    border: "1px solid #d4b8ff",
+    boxShadow: "0 16px 35px rgba(76,29,149,0.08)",
   },
-  card: {
-    background: "white",
-    borderRadius: "12px",
-    padding: "1.5rem",
-    textAlign: "center",
-    border: "1px solid #d4b8ff",
-  },
+
   avatar: {
-    width: "64px",
-    height: "64px",
+    width: "76px",
+    height: "76px",
     borderRadius: "50%",
-    background: "#7c3aed",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "1.8rem",
-    fontWeight: "bold",
-    margin: "0 auto 1rem",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
     color: "white",
+    margin: "0 auto 14px",
+    display: "grid",
+    placeItems: "center",
+    fontSize: "1.8rem",
+    fontWeight: 900,
     overflow: "hidden",
   },
+
   avatarImg: {
     width: "100%",
     height: "100%",
-    borderRadius: "50%",
     objectFit: "cover",
   },
+
   username: {
-    color: "#2d0a4e",
-    marginBottom: "0.25rem",
+    color: "#4c1d95",
+    marginBottom: "4px",
   },
+
   realUsername: {
     color: "#9b7cc5",
-    fontSize: "0.8rem",
-    marginBottom: "0.5rem",
+    fontSize: "0.85rem",
+    marginBottom: "8px",
   },
+
   country: {
-    color: "#888",
-    fontSize: "0.9rem",
-    marginBottom: "0.5rem",
+    color: "#7c6a92",
+    marginBottom: "12px",
   },
+
+  pills: {
+    display: "flex",
+    gap: "8px",
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+
   biasBadge: {
-    display: "inline-block",
-    padding: "4px 14px",
-    background: "#f0e6ff",
-    color: "#7c3aed",
-    borderRadius: "20px",
-    fontSize: "0.85rem",
-    marginBottom: "0.5rem",
+    padding: "7px 12px",
+    background: "#f3e8ff",
+    color: "#6d28d9",
+    borderRadius: "999px",
+    fontSize: "0.84rem",
+    fontWeight: 900,
   },
+
   adminBadge: {
-    display: "inline-block",
-    padding: "4px 14px",
-    background: "#fff3cd",
-    color: "#856404",
-    borderRadius: "20px",
-    fontSize: "0.85rem",
-    marginBottom: "0.5rem",
+    padding: "7px 12px",
+    background: "#fef3c7",
+    color: "#92400e",
+    borderRadius: "999px",
+    fontSize: "0.84rem",
+    fontWeight: 900,
   },
+
   joined: {
-    color: "#aaa",
-    fontSize: "0.8rem",
-    marginTop: "0.5rem",
+    color: "#9ca3af",
+    fontSize: "0.82rem",
+    marginTop: "14px",
+  },
+
+  emptyMini: {
+    padding: "36px",
+    borderRadius: "24px",
+    background: "#faf7ff",
+    color: "#7c6a92",
+    textAlign: "center",
   },
 };

@@ -562,66 +562,542 @@ export default function Quiz() {
 }
 
 const styles = {
-  container: { minHeight: "100vh", background: "#f8f5ff", color: "#2d0a4e" },
-  page: { display: "grid", gridTemplateColumns: "330px 1fr", gap: "0.75rem", padding: "2rem 3rem", boxSizing: "border-box" },
-  sidebar: { background: "white", border: "1px solid #d4b8ff", borderRadius: "10px", padding: "0.75rem", alignSelf: "start", position: "sticky", top: "90px" },
-  sideTitle: { margin: "0 0 1rem", fontSize: "1.3rem" },
-  topicCard: { border: "1px solid #d4b8ff", background: "white", color: "#2d0a4e", cursor: "pointer", textAlign: "left", fontSize: "1rem", padding: "0.8rem", marginBottom: "0.4rem" },
-  topicCardActive: { background: "#f0c8ea", border: "2px solid #7c3aed", fontWeight: "bold" },
-  topicTitleRow: { display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "flex-start" },
-  topicMeta: { fontSize: "0.82rem", color: "#555", marginTop: "0.7rem" },
-  topicActions: { display: "flex", gap: "0.6rem", marginTop: "0.7rem" },
-  countBadge: { background: "#7c3aed", color: "white", borderRadius: "999px", padding: "2px 8px", fontSize: "0.8rem", flexShrink: 0 },
-  addTopicBtn: { width: "100%", marginTop: "0.75rem", padding: "0.9rem", background: "#d662c7", color: "#111", border: "1px solid #8a2682", cursor: "pointer", fontWeight: "bold" },
-  addBtn: { width: "100%", marginTop: "0.75rem", padding: "0.9rem", background: "#7c3aed", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" },
-  mainArea: { minWidth: 0, background: "white", border: "2px solid #2d0a4e", padding: "1.5rem", minHeight: "620px" },
-  topBar: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", marginBottom: "1.5rem" },
-  title: { margin: 0, fontSize: "2rem" },
-  subtitle: { margin: "0.35rem 0 0", color: "#7c3aed" },
-  primaryBtn: { padding: "0.8rem 1.2rem", background: "#7c3aed", color: "white", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "bold" },
-  emptyCard: { background: "white", border: "1px solid #d4b8ff", borderRadius: "16px", padding: "3rem", textAlign: "center" },
-  quizCard: { background: "white", padding: "1rem" },
-  progressText: { color: "#777", fontSize: "0.95rem", marginBottom: "0.7rem" },
-  progressBar: { background: "#f0e6ff", borderRadius: "10px", height: "8px", marginBottom: "1.5rem" },
-  progressFill: { background: "#7c3aed", height: "8px", borderRadius: "10px", transition: "width 0.3s" },
-  questionHeaderRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" },
-  questionNo: { margin: "0 0 1rem", fontSize: "1.2rem" },
-  questionImageWrap: { display: "flex", justifyContent: "center", marginBottom: "1.5rem" },
-  questionImage: { maxWidth: "520px", width: "100%", maxHeight: "300px", objectFit: "contain", border: "1px solid #111", background: "#fff" },
-  question: { fontSize: "1.45rem", lineHeight: 1.4, margin: "2rem 0 1.5rem" },
-  options: { display: "grid", gap: "0.85rem", marginBottom: "1.5rem" },
-  option: { padding: "0.85rem 1rem", borderRadius: "8px", border: "1px solid #d4b8ff", background: "#f8f5ff", color: "#2d0a4e", fontSize: "1rem", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "1rem" },
-  correct: { background: "#d4edda", border: "2px solid #28a745", color: "#155724" },
-  wrong: { background: "#f8d7da", border: "2px solid #dc3545", color: "#721c24" },
-  dimmed: { opacity: 0.55 },
-  optionLetter: { background: "#7c3aed", color: "white", borderRadius: "50%", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", fontWeight: "bold", flexShrink: 0 },
-  nextBtn: { width: "220px", float: "right", padding: "14px", background: "#8bd34b", border: "2px solid #6daa35", color: "#111", borderRadius: "4px", fontSize: "1.05rem", cursor: "pointer", fontWeight: "bold" },
-  cardActions: { display: "flex", gap: "0.5rem" },
-  editBtn: { padding: "0.45rem 0.8rem", background: "#00aeef", color: "#111", border: "1px solid #0075a6", cursor: "pointer" },
-  deleteBtn: { padding: "0.45rem 0.8rem", background: "red", color: "#111", border: "1px solid #900", cursor: "pointer" },
-  blueBtn: { padding: "0.45rem 1.1rem", background: "#00aeef", color: "#111", border: "1px solid #0075a6", cursor: "pointer" },
-  redBtn: { padding: "0.45rem 1.1rem", background: "red", color: "#111", border: "1px solid #900", cursor: "pointer" },
-  resultCard: { background: "white", borderRadius: "16px", padding: "3rem", border: "1px solid #d4b8ff", textAlign: "center", maxWidth: "700px", margin: "0 auto" },
-  resultEmoji: { fontSize: "4rem", marginBottom: "1rem" },
-  resultTitle: { fontSize: "2rem", marginBottom: "1.5rem" },
-  scoreCircle: { width: "130px", height: "130px", borderRadius: "50%", background: "#f0e6ff", border: "4px solid #7c3aed", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem" },
-  scoreNumber: { fontSize: "2.7rem", fontWeight: "bold", color: "#7c3aed" },
-  scoreTotal: { fontSize: "1.2rem", color: "#888" },
-  resultMessage: { fontSize: "1.1rem", marginBottom: "2rem" },
-  restartBtn: { width: "100%", padding: "14px", background: "#7c3aed", border: "none", color: "white", borderRadius: "10px", fontSize: "1.1rem", cursor: "pointer", marginBottom: "1rem" },
-  homeBtn: { width: "100%", padding: "14px", background: "white", border: "2px solid #7c3aed", color: "#7c3aed", borderRadius: "10px", fontSize: "1.1rem", cursor: "pointer" },
-  modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "1rem" },
-  modalCard: { width: "min(760px, 95vw)", maxHeight: "92vh", overflowY: "auto", background: "white", borderRadius: "18px", padding: "1.5rem", border: "2px solid #d4b8ff" },
-  smallModalCard: { width: "min(460px, 95vw)", background: "white", borderRadius: "18px", padding: "1.5rem", border: "2px solid #d4b8ff" },
-  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" },
-  modalTitle: { margin: 0 },
-  closeBtn: { background: "transparent", border: "none", fontSize: "2rem", cursor: "pointer", color: "#7c3aed" },
-  label: { display: "block", fontWeight: "bold", margin: "0.8rem 0 0.35rem" },
-  input: { width: "100%", padding: "0.85rem", border: "1px solid #d4b8ff", borderRadius: "10px", fontSize: "1rem", boxSizing: "border-box" },
-  textarea: { width: "100%", minHeight: "90px", padding: "0.85rem", border: "1px solid #d4b8ff", borderRadius: "10px", fontSize: "1rem", boxSizing: "border-box", resize: "vertical" },
-  previewImage: { width: "100%", maxHeight: "220px", objectFit: "contain", border: "1px solid #d4b8ff", borderRadius: "12px", marginTop: "0.75rem", background: "#f8f5ff" },
-  formGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" },
-  modalActions: { display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1.2rem" },
-  cancelBtn: { padding: "0.8rem 1.2rem", background: "white", border: "2px solid #7c3aed", color: "#7c3aed", borderRadius: "10px", cursor: "pointer" },
-  saveBtn: { padding: "0.8rem 1.2rem", background: "#7c3aed", border: "none", color: "white", borderRadius: "10px", cursor: "pointer", fontWeight: "bold" },
+  container: {
+    minHeight: "100vh",
+  },
+
+  page: {
+    width: "100%",
+    padding: "40px clamp(16px,4vw,64px)",
+    display: "grid",
+    gridTemplateColumns: "330px 1fr",
+    gap: "24px",
+  },
+
+  sidebar: {
+    alignSelf: "start",
+    position: "sticky",
+    top: "100px",
+    padding: "22px",
+    borderRadius: "30px",
+    background: "rgba(255,255,255,0.82)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 18px 45px rgba(76,29,149,0.08)",
+  },
+
+  sideTitle: {
+    color: "#241039",
+    fontSize: "1.5rem",
+    marginBottom: "18px",
+  },
+
+  topicCard: {
+    width: "100%",
+    border: "1px solid rgba(124,58,237,0.14)",
+    background: "white",
+    color: "#4c1d95",
+    cursor: "pointer",
+    textAlign: "left",
+    padding: "15px",
+    marginBottom: "10px",
+    borderRadius: "20px",
+    fontWeight: 800,
+  },
+
+  topicCardActive: {
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    boxShadow: "0 14px 28px rgba(124,58,237,0.22)",
+  },
+
+  topicTitleRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "10px",
+    alignItems: "flex-start",
+  },
+
+  topicMeta: {
+    fontSize: "0.82rem",
+    opacity: 0.78,
+    marginTop: "10px",
+  },
+
+  topicActions: {
+    display: "flex",
+    gap: "8px",
+    marginTop: "12px",
+    flexWrap: "wrap",
+  },
+
+  countBadge: {
+    background: "rgba(255,255,255,0.22)",
+    color: "inherit",
+    borderRadius: "999px",
+    padding: "4px 9px",
+    fontSize: "0.75rem",
+    flexShrink: 0,
+  },
+
+  addTopicBtn: {
+    width: "100%",
+    marginTop: "14px",
+    padding: "13px",
+    border: "none",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  addBtn: {
+    width: "100%",
+    marginTop: "10px",
+    padding: "13px",
+    border: "1px solid rgba(124,58,237,0.22)",
+    borderRadius: "999px",
+    background: "#f3e8ff",
+    color: "#6d28d9",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  mainArea: {
+    minWidth: 0,
+    padding: "34px",
+    borderRadius: "34px",
+    background: "rgba(255,255,255,0.78)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 18px 45px rgba(76,29,149,0.08)",
+  },
+
+  topBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "16px",
+    marginBottom: "28px",
+    flexWrap: "wrap",
+  },
+
+  title: {
+    margin: 0,
+    fontSize: "clamp(2rem,4vw,3.3rem)",
+    color: "#241039",
+    letterSpacing: "-0.05em",
+  },
+
+  subtitle: {
+    marginTop: "8px",
+    color: "#7c6a92",
+    fontWeight: 700,
+  },
+
+  primaryBtn: {
+    padding: "13px 22px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    border: "none",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+    boxShadow: "0 14px 28px rgba(124,58,237,0.22)",
+  },
+
+  emptyCard: {
+    background: "white",
+    border: "1px solid rgba(124,58,237,0.14)",
+    borderRadius: "28px",
+    padding: "55px 20px",
+    textAlign: "center",
+    color: "#7c6a92",
+  },
+
+  quizCard: {
+    background: "white",
+    borderRadius: "30px",
+    padding: "28px",
+    border: "1px solid rgba(124,58,237,0.12)",
+    boxShadow: "0 16px 35px rgba(76,29,149,0.08)",
+  },
+
+  progressText: {
+    color: "#7c6a92",
+    fontSize: "0.95rem",
+    marginBottom: "10px",
+    fontWeight: 800,
+  },
+
+  progressBar: {
+    background: "#f3e8ff",
+    borderRadius: "999px",
+    height: "10px",
+    marginBottom: "24px",
+    overflow: "hidden",
+  },
+
+  progressFill: {
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    height: "10px",
+    borderRadius: "999px",
+    transition: "width 0.3s",
+  },
+
+  questionHeaderRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "16px",
+    flexWrap: "wrap",
+  },
+
+  questionNo: {
+    margin: "0 0 16px",
+    color: "#7c3aed",
+    fontSize: "1.2rem",
+  },
+
+  questionImageWrap: {
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "24px",
+  },
+
+  questionImage: {
+    maxWidth: "560px",
+    width: "100%",
+    maxHeight: "340px",
+    objectFit: "contain",
+    borderRadius: "24px",
+    border: "1px solid rgba(124,58,237,0.14)",
+    background: "#faf7ff",
+  },
+
+  question: {
+    fontSize: "clamp(1.4rem,3vw,2rem)",
+    lineHeight: 1.45,
+    margin: "26px 0",
+    color: "#241039",
+    fontWeight: 800,
+  },
+
+  options: {
+    display: "grid",
+    gap: "14px",
+    marginBottom: "24px",
+  },
+
+  option: {
+    padding: "16px 18px",
+    borderRadius: "20px",
+    border: "1px solid rgba(124,58,237,0.16)",
+    background: "#faf7ff",
+    color: "#241039",
+    fontSize: "1rem",
+    cursor: "pointer",
+    textAlign: "left",
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    fontWeight: 800,
+  },
+
+  correct: {
+    background: "#dcfce7",
+    border: "2px solid #22c55e",
+    color: "#166534",
+  },
+
+  wrong: {
+    background: "#fee2e2",
+    border: "2px solid #ef4444",
+    color: "#991b1b",
+  },
+
+  dimmed: {
+    opacity: 0.55,
+  },
+
+  optionLetter: {
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    borderRadius: "50%",
+    width: "34px",
+    height: "34px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.9rem",
+    fontWeight: 900,
+    flexShrink: 0,
+  },
+
+  nextBtn: {
+    minWidth: "220px",
+    float: "right",
+    padding: "14px 20px",
+    background: "#22c55e",
+    border: "none",
+    color: "white",
+    borderRadius: "999px",
+    fontSize: "1rem",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  cardActions: {
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+  },
+
+  editBtn: {
+    padding: "8px 13px",
+    background: "#e0f2fe",
+    color: "#0369a1",
+    border: "none",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  deleteBtn: {
+    padding: "8px 13px",
+    background: "#fee2e2",
+    color: "#991b1b",
+    border: "none",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  blueBtn: {
+    padding: "8px 13px",
+    background: "#e0f2fe",
+    color: "#0369a1",
+    border: "none",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  redBtn: {
+    padding: "8px 13px",
+    background: "#fee2e2",
+    color: "#991b1b",
+    border: "none",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  resultCard: {
+    background: "white",
+    borderRadius: "30px",
+    padding: "50px 24px",
+    border: "1px solid rgba(124,58,237,0.14)",
+    textAlign: "center",
+    maxWidth: "720px",
+    margin: "0 auto",
+    boxShadow: "0 16px 35px rgba(76,29,149,0.08)",
+  },
+
+  resultEmoji: {
+    fontSize: "4rem",
+    marginBottom: "16px",
+  },
+
+  resultTitle: {
+    color: "#241039",
+    fontSize: "2rem",
+    marginBottom: "24px",
+  },
+
+  scoreCircle: {
+    width: "140px",
+    height: "140px",
+    borderRadius: "50%",
+    background: "#f3e8ff",
+    border: "5px solid #7c3aed",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 24px",
+  },
+
+  scoreNumber: {
+    fontSize: "2.8rem",
+    fontWeight: 900,
+    color: "#7c3aed",
+  },
+
+  scoreTotal: {
+    fontSize: "1.2rem",
+    color: "#7c6a92",
+  },
+
+  resultMessage: {
+    fontSize: "1.1rem",
+    marginBottom: "28px",
+    color: "#6b5a80",
+    fontWeight: 700,
+  },
+
+  restartBtn: {
+    width: "100%",
+    padding: "14px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    border: "none",
+    color: "white",
+    borderRadius: "999px",
+    fontSize: "1rem",
+    cursor: "pointer",
+    marginBottom: "12px",
+    fontWeight: 900,
+  },
+
+  homeBtn: {
+    width: "100%",
+    padding: "14px",
+    background: "white",
+    border: "1px solid rgba(124,58,237,0.22)",
+    color: "#7c3aed",
+    borderRadius: "999px",
+    fontSize: "1rem",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(18,10,35,0.78)",
+    backdropFilter: "blur(10px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+    padding: "20px",
+  },
+
+  modalCard: {
+    width: "min(760px,95vw)",
+    maxHeight: "92vh",
+    overflowY: "auto",
+    background: "white",
+    borderRadius: "30px",
+    padding: "28px",
+    border: "1px solid rgba(124,58,237,0.18)",
+    boxShadow: "0 35px 90px rgba(0,0,0,0.35)",
+  },
+
+  smallModalCard: {
+    width: "min(460px,95vw)",
+    background: "white",
+    borderRadius: "30px",
+    padding: "28px",
+    border: "1px solid rgba(124,58,237,0.18)",
+    boxShadow: "0 35px 90px rgba(0,0,0,0.35)",
+  },
+
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "18px",
+  },
+
+  modalTitle: {
+    margin: 0,
+    color: "#241039",
+    fontSize: "1.5rem",
+  },
+
+  closeBtn: {
+    background: "#f3e8ff",
+    border: "none",
+    width: "40px",
+    height: "40px",
+    borderRadius: "50%",
+    fontSize: "1.5rem",
+    cursor: "pointer",
+    color: "#7c3aed",
+    fontWeight: 900,
+  },
+
+  label: {
+    display: "block",
+    fontWeight: 900,
+    margin: "13px 0 6px",
+    color: "#6d28d9",
+  },
+
+  input: {
+    width: "100%",
+    padding: "14px 16px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    borderRadius: "16px",
+    fontSize: "1rem",
+    boxSizing: "border-box",
+    background: "#faf7ff",
+    outline: "none",
+  },
+
+  textarea: {
+    width: "100%",
+    minHeight: "100px",
+    padding: "14px 16px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    borderRadius: "16px",
+    fontSize: "1rem",
+    boxSizing: "border-box",
+    resize: "vertical",
+    background: "#faf7ff",
+    outline: "none",
+  },
+
+  previewImage: {
+    width: "100%",
+    maxHeight: "240px",
+    objectFit: "contain",
+    border: "1px solid rgba(124,58,237,0.14)",
+    borderRadius: "18px",
+    marginTop: "12px",
+    background: "#faf7ff",
+  },
+
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "14px",
+  },
+
+  modalActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "12px",
+    marginTop: "22px",
+    flexWrap: "wrap",
+  },
+
+  cancelBtn: {
+    padding: "12px 18px",
+    background: "white",
+    border: "1px solid rgba(124,58,237,0.22)",
+    color: "#7c3aed",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  saveBtn: {
+    padding: "12px 18px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    border: "none",
+    color: "white",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
 };

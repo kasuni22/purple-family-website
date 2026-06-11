@@ -20,14 +20,21 @@ export default function Wallpapers() {
       try {
         const userRes = await API.get("/auth/me");
         setCurrentUser(userRes.data);
+
         const wallpapersRes = await API.get("/wallpapers");
-        setWallpapers(wallpapersRes.data);
+        setWallpapers(wallpapersRes.data || []);
       } catch {
         navigate("/login");
       }
     };
+
     loadData();
   }, [navigate]);
+
+  const getFileUrl = (path) => {
+    if (!path) return "";
+    return path.startsWith("http") ? path : `http://127.0.0.1:8000/${path}`;
+  };
 
   const formatDate = (value) => {
     if (!value) return "";
@@ -39,14 +46,21 @@ export default function Wallpapers() {
   };
 
   const updateWallpaperState = (wallpaperId, changes) => {
-    setWallpapers(prev => prev.map(w => w.id === wallpaperId ? { ...w, ...changes } : w));
-    setSelectedWallpaper(prev => prev && prev.id === wallpaperId ? { ...prev, ...changes } : prev);
+    setWallpapers((prev) =>
+      prev.map((w) => (w.id === wallpaperId ? { ...w, ...changes } : w))
+    );
+
+    setSelectedWallpaper((prev) =>
+      prev && prev.id === wallpaperId ? { ...prev, ...changes } : prev
+    );
   };
 
   const handleLike = async (wallpaper, e) => {
     e.stopPropagation();
+
     try {
       await API.post(`/wallpapers/${wallpaper.id}/like`);
+
       updateWallpaperState(wallpaper.id, {
         liked_by_current_user: true,
         likes_count: (wallpaper.likes_count || 0) + 1,
@@ -58,8 +72,10 @@ export default function Wallpapers() {
 
   const handleUnlike = async (wallpaper, e) => {
     e.stopPropagation();
+
     try {
       await API.delete(`/wallpapers/${wallpaper.id}/like`);
+
       updateWallpaperState(wallpaper.id, {
         liked_by_current_user: false,
         likes_count: Math.max((wallpaper.likes_count || 1) - 1, 0),
@@ -71,10 +87,14 @@ export default function Wallpapers() {
 
   const handleDelete = async (wallpaper, e) => {
     e.stopPropagation();
-    if (!window.confirm(`Delete wallpaper \"${wallpaper.title}\"?`)) return;
+
+    if (!window.confirm(`Delete wallpaper "${wallpaper.title}"?`)) return;
+
     try {
       await API.delete(`/wallpapers/${wallpaper.id}`);
-      setWallpapers(prev => prev.filter(w => w.id !== wallpaper.id));
+
+      setWallpapers((prev) => prev.filter((w) => w.id !== wallpaper.id));
+
       if (selectedWallpaper?.id === wallpaper.id) {
         setSelectedWallpaper(null);
       }
@@ -85,17 +105,19 @@ export default function Wallpapers() {
 
   const handleUpload = async (e) => {
     e.preventDefault();
+
     if (!form.file) return alert("Please select a file!");
+
     const formData = new FormData();
     formData.append("title", form.title);
     formData.append("member", form.member);
     formData.append("file", form.file);
+
     try {
       const res = await API.post("/wallpapers", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
+
       setWallpapers([res.data, ...wallpapers]);
       setForm({ title: "", member: "", file: null });
       setUploading(false);
@@ -105,141 +127,235 @@ export default function Wallpapers() {
     }
   };
 
-  const filtered = filter === "All" ? wallpapers
-    : wallpapers.filter(w => w.member === filter);
-
-  const getFileUrl = (path) => {
-    if (!path) return "";
-    return path.startsWith("http") ? path : `http://127.0.0.1:8000/${path}`;
-  };
+  const filtered =
+    filter === "All" ? wallpapers : wallpapers.filter((w) => w.member === filter);
 
   const handleDownload = (wallpaper) => {
     window.location.href = `http://127.0.0.1:8000/wallpapers/${wallpaper.id}/download`;
   };
 
   return (
-    <div style={styles.container}>
+    <>
       <Navbar />
 
-      <div style={styles.content}>
-        <div style={styles.headerControls}>
-          <h2 style={styles.title}>🖼️ BTS Wallpaper Gallery</h2>
+      <main style={styles.page}>
+        <section style={styles.hero}>
+          <div>
+            <div style={styles.badge}>🖼️ BTS Wallpaper Gallery</div>
+            <h1 style={styles.title}>Collect beautiful purple moments</h1>
+            <p style={styles.subtitle}>
+              Upload, preview, like and download BTS wallpapers shared by your
+              Purple Family.
+            </p>
+          </div>
+
+          <div style={styles.heroCard}>
+            <span style={styles.heroIcon}>💜</span>
+            <h2>{wallpapers.length}</h2>
+            <p>Total Wallpapers</p>
+          </div>
+        </section>
+
+        <section style={styles.toolbar}>
+          <div style={styles.filters}>
+            {members.map((m) => (
+              <button
+                key={m}
+                onClick={() => setFilter(m)}
+                style={{
+                  ...styles.filterBtn,
+                  ...(filter === m ? styles.activeFilter : {}),
+                }}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+
           {currentUser?.is_admin && (
-            <button onClick={() => setUploading(!uploading)} style={styles.uploadBtn}>
+            <button
+              onClick={() => setUploading(!uploading)}
+              style={styles.uploadBtn}
+            >
               {uploading ? "Cancel" : "⬆️ Upload Wallpaper"}
             </button>
           )}
-        </div>
+        </section>
 
-        {/* Upload Form - Admin Only */}
         {currentUser?.is_admin && uploading && (
-          <div style={styles.uploadCard}>
+          <section style={styles.uploadCard}>
             <h3 style={styles.cardTitle}>Upload New Wallpaper</h3>
+
             <form onSubmit={handleUpload} style={styles.form}>
-              <input style={styles.input} placeholder="Wallpaper Title"
+              <input
+                style={styles.input}
+                placeholder="Wallpaper title"
                 value={form.title}
-                onChange={e => setForm({ ...form, title: e.target.value })} required />
-              <select style={styles.input}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                required
+              />
+
+              <select
+                style={styles.input}
                 value={form.member}
-                onChange={e => setForm({ ...form, member: e.target.value })}>
+                onChange={(e) => setForm({ ...form, member: e.target.value })}
+              >
                 <option value="">Select Member</option>
-                {members.slice(1).map(m => (
-                  <option key={m} value={m}>{m}</option>
+                {members.slice(1).map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
                 ))}
               </select>
-              <input type="file" accept="image/*" style={styles.fileInput}
-                onChange={e => setForm({ ...form, file: e.target.files[0] })} required />
-              <button style={styles.button} type="submit">Upload 💜</button>
+
+              <input
+                type="file"
+                accept="image/*"
+                style={styles.fileInput}
+                onChange={(e) => setForm({ ...form, file: e.target.files[0] })}
+                required
+              />
+
+              <button style={styles.button} type="submit">
+                Upload Wallpaper 💜
+              </button>
             </form>
-          </div>
+          </section>
         )}
 
-        {/* Filter Buttons */}
-        <div style={styles.filters}>
-          {members.map(m => (
-            <button key={m} onClick={() => setFilter(m)}
-              style={{
-                ...styles.filterBtn,
-                background: filter === m ? "#7c3aed" : "transparent",
-                border: filter === m ? "none" : "1px solid #7c3aed"
-              }}>
-              {m}
-            </button>
-          ))}
-        </div>
-
-        {/* Wallpaper Grid */}
         {filtered.length === 0 ? (
-          <div style={styles.emptyCard}>
-            <p style={{ color: "#ccc" }}>No wallpapers yet! 💜</p>
-            <p style={{ color: "#888", fontSize: "0.9rem" }}>Be the first ARMY to upload a wallpaper! 💜</p>
-          </div>
+          <section style={styles.emptyCard}>
+            <h3>No wallpapers yet 💜</h3>
+            <p>Upload a beautiful BTS wallpaper to start the gallery.</p>
+          </section>
         ) : (
-          <div style={styles.grid}>
-            {filtered.map(w => (
-              <div key={w.id} style={styles.card} onClick={() => setSelectedWallpaper(w)}>
-                <img
-                  src={getFileUrl(w.file_path)}
-                  alt={w.title}
-                  style={styles.image}
-                />
+          <section style={styles.grid}>
+            {filtered.map((w) => (
+              <article
+                key={w.id}
+                style={styles.card}
+                onClick={() => setSelectedWallpaper(w)}
+              >
+                <div style={styles.imageWrap}>
+                  <img
+                    src={getFileUrl(w.file_path)}
+                    alt={w.title}
+                    style={styles.image}
+                  />
+
+                  {w.member && <span style={styles.memberBadge}>{w.member}</span>}
+                </div>
+
                 <div style={styles.cardInfo}>
-                  <h3 style={styles.cardTitle}>{w.title}</h3>
-                  {w.member && <p style={styles.member}>💜 {w.member}</p>}
-                  <p style={styles.meta}>👤 {w.uploaded_by_username || "Unknown"} · 📅 {formatDate(w.created_at)}</p>
-                  <p style={styles.likes}>💜 {w.likes_count || 0} likes</p>
+                  <h3 style={styles.wallTitle}>{w.title}</h3>
+
+                  <p style={styles.meta}>
+                    👤 {w.uploaded_by_username || "Unknown"} · 📅{" "}
+                    {formatDate(w.created_at)}
+                  </p>
+
                   <div style={styles.actionRow}>
                     <button
-                      onClick={(e) => w.liked_by_current_user ? handleUnlike(w, e) : handleLike(w, e)}
-                      style={styles.likeBtn}
+                      onClick={(e) =>
+                        w.liked_by_current_user
+                          ? handleUnlike(w, e)
+                          : handleLike(w, e)
+                      }
+                      style={{
+                        ...styles.likeBtn,
+                        ...(w.liked_by_current_user ? styles.likedBtn : {}),
+                      }}
                     >
-                      {w.liked_by_current_user ? "❤️ Liked" : "🤍 Like"}
+                      {w.liked_by_current_user ? "❤️" : "🤍"} {w.likes_count || 0}
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDownload(w); }}
-                      style={styles.downloadBtn}>
-                      ⬇️ Download
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(w);
+                      }}
+                      style={styles.downloadBtn}
+                    >
+                      ⬇️
                     </button>
+
                     {canDeleteWallpaper(w) && (
-                      <button onClick={(e) => handleDelete(w, e)} style={styles.deleteBtn}>
-                        Delete
+                      <button
+                        onClick={(e) => handleDelete(w, e)}
+                        style={styles.deleteBtn}
+                      >
+                        🗑️
                       </button>
                     )}
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
-          </div>
+          </section>
         )}
 
         {selectedWallpaper && (
-          <div style={styles.modalOverlay} onClick={() => setSelectedWallpaper(null)}>
-            <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
-              <button style={styles.closeBtn} onClick={() => setSelectedWallpaper(null)}>×</button>
-              <img src={getFileUrl(selectedWallpaper.file_path)} alt={selectedWallpaper.title}
-                style={styles.modalImage} />
+          <div
+            style={styles.modalOverlay}
+            onClick={() => setSelectedWallpaper(null)}
+          >
+            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <button
+                style={styles.closeBtn}
+                onClick={() => setSelectedWallpaper(null)}
+              >
+                ×
+              </button>
+
+              <img
+                src={getFileUrl(selectedWallpaper.file_path)}
+                alt={selectedWallpaper.title}
+                style={styles.modalImage}
+              />
+
               <div style={styles.modalInfo}>
                 <h3 style={styles.modalTitle}>{selectedWallpaper.title}</h3>
+
                 {selectedWallpaper.member && (
-                  <p style={styles.member}>💜 {selectedWallpaper.member}</p>
+                  <p style={styles.modalMember}>💜 {selectedWallpaper.member}</p>
                 )}
-                <p style={styles.meta}>👤 {selectedWallpaper.uploaded_by_username || "Unknown"} · 📅 {formatDate(selectedWallpaper.created_at)}</p>
-                <p style={styles.likes}>💜 {selectedWallpaper.likes_count || 0} likes</p>
+
+                <p style={styles.meta}>
+                  👤 {selectedWallpaper.uploaded_by_username || "Unknown"} · 📅{" "}
+                  {formatDate(selectedWallpaper.created_at)}
+                </p>
+
                 <div style={styles.modalActions}>
                   <button
-                    style={styles.likeBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      selectedWallpaper.liked_by_current_user ? handleUnlike(selectedWallpaper, e) : handleLike(selectedWallpaper, e);
+                    style={{
+                      ...styles.likeBtn,
+                      ...(selectedWallpaper.liked_by_current_user
+                        ? styles.likedBtn
+                        : {}),
                     }}
+                    onClick={(e) =>
+                      selectedWallpaper.liked_by_current_user
+                        ? handleUnlike(selectedWallpaper, e)
+                        : handleLike(selectedWallpaper, e)
+                    }
                   >
-                    {selectedWallpaper.liked_by_current_user ? "❤️ Liked" : "🤍 Like"}
+                    {selectedWallpaper.liked_by_current_user ? "❤️ Liked" : "🤍 Like"}{" "}
+                    {selectedWallpaper.likes_count || 0}
                   </button>
-                  <button style={styles.downloadBtn} onClick={() => handleDownload(selectedWallpaper)}>
+
+                  <button
+                    style={styles.modalDownloadBtn}
+                    onClick={() => handleDownload(selectedWallpaper)}
+                  >
                     ⬇️ Download
                   </button>
+
                   {canDeleteWallpaper(selectedWallpaper) && (
-                    <button style={styles.deleteBtn} onClick={(e) => handleDelete(selectedWallpaper, e)}>
-                      Delete
+                    <button
+                      style={styles.deleteBtn}
+                      onClick={(e) => handleDelete(selectedWallpaper, e)}
+                    >
+                      🗑️ Delete
                     </button>
                   )}
                 </div>
@@ -247,169 +363,346 @@ export default function Wallpapers() {
             </div>
           </div>
         )}
-      </div>
+      </main>
 
       <Footer />
-    </div>
+    </>
   );
 }
 
 const styles = {
-  container: { minHeight: "100vh", background: "#f8f5ff", display: "flex", flexDirection: "column" },
-  content: {
+  page: {
     width: "100%",
-    padding: "2rem 3rem",
-    flex: 1,
-    boxSizing: "border-box"
+    padding: "40px clamp(16px,4vw,64px)",
   },
-  headerControls: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" },
-  title: { color: "#2d0a4e", fontSize: "2rem", margin: 0 },
-  uploadBtn: {
-    padding: "8px 16px",
-    background: "#7c3aed",
-    border: "none",
-    color: "white",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
-  uploadCard: {
-    background: "#ffffff",
-    borderRadius: "12px",
-    padding: "1.5rem",
-    marginBottom: "1.5rem",
-    border: "1px solid #d4b8ff",
-  },
-  form: { display: "flex", flexDirection: "column", gap: "1rem" },
-  input: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #d4b8ff",
-    background: "#f0e6ff",
-    color: "#2d0a4e",
-    fontSize: "1rem",
-  },
-  fileInput: { color: "#2d0a4e" },
-  button: {
-    padding: "12px",
-    borderRadius: "8px",
-    background: "#7c3aed",
-    color: "white",
-    fontSize: "1rem",
-    cursor: "pointer",
-    border: "none",
-  },
-  filters: { display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.5rem" },
-  filterBtn: {
-    padding: "6px 16px",
-    borderRadius: "20px",
-    color: "#2d0a4e",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-  },
-  emptyCard: {
-    background: "#ffffff",
-    borderRadius: "12px",
-    padding: "3rem",
-    textAlign: "center",
-    border: "1px solid #d4b8ff",
-  },
-  grid: {
+
+  hero: {
+    width: "min(1280px,100%)",
+    margin: "0 auto 24px",
+    padding: "50px",
+    borderRadius: "36px",
+    background:
+      "linear-gradient(135deg,rgba(255,255,255,0.92),rgba(243,232,255,0.9))",
+    border: "1px solid rgba(124,58,237,0.16)",
+    boxShadow: "0 25px 70px rgba(76,29,149,0.14)",
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-    gap: "1.5rem",
-    width: "100%"
+    gridTemplateColumns: "1fr 250px",
+    gap: "24px",
+    alignItems: "center",
   },
-  card: {
-    background: "#ffffff",
-    borderRadius: "12px",
-    overflow: "hidden",
-    border: "1px solid #d4b8ff",
+
+  badge: {
+    display: "inline-flex",
+    padding: "10px 16px",
+    borderRadius: "999px",
+    background: "rgba(124,58,237,0.1)",
+    color: "#6d28d9",
+    fontWeight: 900,
+    marginBottom: "18px",
+  },
+
+  title: {
+    fontSize: "clamp(2.3rem,5vw,4.6rem)",
+    lineHeight: 0.95,
+    letterSpacing: "-0.06em",
+    color: "#241039",
+    marginBottom: "18px",
+  },
+
+  subtitle: {
+    color: "#6b5a80",
+    lineHeight: 1.8,
+    maxWidth: "680px",
+  },
+
+  heroCard: {
+    minHeight: "220px",
+    borderRadius: "30px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    display: "grid",
+    placeItems: "center",
+    textAlign: "center",
+    boxShadow: "0 20px 45px rgba(124,58,237,0.25)",
+  },
+
+  heroIcon: {
+    fontSize: "3rem",
+  },
+
+  toolbar: {
+    width: "min(1280px,100%)",
+    margin: "0 auto 24px",
+    padding: "18px",
+    borderRadius: "28px",
+    background: "rgba(255,255,255,0.75)",
+    border: "1px solid rgba(124,58,237,0.14)",
     display: "flex",
-    flexDirection: "column",
+    justifyContent: "space-between",
+    gap: "16px",
+    flexWrap: "wrap",
+  },
+
+  filters: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+  },
+
+  filterBtn: {
+    border: "1px solid rgba(124,58,237,0.22)",
+    background: "white",
+    color: "#6d28d9",
+    padding: "10px 16px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  activeFilter: {
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    boxShadow: "0 12px 24px rgba(124,58,237,0.2)",
+  },
+
+  uploadBtn: {
+    border: "none",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    padding: "12px 20px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  uploadCard: {
+    width: "min(1280px,100%)",
+    margin: "0 auto 24px",
+    padding: "26px",
+    borderRadius: "30px",
+    background: "rgba(255,255,255,0.86)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 16px 36px rgba(76,29,149,0.08)",
+  },
+
+  cardTitle: {
+    color: "#4c1d95",
+    marginBottom: "16px",
+  },
+
+  form: {
+    display: "grid",
+    gap: "14px",
+  },
+
+  input: {
+    padding: "14px 16px",
+    borderRadius: "16px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    outline: "none",
+    background: "white",
+  },
+
+  fileInput: {
+    color: "#4c1d95",
+    fontWeight: 800,
+  },
+
+  button: {
+    border: "none",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    padding: "14px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  emptyCard: {
+    width: "min(1280px,100%)",
+    margin: "0 auto",
+    padding: "60px 20px",
+    textAlign: "center",
+    borderRadius: "30px",
+    background: "white",
+    color: "#7c6a92",
+    border: "1px solid rgba(124,58,237,0.14)",
+  },
+
+  grid: {
+    width: "min(1280px,100%)",
+    margin: "0 auto",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))",
+    gap: "22px",
+  },
+
+  card: {
+    overflow: "hidden",
+    borderRadius: "30px",
+    background: "rgba(255,255,255,0.9)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 18px 42px rgba(76,29,149,0.1)",
     cursor: "pointer",
   },
-  image: { width: "100%", height: "280px", objectFit: "contain", background: "#f8f5ff" },
-  cardInfo: { padding: "1rem" },
-  cardTitle: { color: "#2d0a4e", margin: "0 0 0.5rem" },
-  member: { color: "#888888", fontSize: "0.9rem", margin: "0 0 0.5rem" },
-  meta: { color: "#666", fontSize: "0.85rem", margin: "0 0 0.5rem" },
-  likes: { color: "#7c3aed", fontSize: "0.9rem", margin: "0 0 1rem", fontWeight: 600 },
-  actionRow: { display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center", marginTop: "0.75rem" },
-  likeBtn: {
-    padding: "8px 14px",
-    borderRadius: "10px",
+
+  imageWrap: {
+    position: "relative",
+    height: "320px",
     background: "#f3e8ff",
-    color: "#7c3aed",
-    border: "1px solid #7c3aed",
-    cursor: "pointer",
-    fontWeight: 600,
   },
+
+  image: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+
+  memberBadge: {
+    position: "absolute",
+    left: "14px",
+    top: "14px",
+    padding: "8px 13px",
+    borderRadius: "999px",
+    background: "rgba(255,255,255,0.86)",
+    color: "#6d28d9",
+    fontWeight: 900,
+    backdropFilter: "blur(12px)",
+  },
+
+  cardInfo: {
+    padding: "18px",
+  },
+
+  wallTitle: {
+    color: "#241039",
+    marginBottom: "8px",
+  },
+
+  meta: {
+    color: "#7c6a92",
+    fontSize: "0.86rem",
+    lineHeight: 1.5,
+  },
+
+  actionRow: {
+    display: "flex",
+    gap: "9px",
+    flexWrap: "wrap",
+    marginTop: "15px",
+  },
+
+  likeBtn: {
+    border: "1px solid rgba(124,58,237,0.22)",
+    background: "#f3e8ff",
+    color: "#6d28d9",
+    padding: "9px 14px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  likedBtn: {
+    background: "#fdf2f8",
+    color: "#db2777",
+    border: "1px solid rgba(236,72,153,0.28)",
+  },
+
+  downloadBtn: {
+    border: "none",
+    background: "#241039",
+    color: "white",
+    padding: "9px 14px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
   deleteBtn: {
-    padding: "8px 14px",
-    borderRadius: "10px",
+    border: "1px solid #fecaca",
     background: "#fee2e2",
     color: "#991b1b",
-    border: "1px solid #fca5a5",
+    padding: "9px 14px",
+    borderRadius: "999px",
     cursor: "pointer",
-    fontWeight: 600,
+    fontWeight: 900,
   },
-  modalActions: { display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center", marginTop: "1rem" },
-  downloadBtn: {
-    display: "inline-block",
-    padding: "6px 16px",
-    background: "#7c3aed",
-    color: "white",
-    borderRadius: "6px",
-    textDecoration: "none",
-    fontSize: "0.9rem",
-  },
+
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(45, 10, 78, 0.75)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    background: "rgba(18,10,35,0.78)",
+    backdropFilter: "blur(10px)",
+    display: "grid",
+    placeItems: "center",
     zIndex: 1000,
-    padding: "2rem",
+    padding: "22px",
   },
+
   modalContent: {
     position: "relative",
-    background: "white",
-    borderRadius: "16px",
-    padding: "1rem",
-    maxWidth: "900px",
-    width: "100%",
-    maxHeight: "90vh",
+    width: "min(980px,100%)",
+    maxHeight: "92vh",
     overflow: "auto",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+    borderRadius: "34px",
+    background: "white",
+    boxShadow: "0 35px 90px rgba(0,0,0,0.35)",
+    padding: "18px",
   },
+
+  closeBtn: {
+    position: "absolute",
+    top: "22px",
+    right: "22px",
+    width: "42px",
+    height: "42px",
+    borderRadius: "50%",
+    border: "none",
+    background: "rgba(36,16,57,0.88)",
+    color: "white",
+    fontSize: "1.4rem",
+    cursor: "pointer",
+    zIndex: 2,
+  },
+
   modalImage: {
     width: "100%",
     maxHeight: "70vh",
     objectFit: "contain",
-    borderRadius: "12px",
-    background: "#f8f5ff",
+    borderRadius: "24px",
+    background: "#f3e8ff",
   },
+
   modalInfo: {
-    padding: "1rem 0 0",
+    padding: "18px 8px 8px",
   },
+
   modalTitle: {
-    color: "#2d0a4e",
-    margin: "0 0 0.5rem",
+    color: "#241039",
+    fontSize: "1.7rem",
+    marginBottom: "8px",
   },
-  closeBtn: {
-    position: "absolute",
-    top: "12px",
-    right: "12px",
-    background: "#7c3aed",
-    color: "white",
+
+  modalMember: {
+    color: "#7c3aed",
+    fontWeight: 900,
+    marginBottom: "8px",
+  },
+
+  modalActions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginTop: "16px",
+  },
+
+  modalDownloadBtn: {
     border: "none",
-    width: "36px",
-    height: "36px",
-    borderRadius: "50%",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    padding: "10px 16px",
+    borderRadius: "999px",
     cursor: "pointer",
-    fontSize: "1rem",
-    zIndex: 2,
-  }
+    fontWeight: 900,
+  },
 };

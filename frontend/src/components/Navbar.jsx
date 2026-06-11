@@ -21,7 +21,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login");
+    navigate("/");
   };
 
   const profileImage = user?.profile_picture
