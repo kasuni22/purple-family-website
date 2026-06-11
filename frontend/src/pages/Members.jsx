@@ -207,9 +207,24 @@ export default function Members() {
                 {filtered.map(member => (
                   <div key={member.id} style={styles.card}>
                     <div style={styles.avatar}>
-                      {member.username[0].toUpperCase()}
+                      {member.profile_picture ? (
+                        <img
+                          src={`http://127.0.0.1:8000/${member.profile_picture}`}
+                          alt={member.nickname || member.username}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "50%",
+                            objectFit: "cover"
+                          }}
+                        />
+                      ) : (
+                        (member.nickname || member.username)[0].toUpperCase()
+                      )}
                     </div>
-                    <h3 style={styles.username}>{member.username}</h3>
+                    <h3 style={styles.username}>
+                      {member.nickname || member.username}
+                    </h3>
                     {member.country && (
                       <p style={styles.country}>🌍 {member.country}</p>
                     )}

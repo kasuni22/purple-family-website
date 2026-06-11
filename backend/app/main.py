@@ -435,13 +435,15 @@ def get_members(db: Session = Depends(get_db)):
     users = db.query(models.User).order_by(models.User.created_at.desc()).all()
     return [
         {
-            "id": u.id,
-            "username": u.username,
-            "country": u.country,
-            "bias": u.bias,
-            "is_admin": u.is_admin,
-            "created_at": u.created_at
-        }
+    "id": u.id,
+    "username": u.username,
+    "nickname": u.nickname,
+    "profile_picture": u.profile_picture,
+    "country": u.country,
+    "bias": u.bias,
+    "is_admin": u.is_admin,
+    "created_at": u.created_at,
+}
         for u in users
     ]
 
