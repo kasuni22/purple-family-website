@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.svg";
 import btsHero from "../assets/bts-hero.jpeg";
+import Footer from "../components/Footer";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -9,11 +10,27 @@ export default function Landing() {
     document.getElementById("features").scrollIntoView({ behavior: "smooth" });
   };
 
+  const features = [
+    { icon: "📢", title: "Family Board", desc: "Share updates, thoughts and love with your purple family." },
+    { icon: "🎂", title: "Birthday Calendar", desc: "Celebrate every ARMY birthday beautifully." },
+    { icon: "🖼️", title: "Wallpaper Gallery", desc: "Upload, like and download BTS wallpapers." },
+    { icon: "👥", title: "OT7 Members", desc: "Learn and share thoughts about all 7 members." },
+    { icon: "🎵", title: "Sing-Along", desc: "Enjoy BTS lyrics, albums and YouTube videos." },
+    { icon: "🎮", title: "BTS Quiz", desc: "Create topics and play BTS quiz games." },
+  ];
+
   return (
     <div style={styles.container}>
       {/* Navbar */}
       <nav style={styles.nav}>
-        <img src={logo} alt="Purple Family" style={{ height: "50px" }} />
+        <div style={styles.brand}>
+          <img src={logo} alt="Purple Family" style={styles.logo} />
+          <div>
+            <strong style={styles.brandTitle}>Purple Family</strong>
+            <p style={styles.brandSub}>SL BTS ARMY Community</p>
+          </div>
+        </div>
+
         <div style={styles.navButtons}>
           <button onClick={() => navigate("/login")} style={styles.loginBtn}>Login</button>
           <button onClick={() => navigate("/register")} style={styles.joinBtn}>Join Us 💜</button>
@@ -31,23 +48,24 @@ export default function Landing() {
         <div style={styles.heroContent}>
           <div style={styles.badge}>🇱🇰 Sri Lankan ARMY Community</div>
           <h1 style={styles.heroTitle}>Welcome to<br />Purple Family 💜</h1>
-          <p style={styles.heroSubtitle}>
-            A safe space for Sri Lankan BTS ARMY to connect,
-            share, celebrate birthdays, and spread purple love!
+          <p style={styles.subtitle}>
+            Connect with Sri Lankan ARMYs, celebrate birthdays, share BTS
+            wallpapers, sing along, play quizzes and spread purple love.
           </p>
-          <div style={styles.heroButtons}>
-            <button onClick={() => navigate("/register")} style={styles.ctaBtn}>
+
+          <div style={styles.actions}>
+            <button onClick={() => navigate("/register")} style={styles.primaryBtn}>
               Join the Family 💜
             </button>
+
             <button onClick={() => navigate("/login")} style={styles.secondaryBtn}>
-              I'm already ARMY
+              I&apos;m already ARMY
             </button>
           </div>
-          {/* Scroll Button */}
-          <div style={styles.scrollBtn} onClick={scrollToFeatures}>
-            <span style={styles.scrollText}>Explore more</span>
-            <div style={styles.scrollArrow}>↓</div>
-          </div>
+
+          <button onClick={scrollToFeatures} style={styles.exploreBtn}>
+            Explore more ↓
+          </button>
         </div>
 
         <div style={styles.heroArt}>
@@ -59,37 +77,41 @@ export default function Landing() {
       </div>
 
       {/* Features Section */}
-      <div id="features" style={styles.features}>
-        <h2 style={styles.featuresTitle}>Everything for ARMY 💜</h2>
-        <div style={styles.featuresGrid}>
-          {[
-            { icon: "📢", title: "Family Board", desc: "Share updates, thoughts and love with your purple family", path: "/dashboard" },
-            { icon: "🎂", title: "Birthday Calendar", desc: "Never miss an ARMY birthday! Celebrate together 💜", path: "/register" },
-            { icon: "🖼️", title: "Wallpaper Gallery", desc: "Download beautiful BTS wallpapers for free", path: "/register" },
-            { icon: "👥", title: "Know About OT7", desc: "Learn about all 7 BTS members and share your thoughts", path: "/register" },
-            { icon: "🎵", title: "Sing-Along", desc: "Sing your heart out with BTS lyrics and YouTube videos", path: "/register" },
-            { icon: "🎮", title: "BTS Quiz", desc: "Test your BTS knowledge and challenge your ARMY friends!", path: "/register" },
-          ].map((f, i) => (
-            <div key={i} style={styles.featureCard}
-              onClick={() => navigate(f.path)}>
-              <div style={styles.featureIcon}>{f.icon}</div>
-              <h3 style={styles.featureTitle}>{f.title}</h3>
-              <p style={styles.featureDesc}>{f.desc}</p>
-              <div style={styles.featureLink}>Explore →</div>
+      <section id="features" style={styles.section}>
+        <div style={styles.sectionHeader}>
+          <p style={styles.kicker}>What you can do</p>
+          <h2 style={styles.sectionTitle}>Everything for ARMY 💜</h2>
+          <p style={styles.sectionDesc}>
+            A clean, fun and modern space for your whole Purple Family.
+          </p>
+        </div>
+
+        <div style={styles.grid}>
+          {features.map((item) => (
+            <div key={item.title} style={styles.featureCard}>
+              <div style={styles.featureIcon}>{item.icon}</div>
+              <h3 style={styles.featureTitle}>{item.title}</h3>
+              <p style={styles.featureDesc}>{item.desc}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* BTS Members Section */}
-      <div style={styles.members}>
-        <h2 style={styles.featuresTitle}>Who's your bias? 💜</h2>
+      <section style={styles.biasSection}>
+        <p style={styles.kicker}>OT7</p>
+        <h2 style={styles.sectionTitle}>Who&apos;s your bias?</h2>
+
         <div style={styles.biasGrid}>
-          {["Jin", "Suga", "J-Hope", "RM", "Jimin", "Taehyung", "Jungkook"].map((name, i) => (
-            <div key={i} style={styles.biasPill}>💜 {name}</div>
-          ))}
+          {["RM", "Jin", "SUGA", "j-hope", "Jimin", "V", "Jung Kook"].map(
+            (name) => (
+              <span key={name} style={styles.biasPill}>
+                💜 {name}
+              </span>
+            )
+          )}
         </div>
-      </div>
+      </section>
 
       {/* WhatsApp Community Section */}
       <div style={styles.whatsapp}>
@@ -117,35 +139,18 @@ export default function Landing() {
       </div>
 
       {/* CTA Section */}
-      <div style={styles.cta}>
-        <h2 style={styles.ctaTitle}>Ready to join the Purple Family? 💜</h2>
-        <p style={styles.ctaDesc}>Connect with Sri Lankan ARMYs who love BTS just as much as you do!</p>
-        <button onClick={() => navigate("/register")} style={styles.ctaBigBtn}>
+      <section style={styles.cta}>
+        <h2 style={styles.ctaTitle}>Ready to join Purple Family?</h2>
+        <p style={styles.ctaText}>
+          Create your profile and become part of our SL BTS ARMY home.
+        </p>
+        <button onClick={() => navigate("/register")} style={styles.ctaButton}>
           Join for Free 💜
         </button>
-      </div>
+      </section>
 
       {/* Footer */}
-      <footer style={styles.footer}>
-        <div style={styles.footerContent}>
-          <div style={styles.footerLeft}>
-            <img src={logo} alt="Purple Family" style={{ height: "40px", marginBottom: "0.5rem" }} />
-            <p style={styles.footerDesc}>A safe space for Sri Lankan BTS ARMY 💜</p>
-          </div>
-          <div style={styles.footerMiddle}>
-            <p style={styles.footerLink} onClick={() => navigate("/register")}>Join Us</p>
-            <p style={styles.footerLink} onClick={() => navigate("/login")}>Login</p>
-          </div>
-          <div style={styles.footerRight}>
-            <p style={styles.footerText}>Made by 💜 Kasuni Kariyawasam</p>
-            <p style={styles.footerText}>© 2026 Purple Family. All rights reserved.</p>
-            <p style={styles.footerSmall}>Built with 🐍 Python & ⚛️ React</p>
-          </div>
-        </div>
-        <div style={styles.footerBottom}>
-          <p style={styles.footerBottomText}>💜 Purple Family — Sri Lankan BTS ARMY Community 💜</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
@@ -153,19 +158,65 @@ export default function Landing() {
 const styles = {
   container: { minHeight: "100vh", background: "#f8f5ff" },
   nav: {
-    background: "white", padding: "1rem 3rem", display: "flex",
-    justifyContent: "space-between", alignItems: "center",
-    borderBottom: "2px solid #e0d0ff", position: "sticky", top: 0, zIndex: 100
+    position: "sticky",
+    top: 0,
+    zIndex: 50,
+    padding: "16px clamp(18px, 5vw, 70px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    background: "rgba(255,255,255,0.75)",
+    backdropFilter: "blur(18px)",
+    borderBottom: "1px solid rgba(124,58,237,0.14)",
   },
-  navButtons: { display: "flex", gap: "1rem" },
+
+  brand: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+  },
+
+  logo: {
+    width: "48px",
+    height: "48px",
+  },
+
+  brandTitle: {
+    color: "#4c1d95",
+    fontSize: "1.1rem",
+  },
+
+  brandSub: {
+    color: "#8b5cf6",
+    fontSize: "0.8rem",
+    fontWeight: 700,
+  },
+
+  navButtons: {
+    display: "flex",
+    gap: "12px",
+  },
+
   loginBtn: {
-    padding: "8px 20px", background: "white", border: "1px solid #7c3aed",
-    color: "#7c3aed", borderRadius: "8px", cursor: "pointer", fontSize: "1rem"
+    border: "1px solid rgba(124,58,237,0.28)",
+    background: "white",
+    color: "#6d28d9",
+    padding: "11px 22px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 800,
   },
   joinBtn: {
-    padding: "8px 20px", background: "#7c3aed", border: "none",
-    color: "white", borderRadius: "8px", cursor: "pointer", fontSize: "1rem"
+    border: "none",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    padding: "11px 22px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 800,
+    boxShadow: "0 12px 24px rgba(124,58,237,0.25)",
   },
+
   hero: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
     padding: "5rem 3rem", maxWidth: "1200px", margin: "0 auto", position: "relative"
@@ -184,43 +235,55 @@ const styles = {
     fontSize: "3.5rem", color: "#2d0a4e", lineHeight: 1.2,
     marginBottom: "1.5rem", fontWeight: "bold"
   },
-  heroSubtitle: {
-    fontSize: "1.2rem", color: "#666", marginBottom: "2rem",
-    maxWidth: "500px", lineHeight: 1.6
+  subtitle: {
+    color: "#6b5a80",
+    fontSize: "1.05rem",
+    lineHeight: 1.8,
+    maxWidth: "600px",
+    marginBottom: "30px",
   },
-  heroButtons: { display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "2rem" },
-  ctaBtn: {
-    padding: "14px 32px", background: "#7c3aed", border: "none",
-    color: "white", borderRadius: "10px", cursor: "pointer", fontSize: "1.1rem",
-    fontWeight: "bold"
+
+  actions: {
+    display: "flex",
+    gap: "14px",
+    flexWrap: "wrap",
+    marginBottom: "28px",
   },
-  ctaBigBtn: {
-    padding: "16px 48px", background: "white", border: "3px solid white",
-    color: "#7c3aed", borderRadius: "50px", cursor: "pointer", fontSize: "1.2rem",
-    fontWeight: "bold"
+
+  primaryBtn: {
+    border: "none",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    padding: "15px 28px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+    fontSize: "1rem",
+    boxShadow: "0 18px 35px rgba(124,58,237,0.25)",
   },
+
   secondaryBtn: {
-    padding: "14px 32px", background: "white",
-    border: "2px solid #7c3aed", color: "#7c3aed", borderRadius: "10px",
-    cursor: "pointer", fontSize: "1.1rem"
+    border: "1px solid rgba(124,58,237,0.22)",
+    background: "rgba(255,255,255,0.78)",
+    color: "#4c1d95",
+    padding: "15px 28px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+    fontSize: "1rem",
   },
-  scrollBtn: {
-    display: "flex", flexDirection: "column", alignItems: "flex-start",
-    gap: "8px", cursor: "pointer", marginTop: "2rem"
-  },
-  scrollText: {
-    color: "#7c3aed", fontSize: "0.95rem", fontWeight: "500",
-    letterSpacing: "1px"
-  },
-  scrollArrow: {
-    width: "48px", height: "48px", borderRadius: "50%",
-    background: "#7c3aed", border: "none", display: "flex",
-    alignItems: "center", justifyContent: "center", color: "white",
-    fontSize: "2.0rem", boxShadow: "0 4px 15px rgba(124, 58, 237, 0.4)"
+
+  exploreBtn: {
+    border: "none",
+    background: "transparent",
+    color: "#7c3aed",
+    fontWeight: 900,
+    cursor: "pointer",
+    fontSize: "1rem",
   },
   heroArt: {
     flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-    position: "relative", height: "400px", zIndex: 1, marginLeft: "-950px"
+    position: "relative", height: "400px", zIndex: 1, marginLeft: "-850px"
   },
   artCircle1: { position: "absolute", top: "1%", left: "40%", fontSize: "4rem" },
   artCircle2: { position: "absolute", top: "1%", right: "30%", fontSize: "3rem" },
@@ -232,35 +295,89 @@ const styles = {
     fontSize: "1.8rem", fontWeight: "bold", color: "white", textAlign: "center",
     lineHeight: 1.4, boxShadow: "0 20px 60px rgba(124, 58, 237, 0.3)"
   },
-  features: { background: "white", padding: "5rem 3rem" },
-  featuresTitle: {
-    textAlign: "center", color: "#2d0a4e", fontSize: "2rem",
-    marginBottom: "3rem"
+  section: {
+    padding: "80px clamp(18px, 5vw, 70px)",
+    background: "rgba(255,255,255,0.52)",
   },
-  featuresGrid: {
-    display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "2rem", maxWidth: "1100px", margin: "0 auto"
+
+  sectionHeader: {
+    textAlign: "center",
+    maxWidth: "720px",
+    margin: "0 auto 38px",
   },
+
+  kicker: {
+    color: "#ec4899",
+    fontWeight: 900,
+    letterSpacing: "0.15em",
+    textTransform: "uppercase",
+    marginBottom: "10px",
+  },
+
+  sectionTitle: {
+    color: "#241039",
+    fontSize: "clamp(2rem, 4vw, 2.4rem)",
+    letterSpacing: "-0.04em",
+    marginBottom: "12px",
+  },
+
+  sectionDesc: {
+    color: "#7c6a92",
+    lineHeight: 1.7,
+  },
+
+  grid: {
+    width: "min(1180px, 100%)",
+    margin: "0 auto",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",
+    gap: "22px",
+  },
+
   featureCard: {
-    background: "#f8f5ff", borderRadius: "12px", padding: "2rem",
-    textAlign: "center", border: "1px solid #e0d0ff", cursor: "pointer",
-    transition: "transform 0.2s"
+    background: "rgba(255,255,255,0.82)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    borderRadius: "28px",
+    padding: "30px",
+    boxShadow: "0 18px 40px rgba(76,29,149,0.08)",
   },
-  featureIcon: { fontSize: "2.5rem", marginBottom: "1rem" },
-  featureTitle: { color: "#2d0a4e", marginBottom: "0.5rem", fontSize: "1.1rem" },
+
+  featureIcon: {
+    fontSize: "2.5rem",
+    marginBottom: "18px",
+  },
+
+  featureTitle: {
+    color: "#4c1d95",
+    marginBottom: "10px",
+  },
+
   featureDesc: {
-    color: "#888", fontSize: "0.95rem", lineHeight: 1.6,
-    marginBottom: "1rem"
+    color: "#7c6a92",
+    lineHeight: 1.7,
   },
-  featureLink: { color: "#7c3aed", fontWeight: "500", fontSize: "0.9rem" },
-  members: { padding: "5rem 3rem", textAlign: "center" },
+  biasSection: {
+    padding: "80px 20px",
+    textAlign: "center",
+  },
+
   biasGrid: {
-    display: "flex", gap: "1rem", flexWrap: "wrap",
-    justifyContent: "center", maxWidth: "600px", margin: "0 auto"
+    margin: "28px auto 0",
+    width: "min(820px,100%)",
+    display: "flex",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    gap: "14px",
   },
+
   biasPill: {
-    padding: "10px 24px", background: "white", border: "2px solid #d4b8ff",
-    color: "#7c3aed", borderRadius: "30px", fontSize: "1rem", fontWeight: "500"
+    padding: "13px 22px",
+    borderRadius: "999px",
+    background: "white",
+    color: "#6d28d9",
+    fontWeight: 900,
+    border: "1px solid rgba(124,58,237,0.18)",
+    boxShadow: "0 12px 24px rgba(76,29,149,0.08)",
   },
   whatsapp: {
     background: "#f0e6ff", padding: "4rem 3rem",
@@ -292,9 +409,37 @@ const styles = {
     fontSize: "1rem", fontWeight: "bold", flexShrink: 0,
     whiteSpace: "nowrap"
   },
-  cta: { background: "#7c3aed", padding: "5rem 3rem", textAlign: "center" },
-  ctaTitle: { color: "white", fontSize: "2rem", marginBottom: "1rem" },
-  ctaDesc: { color: "#e0d0ff", fontSize: "1.1rem", marginBottom: "2rem" },
+  cta: {
+    width: "min(1180px, calc(100% - 36px))",
+    margin: "20px auto 80px",
+    padding: "60px 24px",
+    textAlign: "center",
+    borderRadius: "36px",
+    background: "linear-gradient(135deg,#4c1d95,#7c3aed,#ec4899)",
+    color: "white",
+    boxShadow: "0 28px 70px rgba(124,58,237,0.28)",
+  },
+
+  ctaTitle: {
+    fontSize: "clamp(2rem, 4vw, 3.0rem)",
+    marginBottom: "12px",
+  },
+
+  ctaText: {
+    color: "rgba(255,255,255,0.82)",
+    marginBottom: "28px",
+  },
+
+  ctaButton: {
+    border: "none",
+    background: "white",
+    color: "#6d28d9",
+    padding: "15px 34px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 900,
+    fontSize: "1rem",
+  },
   footer: { background: "#2d0a4e", padding: "3rem 3rem 0" },
   footerContent: {
     maxWidth: "1100px", margin: "0 auto", display: "flex",
