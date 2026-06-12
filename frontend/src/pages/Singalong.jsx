@@ -190,11 +190,8 @@ export default function Singalong() {
 
       const saved = res.data;
 
-      setSongs((prev) =>
-        editingSong
-          ? prev.map((song) => (song.id === saved.id ? saved : song))
-          : [saved, ...prev]
-      );
+      const songsRes = await API.get("/songs");
+      setSongs(songsRes.data || []);
 
       setSelectedSong(saved);
       setShowSongForm(false);
@@ -207,6 +204,8 @@ export default function Singalong() {
   };
 
   const startEditSong = (song) => {
+    if (!song) return;
+
     setEditingSong(song);
 
     setSongForm({
@@ -216,13 +215,22 @@ export default function Singalong() {
       youtube_url: song.youtube_url || "",
       release_year: song.release_year ? String(song.release_year) : "",
       album: song.album || "",
-      album_id: song.album_id || "",
+      album_id: song.album_id ? String(song.album_id) : "",
       song_type: song.song_type || "BTS",
       solo_artist: song.solo_artist || "",
       image_url: song.image_url || "",
     });
 
     setShowSongForm(true);
+
+    setTimeout(() => {
+      const form = document.getElementById("song-form-card");
+      if (form) {
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }, 80);
   };
 
   const handleFavoriteToggle = async (song) => {
@@ -357,10 +365,10 @@ export default function Singalong() {
         </section>
 
         {showSongForm && (
-          <section style={styles.formCard}>
+          <section id="song-form-card" style={styles.formCard}>
             <div style={styles.formHeader}>
               <h3 style={styles.cardTitle}>
-                {editingSong ? "Edit Song" : "Add New Song"}
+                {editingSong ? `Edit Song: ${editingSong.title}` : "Add New Song"}
               </h3>
 
               <button
@@ -435,7 +443,7 @@ export default function Singalong() {
 
               <select
                 style={styles.select}
-                value={songForm.album_id || ""}
+                value={songForm.album_id ? String(songForm.album_id) : ""}
                 onChange={(e) => {
                   const album = albums.find((a) => String(a.id) === e.target.value);
 

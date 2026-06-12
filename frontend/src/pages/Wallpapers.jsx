@@ -13,7 +13,7 @@ export default function Wallpapers() {
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
-  const members = ["All", "Jin", "Suga", "J-Hope", "RM", "Jimin", "Taehyung", "Jungkook"];
+  const members = ["All", "OT7", "RM", "Jin", "Suga", "J-Hope", "Jimin", "Taehyung", "Jungkook"];
 
   useEffect(() => {
     const loadData = async () => {
@@ -610,7 +610,7 @@ const styles = {
 
   downloadBtn: {
     border: "none",
-    background: "#241039",
+    background: "#7ca8ff",
     color: "white",
     padding: "9px 14px",
     borderRadius: "999px",

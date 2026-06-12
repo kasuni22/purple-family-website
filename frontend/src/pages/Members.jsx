@@ -33,6 +33,9 @@ export default function Members() {
   const [activeTab, setActiveTab] = useState("ot7");
   const [selectedMember, setSelectedMember] = useState(null);
   const [descriptions, setDescriptions] = useState({});
+  const [mainDescriptions, setMainDescriptions] = useState({});
+  const [editingMainDesc, setEditingMainDesc] = useState(false);
+  const [mainDescText, setMainDescText] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [editingDescId, setEditingDescId] = useState(null);
   const [editingText, setEditingText] = useState("");
@@ -54,6 +57,16 @@ export default function Members() {
     groupDescriptions(res.data || []);
   };
 
+  const loadMainDescriptions = async () => {
+    const res = await API.get("/bts-main-descriptions");
+    setMainDescriptions(res.data || {});
+  };
+
+  const getMainDescription = (member) => {
+    if (!member) return "";
+    return mainDescriptions[member.name] || member.desc;
+  };
+
   useEffect(() => {
     const loadPageData = async () => {
       try {
@@ -65,6 +78,7 @@ export default function Members() {
         setCurrentUser(meRes.data);
         setMembers(membersRes.data || []);
         await loadDescriptions();
+        await loadMainDescriptions();
       } catch {
         navigate("/login");
       }
@@ -130,6 +144,30 @@ export default function Members() {
       await loadDescriptions();
     } catch {
       alert("Only admin can delete descriptions");
+    }
+  };
+
+
+  const saveMainDescription = async () => {
+    if (!selectedMember || !mainDescText.trim()) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("content", mainDescText.trim());
+
+      await API.put(`/bts-main-descriptions/${encodeURIComponent(selectedMember.name)}`, formData);
+      await loadMainDescriptions();
+
+      setSelectedMember({
+        ...selectedMember,
+        desc: mainDescText.trim(),
+      });
+
+      setEditingMainDesc(false);
+      setMainDescText("");
+    } catch (err) {
+      console.error("Main description update failed:", err.response?.data || err.message);
+      alert(err.response?.data?.detail || "Only admin can edit main description");
     }
   };
 
@@ -207,7 +245,11 @@ export default function Members() {
                     <article
                       key={m.name}
                       style={styles.btsCard}
-                      onClick={() => setSelectedMember(m)}
+                      onClick={() => {
+                        setSelectedMember(m);
+                        setEditingMainDesc(false);
+                        setMainDescText("");
+                      }}
                     >
                       <div style={styles.btsPhotoBox}>
                         <img src={m.photo} alt={m.name} style={styles.btsPhoto} />
@@ -228,7 +270,11 @@ export default function Members() {
             ) : (
               <section style={styles.memberDetail}>
                 <button
-                  onClick={() => setSelectedMember(null)}
+                  onClick={() => {
+                    setSelectedMember(null);
+                    setEditingMainDesc(false);
+                    setMainDescText("");
+                  }}
                   style={styles.backBtn}
                 >
                   ← Back to OT7
@@ -253,7 +299,52 @@ export default function Members() {
                       <span>📍 {selectedMember.from}</span>
                     </div>
 
-                    <p style={styles.detailDesc}>{selectedMember.desc}</p>
+                    <div style={styles.mainDescBox}>
+                      <div style={styles.mainDescHeader}>
+                        <span style={styles.mainDescLabel}>Main Description</span>
+
+                        {currentUser?.is_admin && !editingMainDesc && (
+                          <button
+                            style={styles.mainDescEditBtn}
+                            onClick={() => {
+                              setEditingMainDesc(true);
+                              setMainDescText(getMainDescription(selectedMember));
+                            }}
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
+
+                      {editingMainDesc ? (
+                        <div style={styles.mainDescEditBox}>
+                          <textarea
+                            style={styles.mainDescInput}
+                            rows={5}
+                            value={mainDescText}
+                            onChange={(e) => setMainDescText(e.target.value)}
+                          />
+
+                          <div style={styles.editBtns}>
+                            <button style={styles.descBtn} onClick={saveMainDescription}>
+                              Save Main Description
+                            </button>
+
+                            <button
+                              style={styles.cancelBtn}
+                              onClick={() => {
+                                setEditingMainDesc(false);
+                                setMainDescText("");
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p style={styles.detailDesc}>{getMainDescription(selectedMember)}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -738,6 +829,50 @@ const styles = {
     color: "#4b3b5f",
     lineHeight: 1.8,
     maxWidth: "720px",
+  },
+
+  mainDescBox: {
+    marginTop: "4px",
+  },
+
+  mainDescHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
+    marginBottom: "8px",
+  },
+
+  mainDescLabel: {
+    color: "#7c3aed",
+    fontWeight: 900,
+    fontSize: "0.9rem",
+  },
+
+  mainDescEditBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "#e0f2fe",
+    color: "#0369a1",
+    padding: "8px 14px",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+
+  mainDescEditBox: {
+    display: "grid",
+    gap: "12px",
+  },
+
+  mainDescInput: {
+    width: "100%",
+    padding: "14px 16px",
+    borderRadius: "18px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    outline: "none",
+    resize: "vertical",
+    color: "#4b3b5f",
+    lineHeight: 1.7,
   },
 
   descSection: {

@@ -24,6 +24,7 @@ const BTS_BIRTHDAYS = [
 export default function Birthdays() {
   const [birthdays, setBirthdays] = useState([]);
   const [birthdayPosts, setBirthdayPosts] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [search, setSearch] = useState("");
   const [monthFilter, setMonthFilter] = useState("All");
   const [btsMonth, setBtsMonth] = useState("All");
@@ -40,7 +41,7 @@ export default function Birthdays() {
   const today = new Date();
 
   useEffect(() => {
-    API.get("/auth/me").catch(() => navigate("/login"));
+    API.get("/auth/me").then((res) => setCurrentUser(res.data)).catch(() => navigate("/login"));
     API.get("/birthdays").then((res) => setBirthdays(res.data || []));
     API.get("/birthday-posts").then((res) => setBirthdayPosts(res.data || []));
   }, [navigate]);
@@ -120,6 +121,29 @@ export default function Birthdays() {
       setCommentText({ ...commentText, [postId]: "" });
     } catch {
       alert("Failed to comment");
+    }
+  };
+
+
+  const loadBirthdayData = async () => {
+    const res = await API.get("/birthdays");
+    setBirthdays(res.data || []);
+  };
+
+  const handleRemoveMember = async (member) => {
+    const displayName = member.nickname || member.username || "this member";
+
+    if (!window.confirm(`Remove ${displayName} from Purple Family? This will delete their account permanently.`)) {
+      return;
+    }
+
+    try {
+      await API.delete(`/members/${member.id}`);
+      await loadBirthdayData();
+      alert(`${displayName} removed successfully.`);
+    } catch (err) {
+      console.error("Remove member error:", err.response?.data || err.message);
+      alert(err.response?.data?.detail || "Failed to remove member. Admin only.");
     }
   };
 
@@ -254,40 +278,60 @@ export default function Birthdays() {
                 <p>Update your profile to add your birthday.</p>
               </div>
             ) : (
-              <div style={styles.grid}>
+              <div style={styles.memberList}>
                 {filteredArmy.map((member) => (
                   <div
                     key={member.id}
                     style={{
-                      ...styles.card,
+                      ...styles.memberRow,
                       ...(isBirthdayToday(member.birthday)
-                        ? styles.todayBorder
+                        ? styles.todayRowBorder
                         : {}),
                     }}
                   >
-                    {isBirthdayToday(member.birthday) && (
-                      <div style={styles.todayBadge}>🎉 Today</div>
-                    )}
+                    <div style={styles.memberLeft}>
+                      {member.profile_picture ? (
+                        <img
+                          src={imageUrl(member.profile_picture)}
+                          alt={member.username}
+                          style={styles.listAvatarImg}
+                        />
+                      ) : (
+                        <div style={styles.listAvatar}>
+                          {(member.nickname || member.username)?.[0]?.toUpperCase()}
+                        </div>
+                      )}
 
-                    {member.profile_picture ? (
-                      <img
-                        src={imageUrl(member.profile_picture)}
-                        alt={member.username}
-                        style={styles.avatarImg}
-                      />
-                    ) : (
-                      <div style={styles.avatar}>
-                        {(member.nickname || member.username)?.[0]?.toUpperCase()}
+                      <div>
+                        <h3 style={styles.listUsername}>
+                          {member.nickname || member.username}
+                        </h3>
+                        {member.username && member.nickname && (
+                          <p style={styles.listSubName}>@{member.username}</p>
+                        )}
                       </div>
-                    )}
+                    </div>
 
-                    <h3 style={styles.username}>
-                      {member.nickname || member.username}
-                    </h3>
+                    <div style={styles.memberInfo}>
+                      <span style={styles.listDate}>🎂 {formatDate(member.birthday)}</span>
+                      {member.bias && <span style={styles.listBias}>💜 Bias: {member.bias}</span>}
+                    </div>
 
-                    <p style={styles.date}>🎂 {formatDate(member.birthday)}</p>
+                    <div style={styles.memberActions}>
+                      {isBirthdayToday(member.birthday) && (
+                        <div style={styles.listTodayBadge}>🎉 Today</div>
+                      )}
 
-                    {member.bias && <p style={styles.bias}>💜 Bias: {member.bias}</p>}
+                      {currentUser?.is_admin && currentUser?.id !== member.id && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMember(member)}
+                          style={styles.removeMemberBtn}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -654,6 +698,118 @@ const styles = {
     color: "#4c1d95",
     fontWeight: 800,
     outline: "none",
+  },
+
+  memberList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px",
+  },
+
+  memberRow: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "18px",
+    padding: "18px 22px",
+    borderRadius: "24px",
+    background: "rgba(255,255,255,0.92)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 12px 28px rgba(76,29,149,0.07)",
+  },
+
+  todayRowBorder: {
+    border: "2px solid #f59e0b",
+    background: "linear-gradient(135deg,#fff7ed,#ffffff)",
+  },
+
+  memberLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    minWidth: 0,
+  },
+
+  listAvatar: {
+    width: "58px",
+    height: "58px",
+    borderRadius: "50%",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    display: "grid",
+    placeItems: "center",
+    fontSize: "1.35rem",
+    fontWeight: 900,
+    flexShrink: 0,
+  },
+
+  listAvatarImg: {
+    width: "58px",
+    height: "58px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "3px solid #a855f7",
+    flexShrink: 0,
+  },
+
+  listUsername: {
+    color: "#4c1d95",
+    margin: 0,
+    fontSize: "1.1rem",
+  },
+
+  listSubName: {
+    color: "#9ca3af",
+    margin: "4px 0 0",
+    fontSize: "0.85rem",
+    fontWeight: 700,
+  },
+
+  memberInfo: {
+    display: "flex",
+    alignItems: "center",
+    gap: "18px",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    color: "#7c6a92",
+    fontWeight: 800,
+  },
+
+  memberActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+  },
+
+  removeMemberBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "#fee2e2",
+    color: "#991b1b",
+    padding: "9px 16px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  listDate: {
+    color: "#7c3aed",
+  },
+
+  listBias: {
+    color: "#7c6a92",
+  },
+
+  listTodayBadge: {
+    background: "#f59e0b",
+    color: "white",
+    padding: "7px 14px",
+    borderRadius: "999px",
+    fontSize: "0.82rem",
+    fontWeight: 900,
+    whiteSpace: "nowrap",
   },
 
   grid: {

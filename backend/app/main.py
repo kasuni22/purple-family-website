@@ -978,6 +978,59 @@ def delete_bts_description(
 
     return {"detail": "Description deleted"}
 
+
+
+# ─── BTS MAIN DESCRIPTION SETTINGS ─────────────────────────
+
+@app.get("/bts-main-descriptions")
+def get_bts_main_descriptions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    rows = db.execute(
+        text("SELECT key, value FROM app_settings WHERE key LIKE 'bts_main_desc_%'")
+    ).fetchall()
+
+    result = {}
+    for row in rows:
+        member_name = row.key.replace("bts_main_desc_", "", 1)
+        result[member_name] = row.value
+
+    return result
+
+
+@app.put("/bts-main-descriptions/{member_name}")
+def update_bts_main_description(
+    member_name: str,
+    content: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    clean_member = member_name.strip()
+    clean_content = content.strip()
+
+    if not clean_member:
+        raise HTTPException(status_code=400, detail="Member name is required")
+
+    if not clean_content:
+        raise HTTPException(status_code=400, detail="Description is required")
+
+    key = f"bts_main_desc_{clean_member}"
+
+    db.execute(
+        text("""
+            INSERT OR REPLACE INTO app_settings (key, value)
+            VALUES (:key, :value)
+        """),
+        {"key": key, "value": clean_content},
+    )
+    db.commit()
+
+    return {"member_name": clean_member, "content": clean_content}
+
 # ─── QUIZ ROUTES ───────────────────────────────────────────
 
 DEFAULT_QUIZ_TOPICS = [

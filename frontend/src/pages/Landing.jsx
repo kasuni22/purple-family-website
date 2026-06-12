@@ -283,7 +283,7 @@ const styles = {
   },
   heroArt: {
     flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-    position: "relative", height: "400px", zIndex: 1, marginLeft: "-850px"
+    position: "relative", height: "400px", zIndex: 1, marginLeft: "-850px", pointerEvents: "none"
   },
   artCircle1: { position: "absolute", top: "1%", left: "40%", fontSize: "4rem" },
   artCircle2: { position: "absolute", top: "1%", right: "30%", fontSize: "3rem" },
