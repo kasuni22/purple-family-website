@@ -15,6 +15,17 @@ from . import models, schemas, auth
 
 models.Base.metadata.create_all(bind=engine)
 
+with engine.begin() as conn:
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key VARCHAR PRIMARY KEY,
+            value VARCHAR,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """))
+
+print("Using SQLAlchemy models for PostgreSQL schema creation")
+
 print("Using SQLAlchemy models for PostgreSQL schema creation")
 
 app = FastAPI(title="Purple Family API 💜")
