@@ -15,38 +15,14 @@ from . import models, schemas, auth
 
 models.Base.metadata.create_all(bind=engine)
 
-with engine.connect() as conn:
-    for statement in [
-        "ALTER TABLE songs ADD COLUMN release_year INTEGER",
-        "ALTER TABLE songs ADD COLUMN album VARCHAR",
-        "ALTER TABLE songs ADD COLUMN song_type VARCHAR",
-        "ALTER TABLE songs ADD COLUMN solo_artist VARCHAR",
-        "ALTER TABLE songs ADD COLUMN album_id INTEGER",
-        "ALTER TABLE songs ADD COLUMN image_url VARCHAR",
-        "CREATE TABLE IF NOT EXISTS song_favorites (id INTEGER PRIMARY KEY AUTOINCREMENT, song_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(song_id, user_id))",
-        "CREATE TABLE IF NOT EXISTS solo_albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, image_url VARCHAR, youtube_url VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, album_type VARCHAR NOT NULL DEFAULT 'BTS', image_url VARCHAR, playlist_url VARCHAR, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(name, artist, album_type))",
-        "CREATE TABLE IF NOT EXISTS quiz_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, category VARCHAR NOT NULL DEFAULT 'knowledge', question VARCHAR NOT NULL, image_url VARCHAR, option_a VARCHAR NOT NULL, option_b VARCHAR NOT NULL, option_c VARCHAR NOT NULL, option_d VARCHAR NOT NULL, correct_answer VARCHAR NOT NULL, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS quiz_topics (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL UNIQUE, icon VARCHAR DEFAULT '📚', created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "ALTER TABLE quiz_questions ADD COLUMN category VARCHAR DEFAULT 'knowledge'",
-        "ALTER TABLE quiz_questions ADD COLUMN image_url VARCHAR",
-        "ALTER TABLE quiz_questions ADD COLUMN topic_id INTEGER",
-        "CREATE INDEX IF NOT EXISTS idx_quiz_questions_topic_id ON quiz_questions(topic_id)",
-        "ALTER TABLE users ADD COLUMN nickname VARCHAR",
-        "ALTER TABLE users ADD COLUMN profile_picture VARCHAR",
-        "CREATE TABLE IF NOT EXISTS bts_member_descriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, member_name VARCHAR NOT NULL, content VARCHAR NOT NULL, created_by_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR PRIMARY KEY, value VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS quiz_scores (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, topic_id INTEGER NOT NULL, score INTEGER NOT NULL, total_questions INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS special_days (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, date DATE NOT NULL, description VARCHAR, created_by_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-    ]:
-        try:
-            conn.execute(text(statement))
-            conn.commit()
-            print(f"Migration executed: {statement}")
-        except Exception as e:
-            print("Migration skipped or already applied:", statement, e)
+print("Using SQLAlchemy models for PostgreSQL schema creation")
 
 app = FastAPI(title="Purple Family API 💜")
+
+@app.get("/")
+def root():
+    return {"message": "Purple Family API is live 💜"}
+
 
 # CORS - allows React frontend to talk to this backend
 app.add_middleware(
@@ -1229,13 +1205,29 @@ def update_bts_main_description(
 
     key = f"bts_main_desc_{clean_member}"
 
-    db.execute(
-        text("""
-            INSERT OR REPLACE INTO app_settings (key, value)
-            VALUES (:key, :value)
-        """),
-        {"key": key, "value": clean_content},
-    )
+    existing = db.execute(
+        text("SELECT key FROM app_settings WHERE key = :key"),
+        {"key": key},
+    ).first()
+
+    if existing:
+        db.execute(
+            text("""
+                UPDATE app_settings
+                SET value = :value
+                WHERE key = :key
+            """),
+            {"key": key, "value": clean_content},
+        )
+    else:
+        db.execute(
+            text("""
+                INSERT INTO app_settings (key, value)
+                VALUES (:key, :value)
+            """),
+            {"key": key, "value": clean_content},
+        )
+
     db.commit()
 
     return {"member_name": clean_member, "content": clean_content}
@@ -1287,9 +1279,26 @@ def seed_quiz_topics(db: Session):
         )
         db.commit()
 
-    db.execute(
-        text("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('quiz_default_topics_seeded', 'true')")
-    )
+    existing = db.execute(
+        text("SELECT key FROM app_settings WHERE key = 'quiz_default_topics_seeded'")
+    ).first()
+
+    if existing:
+        db.execute(
+            text("""
+                UPDATE app_settings
+                SET value = 'true'
+                WHERE key = 'quiz_default_topics_seeded'
+            """)
+        )
+    else:
+        db.execute(
+            text("""
+                INSERT INTO app_settings (key, value)
+                VALUES ('quiz_default_topics_seeded', 'true')
+            """)
+        )
+
     db.commit()
 
 def serialize_quiz_topic(topic: models.QuizTopic, current_user: models.User, db: Session):
