@@ -10,6 +10,11 @@ export default function Wallpapers() {
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ title: "", member: "", file: null });
   const [selectedWallpaper, setSelectedWallpaper] = useState(null);
+  const [editingWallpaper, setEditingWallpaper] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    member: "",
+  });
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
@@ -33,7 +38,9 @@ export default function Wallpapers() {
 
   const getFileUrl = (path) => {
     if (!path) return "";
-    return path.startsWith("http") ? path : `http://127.0.0.1:8000/${path}`;
+    return path.startsWith("http")
+      ? path
+      : `https://purple-family-website.onrender.com/${path}`;
   };
 
   const formatDate = (value) => {
@@ -42,6 +49,10 @@ export default function Wallpapers() {
   };
 
   const canDeleteWallpaper = (wallpaper) => {
+    return currentUser && (currentUser.is_admin || currentUser.id === wallpaper.uploaded_by_id);
+  };
+
+  const canEditWallpaper = (wallpaper) => {
     return currentUser && (currentUser.is_admin || currentUser.id === wallpaper.uploaded_by_id);
   };
 
@@ -103,6 +114,63 @@ export default function Wallpapers() {
     }
   };
 
+  const startEditWallpaper = (wallpaper, e) => {
+    e.stopPropagation();
+
+    setEditingWallpaper(wallpaper);
+    setEditForm({
+      title: wallpaper.title || "",
+      member: wallpaper.member || "",
+    });
+  };
+
+  const cancelEditWallpaper = () => {
+    setEditingWallpaper(null);
+    setEditForm({
+      title: "",
+      member: "",
+    });
+  };
+
+  const handleUpdateWallpaper = async (e) => {
+    e.preventDefault();
+
+    if (!editingWallpaper) return;
+
+    const formData = new FormData();
+    formData.append("title", editForm.title);
+    formData.append("member", editForm.member);
+
+    try {
+      const res = await API.put(
+        `/wallpapers/${editingWallpaper.id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setWallpapers((prev) =>
+        prev.map((w) =>
+          w.id === editingWallpaper.id ? res.data : w
+        )
+      );
+
+      setSelectedWallpaper((prev) =>
+        prev && prev.id === editingWallpaper.id
+          ? res.data
+          : prev
+      );
+
+      cancelEditWallpaper();
+      alert("Wallpaper updated 💜");
+    } catch (err) {
+      alert(err.response?.data?.detail || "Update failed");
+    }
+  };
+
   const handleUpload = async (e) => {
     e.preventDefault();
 
@@ -131,7 +199,7 @@ export default function Wallpapers() {
     filter === "All" ? wallpapers : wallpapers.filter((w) => w.member === filter);
 
   const handleDownload = (wallpaper) => {
-    window.location.href = `http://127.0.0.1:8000/wallpapers/${wallpaper.id}/download`;
+    window.location.href = `https://purple-family-website.onrender.com/wallpapers/${wallpaper.id}/download`;
   };
 
   return (
@@ -172,17 +240,15 @@ export default function Wallpapers() {
             ))}
           </div>
 
-          {currentUser?.is_admin && (
-            <button
-              onClick={() => setUploading(!uploading)}
-              style={styles.uploadBtn}
-            >
-              {uploading ? "Cancel" : "⬆️ Upload Wallpaper"}
-            </button>
-          )}
+          <button
+            onClick={() => setUploading(!uploading)}
+            style={styles.uploadBtn}
+          >
+            {uploading ? "Cancel" : "⬆️ Upload Wallpaper"}
+          </button>
         </section>
 
-        {currentUser?.is_admin && uploading && (
+        {uploading && (
           <section style={styles.uploadCard}>
             <h3 style={styles.cardTitle}>Upload New Wallpaper</h3>
 
@@ -278,6 +344,14 @@ export default function Wallpapers() {
                     >
                       ⬇️
                     </button>
+                    {canEditWallpaper(w) && (
+                      <button
+                        onClick={(e) => startEditWallpaper(w, e)}
+                        style={styles.editBtn}
+                      >
+                        ✏️
+                      </button>
+                    )}
 
                     {canDeleteWallpaper(w) && (
                       <button
@@ -287,11 +361,63 @@ export default function Wallpapers() {
                         🗑️
                       </button>
                     )}
+
                   </div>
                 </div>
               </article>
             ))}
           </section>
+        )}
+
+        {editingWallpaper && (
+          <div style={styles.modalOverlay} onClick={cancelEditWallpaper}>
+            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <button style={styles.closeBtn} onClick={cancelEditWallpaper}>
+                ×
+              </button>
+
+              <div style={styles.modalInfo}>
+                <h3 style={styles.modalTitle}>Edit Wallpaper</h3>
+
+                <form onSubmit={handleUpdateWallpaper} style={styles.form}>
+                  <input
+                    style={styles.input}
+                    placeholder="Wallpaper title"
+                    value={editForm.title}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        title: e.target.value,
+                      })
+                    }
+                    required
+                  />
+
+                  <select
+                    style={styles.input}
+                    value={editForm.member}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        member: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select Member</option>
+                    {members.slice(1).map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button style={styles.button} type="submit">
+                    Save Changes 💜
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
         )}
 
         {selectedWallpaper && (
@@ -349,6 +475,14 @@ export default function Wallpapers() {
                   >
                     ⬇️ Download
                   </button>
+                  {canEditWallpaper(selectedWallpaper) && (
+                    <button
+                      style={styles.editBtn}
+                      onClick={(e) => startEditWallpaper(selectedWallpaper, e)}
+                    >
+                      ✏️ Edit
+                    </button>
+                  )}
 
                   {canDeleteWallpaper(selectedWallpaper) && (
                     <button
@@ -617,7 +751,15 @@ const styles = {
     cursor: "pointer",
     fontWeight: 900,
   },
-
+  editBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "#e0f2fe",
+    color: "#0369a1",
+    padding: "10px 13px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
   deleteBtn: {
     border: "1px solid #fecaca",
     background: "#fee2e2",

@@ -37,6 +37,7 @@ with engine.connect() as conn:
         "CREATE TABLE IF NOT EXISTS bts_member_descriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, member_name VARCHAR NOT NULL, content VARCHAR NOT NULL, created_by_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
         "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR PRIMARY KEY, value VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
         "CREATE TABLE IF NOT EXISTS quiz_scores (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, topic_id INTEGER NOT NULL, score INTEGER NOT NULL, total_questions INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+        "CREATE TABLE IF NOT EXISTS special_days (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, date DATE NOT NULL, description VARCHAR, created_by_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
     ]:
         try:
             conn.execute(text(statement))
@@ -344,27 +345,45 @@ def upload_wallpaper(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    if not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
-    
     file_path = f"uploads/{file.filename}"
+
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    
+
     wallpaper = models.Wallpaper(
         title=title,
         file_path=file_path,
         member=member,
         uploaded_by_id=current_user.id
     )
+
     db.add(wallpaper)
     db.commit()
     db.refresh(wallpaper)
-    return wallpaper
+
+    return {
+        "id": wallpaper.id,
+        "title": wallpaper.title,
+        "file_path": wallpaper.file_path,
+        "member": wallpaper.member,
+        "created_at": wallpaper.created_at,
+        "uploaded_by_id": wallpaper.uploaded_by_id,
+        "uploaded_by_username": current_user.nickname or current_user.username,
+        "likes_count": 0,
+        "liked_by_current_user": False,
+        "can_edit": True,
+        "can_delete": True,
+    }
 
 @app.get("/wallpapers")
-def get_wallpapers(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
-    wallpapers = db.query(models.Wallpaper).order_by(models.Wallpaper.created_at.desc()).all()
+def get_wallpapers(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    wallpapers = db.query(models.Wallpaper).order_by(
+        models.Wallpaper.created_at.desc()
+    ).all()
+
     return [
         {
             "id": w.id,
@@ -373,15 +392,69 @@ def get_wallpapers(db: Session = Depends(get_db), current_user: models.User = De
             "member": w.member,
             "created_at": w.created_at,
             "uploaded_by_id": w.uploaded_by_id,
-            "uploaded_by_username": w.uploaded_by.username if w.uploaded_by else None,
-            "likes_count": db.query(models.WallpaperLike).filter(models.WallpaperLike.wallpaper_id == w.id).count(),
+            "uploaded_by_username": (
+                w.uploaded_by.nickname or w.uploaded_by.username
+                if w.uploaded_by else "Deleted ARMY"
+            ),
+            "likes_count": db.query(models.WallpaperLike).filter(
+                models.WallpaperLike.wallpaper_id == w.id
+            ).count(),
             "liked_by_current_user": db.query(models.WallpaperLike).filter(
                 models.WallpaperLike.wallpaper_id == w.id,
                 models.WallpaperLike.user_id == current_user.id
             ).first() is not None,
+            "can_edit": bool(
+                current_user.is_admin or w.uploaded_by_id == current_user.id
+            ),
+            "can_delete": bool(
+                current_user.is_admin or w.uploaded_by_id == current_user.id
+            ),
         }
         for w in wallpapers
     ]
+
+@app.put("/wallpapers/{wallpaper_id}")
+def update_wallpaper(
+    wallpaper_id: int,
+    title: str = Form(...),
+    member: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    wallpaper = db.query(models.Wallpaper).filter(
+        models.Wallpaper.id == wallpaper_id
+    ).first()
+
+    if not wallpaper:
+        raise HTTPException(status_code=404, detail="Wallpaper not found")
+
+    if not current_user.is_admin and wallpaper.uploaded_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this wallpaper")
+
+    wallpaper.title = title
+    wallpaper.member = member
+
+    db.commit()
+    db.refresh(wallpaper)
+
+    return {
+        "id": wallpaper.id,
+        "title": wallpaper.title,
+        "file_path": wallpaper.file_path,
+        "member": wallpaper.member,
+        "created_at": wallpaper.created_at,
+        "uploaded_by_id": wallpaper.uploaded_by_id,
+        "uploaded_by_username": current_user.nickname or current_user.username,
+        "likes_count": db.query(models.WallpaperLike).filter(
+            models.WallpaperLike.wallpaper_id == wallpaper.id
+        ).count(),
+        "liked_by_current_user": db.query(models.WallpaperLike).filter(
+            models.WallpaperLike.wallpaper_id == wallpaper.id,
+            models.WallpaperLike.user_id == current_user.id
+        ).first() is not None,
+        "can_edit": True,
+        "can_delete": True,
+    }
 
 
 @app.delete("/wallpapers/{wallpaper_id}")
@@ -496,6 +569,111 @@ def get_today_birthdays(db: Session = Depends(get_db)):
         }
         for u in today_birthdays
     ]
+
+def serialize_special_day(day: models.SpecialDay, current_user: models.User):
+    creator = day.created_by
+
+    return {
+        "id": day.id,
+        "title": day.title,
+        "date": day.date,
+        "description": day.description,
+        "created_by_id": day.created_by_id,
+        "created_by_username": creator.username if creator else None,
+        "created_by_nickname": creator.nickname if creator else None,
+        "created_at": day.created_at,
+        "can_edit": bool(current_user.is_admin or day.created_by_id == current_user.id),
+        "can_delete": bool(current_user.is_admin or day.created_by_id == current_user.id),
+    }
+
+
+@app.get("/special-days")
+def get_special_days(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    days = db.query(models.SpecialDay).order_by(
+        models.SpecialDay.date.asc()
+    ).all()
+
+    return [serialize_special_day(day, current_user) for day in days]
+
+
+@app.post("/special-days")
+def create_special_day(
+    title: str = Form(...),
+    date: str = Form(...),
+    description: Optional[str] = Form(""),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    from datetime import date as date_class
+
+    clean_title = title.strip()
+    if not clean_title:
+        raise HTTPException(status_code=400, detail="Title is required")
+
+    day = models.SpecialDay(
+        title=clean_title,
+        date=date_class.fromisoformat(date),
+        description=description or "",
+        created_by_id=current_user.id,
+    )
+
+    db.add(day)
+    db.commit()
+    db.refresh(day)
+
+    return serialize_special_day(day, current_user)
+
+
+@app.put("/special-days/{day_id}")
+def update_special_day(
+    day_id: int,
+    title: str = Form(...),
+    date: str = Form(...),
+    description: Optional[str] = Form(""),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    from datetime import date as date_class
+
+    day = db.query(models.SpecialDay).filter(models.SpecialDay.id == day_id).first()
+
+    if not day:
+        raise HTTPException(status_code=404, detail="Special day not found")
+
+    if not current_user.is_admin and day.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this special day")
+
+    day.title = title.strip()
+    day.date = date_class.fromisoformat(date)
+    day.description = description or ""
+
+    db.commit()
+    db.refresh(day)
+
+    return serialize_special_day(day, current_user)
+
+
+@app.delete("/special-days/{day_id}")
+def delete_special_day(
+    day_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    day = db.query(models.SpecialDay).filter(models.SpecialDay.id == day_id).first()
+
+    if not day:
+        raise HTTPException(status_code=404, detail="Special day not found")
+
+    if not current_user.is_admin and day.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this special day")
+
+    db.delete(day)
+    db.commit()
+
+    return {"detail": "Special day deleted"}
 
     # ─── MEMBERS ROUTE ─────────────────────────────────────────
 

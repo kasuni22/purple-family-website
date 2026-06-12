@@ -36,6 +36,15 @@ export default function Birthdays() {
     file: null,
   });
   const [commentText, setCommentText] = useState({});
+  const [specialDays, setSpecialDays] = useState([]);
+  const [showSpecialForm, setShowSpecialForm] = useState(false);
+  const [editingSpecialDay, setEditingSpecialDay] = useState(null);
+
+  const [specialForm, setSpecialForm] = useState({
+    title: "",
+    date: "",
+    description: "",
+  });
 
   const navigate = useNavigate();
   const today = new Date();
@@ -44,6 +53,9 @@ export default function Birthdays() {
     API.get("/auth/me").then((res) => setCurrentUser(res.data)).catch(() => navigate("/login"));
     API.get("/birthdays").then((res) => setBirthdays(res.data || []));
     API.get("/birthday-posts").then((res) => setBirthdayPosts(res.data || []));
+    API.get("/special-days")
+      .then((res) => setSpecialDays(res.data || []))
+      .catch(() => { });
   }, [navigate]);
 
   const imageUrl = (path) => `http://127.0.0.1:8000/${path}`;
@@ -144,6 +156,67 @@ export default function Birthdays() {
     } catch (err) {
       console.error("Remove member error:", err.response?.data || err.message);
       alert(err.response?.data?.detail || "Failed to remove member. Admin only.");
+    }
+  };
+
+  const refreshSpecialDays = async () => {
+    const res = await API.get("/special-days");
+    setSpecialDays(res.data || []);
+  };
+
+  const saveSpecialDay = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("title", specialForm.title);
+    formData.append("date", specialForm.date);
+    formData.append("description", specialForm.description);
+
+    try {
+      if (editingSpecialDay) {
+        await API.put(
+          `/special-days/${editingSpecialDay.id}`,
+          formData
+        );
+      } else {
+        await API.post("/special-days", formData);
+      }
+
+      await refreshSpecialDays();
+
+      setSpecialForm({
+        title: "",
+        date: "",
+        description: "",
+      });
+
+      setEditingSpecialDay(null);
+      setShowSpecialForm(false);
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed");
+    }
+  };
+
+  const editSpecialDay = (day) => {
+    setEditingSpecialDay(day);
+
+    setSpecialForm({
+      title: day.title,
+      date: day.date,
+      description: day.description || "",
+    });
+
+    setShowSpecialForm(true);
+  };
+
+  const deleteSpecialDay = async (day) => {
+    if (!window.confirm(`Delete "${day.title}" ?`)) return;
+
+    try {
+      await API.delete(`/special-days/${day.id}`);
+      await refreshSpecialDays();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed");
     }
   };
 
@@ -478,6 +551,15 @@ export default function Birthdays() {
             <div style={styles.sectionHead}>
               <div>
                 <h2 style={styles.sectionTitle}>BTS Birthdays & Special Days</h2>
+                <button
+                  onClick={() => {
+                    setEditingSpecialDay(null);
+                    setShowSpecialForm(!showSpecialForm);
+                  }}
+                  style={styles.addBtn}
+                >
+                  {showSpecialForm ? "Cancel" : "➕ Add Special Day"}
+                </button>
                 <p style={styles.sectionText}>OT7 forever. Important purple days.</p>
               </div>
 
@@ -491,8 +573,62 @@ export default function Birthdays() {
                 ))}
               </select>
             </div>
+            {showSpecialForm && (
+              <div style={styles.formCard}>
+                <h3>
+                  {editingSpecialDay
+                    ? "Edit Special Day"
+                    : "Add Special Day"}
+                </h3>
+
+                <form onSubmit={saveSpecialDay} style={styles.form}>
+                  <input
+                    style={styles.input}
+                    placeholder="Title"
+                    value={specialForm.title}
+                    onChange={(e) =>
+                      setSpecialForm({
+                        ...specialForm,
+                        title: e.target.value,
+                      })
+                    }
+                    required
+                  />
+
+                  <input
+                    type="date"
+                    style={styles.input}
+                    value={specialForm.date}
+                    onChange={(e) =>
+                      setSpecialForm({
+                        ...specialForm,
+                        date: e.target.value,
+                      })
+                    }
+                    required
+                  />
+
+                  <textarea
+                    style={styles.textarea}
+                    placeholder="Description"
+                    value={specialForm.description}
+                    onChange={(e) =>
+                      setSpecialForm({
+                        ...specialForm,
+                        description: e.target.value,
+                      })
+                    }
+                  />
+
+                  <button style={styles.button}>
+                    {editingSpecialDay ? "Update" : "Create"}
+                  </button>
+                </form>
+              </div>
+            )}
 
             <div style={styles.grid}>
+
               {filteredBts.map((member) => (
                 <div
                   key={member.name}
@@ -510,6 +646,67 @@ export default function Birthdays() {
                   )}
                 </div>
               ))}
+              {specialDays.length > 0 && (
+                <>
+                  <h2
+                    style={{
+                      marginTop: "30px",
+                      marginBottom: "20px",
+                    }}
+                  >
+                    🌟 ARMY Special Days
+                  </h2>
+
+                  <div style={styles.grid}>
+                    {specialDays.map((day) => (
+                      <div key={day.id} style={styles.card}>
+                        <h3>{day.title}</h3>
+
+                        <p>
+                          📅{" "}
+                          {new Date(day.date).toLocaleDateString()}
+                        </p>
+
+                        {day.description && (
+                          <p>{day.description}</p>
+                        )}
+
+                        <small>
+                          by{" "}
+                          {day.created_by_nickname ||
+                            day.created_by_username}
+                        </small>
+
+                        {(day.can_edit || day.can_delete) && (
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "8px",
+                              marginTop: "10px",
+                            }}
+                          >
+                            {day.can_edit && (
+                              <button
+                                onClick={() => editSpecialDay(day)}
+                              >
+                                ✏️ Edit
+                              </button>
+                            )}
+
+                            {day.can_delete && (
+                              <button
+                                onClick={() => deleteSpecialDay(day)}
+                              >
+                                🗑️ Delete
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </section>
         )}
