@@ -50,7 +50,11 @@ app = FastAPI(title="Purple Family API 💜")
 # CORS - allows React frontend to talk to this backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://purple-family-website.vercel.app",
+        "https://purple-family-website-58bylyu9l-kasuni22s-projects.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
