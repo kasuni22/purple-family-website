@@ -192,3 +192,19 @@ class QuizQuestion(Base):
 
     created_by = relationship("User")
     topic = relationship("QuizTopic", back_populates="questions")
+
+class QuizScore(Base):
+    __tablename__ = "quiz_scores"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    topic_id = Column(Integer, ForeignKey("quiz_topics.id"), nullable=False)
+
+    score = Column(Integer, nullable=False)
+    total_questions = Column(Integer, nullable=False)
+
+    created_at = Column(DateTime, server_default=func.now())
+
+    user = relationship("User")
+    topic = relationship("QuizTopic")

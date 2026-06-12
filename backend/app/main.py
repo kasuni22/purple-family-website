@@ -36,6 +36,7 @@ with engine.connect() as conn:
         "ALTER TABLE users ADD COLUMN profile_picture VARCHAR",
         "CREATE TABLE IF NOT EXISTS bts_member_descriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, member_name VARCHAR NOT NULL, content VARCHAR NOT NULL, created_by_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
         "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR PRIMARY KEY, value VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+        "CREATE TABLE IF NOT EXISTS quiz_scores (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, topic_id INTEGER NOT NULL, score INTEGER NOT NULL, total_questions INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
     ]:
         try:
             conn.execute(text(statement))
@@ -1262,3 +1263,141 @@ def delete_quiz_question(
     db.delete(quiz_question)
     db.commit()
     return {"detail": "Question deleted"}
+
+
+# ─── QUIZ LEADERBOARD ROUTES ───────────────────────────────
+
+def serialize_quiz_score_row(row):
+    percent = 0
+    if row.total_questions:
+        percent = round((row.score / row.total_questions) * 100)
+
+    return {
+        "id": row.id,
+        "user_id": row.user_id,
+        "username": row.username,
+        "nickname": row.nickname,
+        "profile_picture": row.profile_picture,
+        "topic_id": row.topic_id,
+        "topic_name": row.topic_name,
+        "topic_icon": row.topic_icon,
+        "score": row.score,
+        "total_questions": row.total_questions,
+        "percentage": percent,
+        "created_at": row.created_at,
+    }
+
+
+@app.post("/quiz/scores")
+def save_quiz_score(
+    topic_id: int,
+    score: int,
+    total_questions: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    topic = db.query(models.QuizTopic).filter(models.QuizTopic.id == topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+
+    if total_questions <= 0:
+        raise HTTPException(status_code=400, detail="Total questions must be greater than 0")
+
+    if score < 0 or score > total_questions:
+        raise HTTPException(status_code=400, detail="Invalid score")
+
+    db.execute(
+        text("""
+            INSERT INTO quiz_scores (user_id, topic_id, score, total_questions)
+            VALUES (:user_id, :topic_id, :score, :total_questions)
+        """),
+        {
+            "user_id": current_user.id,
+            "topic_id": topic_id,
+            "score": score,
+            "total_questions": total_questions,
+        },
+    )
+    db.commit()
+
+    return {"detail": "Score saved"}
+
+
+@app.get("/quiz/leaderboard")
+def get_quiz_leaderboard(
+    topic_id: Optional[int] = None,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    limit = max(1, min(limit, 100))
+
+    query = """
+        SELECT
+            qs.id,
+            qs.user_id,
+            qs.topic_id,
+            qs.score,
+            qs.total_questions,
+            qs.created_at,
+            u.username,
+            u.nickname,
+            u.profile_picture,
+            qt.name AS topic_name,
+            qt.icon AS topic_icon
+        FROM quiz_scores qs
+        JOIN users u ON u.id = qs.user_id
+        JOIN quiz_topics qt ON qt.id = qs.topic_id
+    """
+
+    params = {"limit": limit}
+
+    if topic_id:
+        query += " WHERE qs.topic_id = :topic_id"
+        params["topic_id"] = topic_id
+
+    query += """
+        ORDER BY
+            CAST(qs.score AS FLOAT) / qs.total_questions DESC,
+            qs.score DESC,
+            qs.total_questions DESC,
+            qs.created_at ASC
+        LIMIT :limit
+    """
+
+    rows = db.execute(text(query), params).fetchall()
+
+    return [serialize_quiz_score_row(row) for row in rows]
+
+
+@app.get("/quiz/my-scores")
+def get_my_quiz_scores(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    rows = db.execute(
+        text("""
+            SELECT
+                qs.id,
+                qs.user_id,
+                qs.topic_id,
+                qs.score,
+                qs.total_questions,
+                qs.created_at,
+                u.username,
+                u.nickname,
+                u.profile_picture,
+                qt.name AS topic_name,
+                qt.icon AS topic_icon
+            FROM quiz_scores qs
+            JOIN users u ON u.id = qs.user_id
+            JOIN quiz_topics qt ON qt.id = qs.topic_id
+            WHERE qs.user_id = :user_id
+            ORDER BY qs.created_at DESC
+            LIMIT 50
+        """),
+        {"user_id": current_user.id},
+    ).fetchall()
+
+    return [serialize_quiz_score_row(row) for row in rows]
+

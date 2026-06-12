@@ -10,22 +10,82 @@ import Singalong from "./pages/Singalong";
 import Quiz from "./pages/Quiz";
 import EditProfile from "./pages/EditProfile";
 
-function App() {
+function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
 
+  return token ? children : <Navigate to="/login" replace />;
+}
+
+function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/login" />} />
-        <Route path="/birthdays" element={token ? <Birthdays /> : <Navigate to="/login" />} />
-        <Route path="/wallpapers" element={token ? <Wallpapers /> : <Navigate to="/login" />} />
-        <Route path="/members" element={token ? <Members /> : <Navigate to="/login" />} />
-        <Route path="/singalong" element={token ? <Singalong /> : <Navigate to="/login" />} />
-        <Route path="/quiz" element={token ? <Quiz /> : <Navigate to="/login" />} />
-        <Route path="/edit-profile" element={token ? <EditProfile /> : <Navigate to="/login" />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/birthdays"
+          element={
+            <ProtectedRoute>
+              <Birthdays />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/wallpapers"
+          element={
+            <ProtectedRoute>
+              <Wallpapers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/members"
+          element={
+            <ProtectedRoute>
+              <Members />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/singalong"
+          element={
+            <ProtectedRoute>
+              <Singalong />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/quiz"
+          element={
+            <ProtectedRoute>
+              <Quiz />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

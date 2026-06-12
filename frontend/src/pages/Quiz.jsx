@@ -55,6 +55,10 @@ export default function Quiz() {
   const [topicForm, setTopicForm] = useState(emptyTopicForm);
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState("quiz");
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [myScores, setMyScores] = useState([]);
+  const [scoreSaved, setScoreSaved] = useState(false);
 
   const activeTopic = useMemo(
     () => topics.find((topic) => topic.id === Number(activeTopicId)),
@@ -70,6 +74,15 @@ export default function Quiz() {
     ? [currentQuestion.option_a, currentQuestion.option_b, currentQuestion.option_c, currentQuestion.option_d]
     : [];
 
+  const getDisplayName = (item) => item?.nickname || item?.username || "ARMY";
+
+  const getRankIcon = (index) => {
+    if (index === 0) return "🥇";
+    if (index === 1) return "🥈";
+    if (index === 2) return "🥉";
+    return `#${index + 1}`;
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -77,15 +90,19 @@ export default function Quiz() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [meRes, topicsRes, qRes] = await Promise.all([
+      const [meRes, topicsRes, qRes, leaderboardRes, myScoresRes] = await Promise.all([
         API.get("/auth/me"),
         API.get("/quiz/topics"),
         API.get("/quiz/questions"),
+        API.get("/quiz/leaderboard").catch(() => ({ data: [] })),
+        API.get("/quiz/my-scores").catch(() => ({ data: [] })),
       ]);
 
       setCurrentUser(meRes.data);
       setTopics(topicsRes.data || []);
       setQuestions(qRes.data || []);
+      setLeaderboard(leaderboardRes.data || []);
+      setMyScores(myScoresRes.data || []);
 
       if (!activeTopicId && topicsRes.data?.length) {
         setActiveTopicId(topicsRes.data[0].id);
@@ -104,6 +121,7 @@ export default function Quiz() {
     setSelected(null);
     setAnswered(false);
     setShowResult(false);
+    setScoreSaved(false);
   };
 
   const changeTopic = (topicId) => {
@@ -120,12 +138,39 @@ export default function Quiz() {
     }
   };
 
-  const handleNext = () => {
+  const saveScore = async (finalScore) => {
+    if (scoreSaved || !activeTopicId || activeQuestions.length === 0) return;
+
+    try {
+      await API.post("/quiz/scores", null, {
+        params: {
+          topic_id: activeTopicId,
+          score: finalScore,
+          total_questions: activeQuestions.length,
+        },
+      });
+
+      setScoreSaved(true);
+
+      const [leaderboardRes, myScoresRes] = await Promise.all([
+        API.get("/quiz/leaderboard").catch(() => ({ data: [] })),
+        API.get("/quiz/my-scores").catch(() => ({ data: [] })),
+      ]);
+
+      setLeaderboard(leaderboardRes.data || []);
+      setMyScores(myScoresRes.data || []);
+    } catch (err) {
+      console.error("Score save error:", err.response?.data || err.message);
+    }
+  };
+
+  const handleNext = async () => {
     if (current + 1 < activeQuestions.length) {
       setCurrent((prev) => prev + 1);
       setSelected(null);
       setAnswered(false);
     } else {
+      await saveScore(score);
       setShowResult(true);
     }
   };
@@ -358,6 +403,29 @@ export default function Quiz() {
 
           <button onClick={openAddTopicForm} style={styles.addTopicBtn}>➕ Add Topic</button>
           <button onClick={openAddQuestionForm} style={styles.addBtn}>➕ Add Question</button>
+
+          <div style={styles.sideDivider} />
+
+          <button
+            onClick={() => setViewMode("quiz")}
+            style={viewMode === "quiz" ? styles.leaderActiveBtn : styles.leaderBtn}
+          >
+            🎮 Play Quiz
+          </button>
+
+          <button
+            onClick={() => setViewMode("leaderboard")}
+            style={viewMode === "leaderboard" ? styles.leaderActiveBtn : styles.leaderBtn}
+          >
+            🏆 Leaderboard
+          </button>
+
+          <button
+            onClick={() => setViewMode("myScores")}
+            style={viewMode === "myScores" ? styles.leaderActiveBtn : styles.leaderBtn}
+          >
+            💜 My Scores
+          </button>
         </aside>
 
         <main style={styles.mainArea}>
@@ -369,7 +437,97 @@ export default function Quiz() {
             <button onClick={openAddQuestionForm} style={styles.primaryBtn}>➕ Add Question</button>
           </div>
 
-          {loading ? (
+          {viewMode === "leaderboard" ? (
+            <div style={styles.leaderboardCard}>
+              <div style={styles.leaderHeader}>
+                <div>
+                  <h2 style={styles.leaderTitle}>🏆 Top ARMY Rankings</h2>
+                  <p style={styles.leaderSubtitle}>Highest scores from all quiz topics 💜</p>
+                </div>
+                <button onClick={loadData} style={styles.refreshBtn}>Refresh</button>
+              </div>
+
+              {leaderboard.length === 0 ? (
+                <div style={styles.emptyCard}>No scores yet. Play a quiz first 💜</div>
+              ) : (
+                <div style={styles.rankList}>
+                  {leaderboard.map((item, index) => (
+                    <div key={item.id} style={index < 3 ? styles.topRankRow : styles.rankRow}>
+                      <div style={styles.rankNo}>{getRankIcon(index)}</div>
+
+                      <div style={styles.rankAvatar}>
+                        {item.profile_picture ? (
+                          <img
+                            src={imageSrc(item.profile_picture)}
+                            alt={getDisplayName(item)}
+                            style={styles.rankAvatarImg}
+                          />
+                        ) : (
+                          getDisplayName(item)[0]?.toUpperCase()
+                        )}
+                      </div>
+
+                      <div style={styles.rankInfo}>
+                        <strong style={styles.rankName}>{getDisplayName(item)}</strong>
+                        <span style={styles.rankTopic}>
+                          {item.topic_icon || "📚"} {item.topic_name}
+                        </span>
+                      </div>
+
+                      <div style={styles.rankScore}>
+                        <strong>{item.score}/{item.total_questions}</strong>
+                        <span>{item.percentage}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : viewMode === "myScores" ? (
+            <div style={styles.leaderboardCard}>
+              <div style={styles.leaderHeader}>
+                <div>
+                  <h2 style={styles.leaderTitle}>💜 My Quiz Scores</h2>
+                  <p style={styles.leaderSubtitle}>Your latest quiz history</p>
+                </div>
+                <button onClick={loadData} style={styles.refreshBtn}>Refresh</button>
+              </div>
+
+              {myScores.length === 0 ? (
+                <div style={styles.emptyCard}>You have not played any quiz yet 💜</div>
+              ) : (
+                <div style={styles.rankList}>
+                  {myScores.map((item) => (
+                    <div key={item.id} style={styles.rankRow}>
+                      <div style={styles.rankAvatar}>
+                        {item.profile_picture ? (
+                          <img
+                            src={imageSrc(item.profile_picture)}
+                            alt={getDisplayName(item)}
+                            style={styles.rankAvatarImg}
+                          />
+                        ) : (
+                          getDisplayName(item)[0]?.toUpperCase()
+                        )}
+                      </div>
+
+                      <div style={styles.rankInfo}>
+                        <strong style={styles.rankName}>
+                          {item.topic_icon || "📚"} {item.topic_name}
+                        </strong>
+                        <span style={styles.rankTopic}>{formatDate(item.created_at)}</span>
+                      </div>
+
+                      <div style={styles.rankScore}>
+                        <strong>{item.score}/{item.total_questions}</strong>
+                        <span>{item.percentage}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : loading ? (
             <div style={styles.emptyCard}>Loading quiz questions... 💜</div>
           ) : !activeTopic ? (
             <div style={styles.emptyCard}>
@@ -439,6 +597,7 @@ export default function Quiz() {
               </div>
               <p style={styles.resultMessage}>{getResultMessage()}</p>
               <button onClick={handleRestart} style={styles.restartBtn}>🔄 Try Again</button>
+              <button onClick={() => setViewMode("leaderboard")} style={styles.homeBtn}>🏆 View Leaderboard</button>
               <button onClick={openAddQuestionForm} style={styles.homeBtn}>➕ Add More Questions</button>
             </div>
           )}
@@ -661,6 +820,37 @@ const styles = {
     color: "#6d28d9",
     cursor: "pointer",
     fontWeight: 900,
+  },
+
+  sideDivider: {
+    height: "1px",
+    background: "rgba(124,58,237,0.16)",
+    margin: "18px 0",
+  },
+
+  leaderBtn: {
+    width: "100%",
+    marginTop: "10px",
+    padding: "13px",
+    border: "1px solid rgba(124,58,237,0.22)",
+    borderRadius: "999px",
+    background: "white",
+    color: "#6d28d9",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  leaderActiveBtn: {
+    width: "100%",
+    marginTop: "10px",
+    padding: "13px",
+    border: "none",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: 900,
+    boxShadow: "0 14px 28px rgba(124,58,237,0.18)",
   },
 
   mainArea: {
@@ -966,6 +1156,127 @@ const styles = {
     borderRadius: "999px",
     fontSize: "1rem",
     cursor: "pointer",
+    fontWeight: 900,
+    marginBottom: "12px",
+  },
+
+  leaderboardCard: {
+    background: "white",
+    borderRadius: "30px",
+    padding: "28px",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 16px 35px rgba(76,29,149,0.08)",
+  },
+
+  leaderHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "16px",
+    flexWrap: "wrap",
+    marginBottom: "22px",
+  },
+
+  leaderTitle: {
+    margin: 0,
+    color: "#241039",
+    fontSize: "2rem",
+  },
+
+  leaderSubtitle: {
+    margin: "6px 0 0",
+    color: "#7c6a92",
+    fontWeight: 700,
+  },
+
+  refreshBtn: {
+    padding: "11px 18px",
+    border: "1px solid rgba(124,58,237,0.22)",
+    borderRadius: "999px",
+    background: "#f3e8ff",
+    color: "#6d28d9",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  rankList: {
+    display: "grid",
+    gap: "12px",
+  },
+
+  rankRow: {
+    display: "grid",
+    gridTemplateColumns: "58px 54px 1fr auto",
+    alignItems: "center",
+    gap: "14px",
+    padding: "14px",
+    borderRadius: "20px",
+    background: "#faf7ff",
+    border: "1px solid rgba(124,58,237,0.12)",
+  },
+
+  topRankRow: {
+    display: "grid",
+    gridTemplateColumns: "58px 54px 1fr auto",
+    alignItems: "center",
+    gap: "14px",
+    padding: "16px",
+    borderRadius: "22px",
+    background: "linear-gradient(135deg,#fff7d6,#f3e8ff)",
+    border: "1px solid rgba(250,204,21,0.65)",
+    boxShadow: "0 10px 24px rgba(124,58,237,0.10)",
+  },
+
+  rankNo: {
+    color: "#7c3aed",
+    fontWeight: 900,
+    fontSize: "1.1rem",
+    textAlign: "center",
+  },
+
+  rankAvatar: {
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    background: "#7c3aed",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 900,
+    overflow: "hidden",
+  },
+
+  rankAvatarImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+
+  rankInfo: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    minWidth: 0,
+  },
+
+  rankName: {
+    color: "#241039",
+    fontSize: "1rem",
+  },
+
+  rankTopic: {
+    color: "#7c6a92",
+    fontSize: "0.88rem",
+    fontWeight: 700,
+  },
+
+  rankScore: {
+    color: "#7c3aed",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: "3px",
     fontWeight: 900,
   },
 
