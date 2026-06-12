@@ -24,8 +24,10 @@ export default function Navbar() {
     navigate("/");
   };
 
+  const API_BASE = "https://purple-family-website.onrender.com";
+
   const profileImage = user?.profile_picture
-    ? `http://127.0.0.1:8000/${user.profile_picture}`
+    ? `${API_BASE}/${user.profile_picture}`
     : null;
 
   const links = [

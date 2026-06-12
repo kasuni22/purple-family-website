@@ -454,5 +454,21 @@ const styles = {
   footerText: { color: "#b39ddb", fontSize: "0.9rem" },
   footerSmall: { color: "#7c3aed", fontSize: "0.85rem", marginTop: "0.5rem" },
   footerBottom: { textAlign: "center", padding: "1rem 0" },
-  footerBottomText: { color: "#7c3aed", fontSize: "0.85rem" },
+  footerBottomText: {
+    color: "#7c3aed",
+    fontSize: "0.85rem",
+  },
+
+  mobileHero: {
+    flexDirection: "column",
+  },
+
+  mobileNav: {
+    flexDirection: "column",
+    gap: "16px",
+  },
+
+  mobileButtons: {
+    width: "100%",
+  },
 };
