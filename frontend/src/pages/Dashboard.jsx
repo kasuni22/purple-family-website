@@ -5,25 +5,99 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import btsHero from "../assets/bts-hero1.jpg";
 
+const API_BASE = "http://127.0.0.1:8000";
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [birthdays, setBirthdays] = useState([]);
   const [members, setMembers] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [postForm, setPostForm] = useState({ title: "", content: "" });
+  const [posting, setPosting] = useState(false);
+
+  const displayName = user?.nickname || user?.username || "ARMY";
 
   useEffect(() => {
-    API.get("/auth/me")
-      .then((res) => setUser(res.data))
-      .catch(() => navigate("/login"));
-
-    API.get("/birthdays/today")
-      .then((res) => setBirthdays(res.data || []))
-      .catch(() => setBirthdays([]));
-
-    API.get("/members")
-      .then((res) => setMembers(res.data || []))
-      .catch(() => setMembers([]));
+    loadDashboard();
   }, [navigate]);
+
+  const loadDashboard = async () => {
+    try {
+      const [meRes, birthdayRes, membersRes, postsRes] = await Promise.all([
+        API.get("/auth/me"),
+        API.get("/birthdays/today").catch(() => ({ data: [] })),
+        API.get("/members").catch(() => ({ data: [] })),
+        API.get("/posts").catch(() => ({ data: [] })),
+      ]);
+
+      setUser(meRes.data);
+      setBirthdays(birthdayRes.data || []);
+      setMembers(membersRes.data || []);
+      setPosts(postsRes.data || []);
+    } catch {
+      navigate("/login");
+    }
+  };
+
+  const imageUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http") || path.startsWith("blob:")) return path;
+    return `${API_BASE}/${path}`;
+  };
+
+  const getAuthorName = (post) =>
+    post.nickname || post.username || "ARMY";
+
+  const getInitial = (name) =>
+    (name || "A").trim().charAt(0).toUpperCase();
+
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "";
+    return new Date(dateValue).toLocaleString([], {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const handleCreatePost = async (e) => {
+    e.preventDefault();
+
+    if (!postForm.title.trim() || !postForm.content.trim()) {
+      alert("Please add title and message 💜");
+      return;
+    }
+
+    try {
+      setPosting(true);
+      await API.post("/posts", {
+        title: postForm.title.trim(),
+        content: postForm.content.trim(),
+      });
+
+      setPostForm({ title: "", content: "" });
+      const postsRes = await API.get("/posts");
+      setPosts(postsRes.data || []);
+    } catch (err) {
+      alert(err.response?.data?.detail || "Post failed");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const handleDeletePost = async (post) => {
+    if (!window.confirm("Delete this ARMY feed post?")) return;
+
+    try {
+      await API.delete(`/posts/${post.id}`);
+      setPosts((prev) => prev.filter((item) => item.id !== post.id));
+    } catch (err) {
+      alert(err.response?.data?.detail || "Delete failed");
+    }
+  };
 
   const cards = [
     {
@@ -70,8 +144,6 @@ export default function Dashboard() {
     },
   ];
 
-  const displayName = user?.nickname || user?.username || "ARMY";
-
   return (
     <>
       <Navbar />
@@ -81,21 +153,19 @@ export default function Dashboard() {
           <div style={styles.heroContent}>
             <div style={styles.badge}>💜 Welcome back, {displayName}</div>
 
-            <h1 style={styles.title}>
-              Your Purple Family dashboard
-            </h1>
+            <h1 style={styles.title}>Your Purple Family ARMY Feed</h1>
 
             <p style={styles.subtitle}>
-              Manage birthdays, wallpapers, members, BTS songs, quizzes and your
-              ARMY profile from one beautiful place.
+              Share updates, memories, BTS love, birthday wishes and community
+              moments with your SL ARMY family.
             </p>
 
             <div style={styles.heroActions}>
               <button
                 style={styles.primaryBtn}
-                onClick={() => navigate("/wallpapers")}
+                onClick={() => document.getElementById("army-feed-form")?.scrollIntoView({ behavior: "smooth" })}
               >
-                Explore Wallpapers
+                Write Feed Post 💜
               </button>
 
               <button
@@ -129,9 +199,9 @@ export default function Dashboard() {
           </div>
 
           <div style={styles.statCard}>
-            <span style={styles.statIcon}>⭐</span>
-            <h3 style={styles.statNumber}>OT7</h3>
-            <p style={styles.statText}>Forever BTS</p>
+            <span style={styles.statIcon}>💌</span>
+            <h3 style={styles.statNumber}>{posts.length}</h3>
+            <p style={styles.statText}>Feed Posts</p>
           </div>
         </section>
 
@@ -139,9 +209,7 @@ export default function Dashboard() {
           <section style={styles.birthdayBox}>
             <div>
               <h2 style={styles.boxTitle}>🎉 Today&apos;s Birthday</h2>
-              <p style={styles.boxText}>
-                Don&apos;t forget to send purple wishes!
-              </p>
+              <p style={styles.boxText}>Don&apos;t forget to send purple wishes!</p>
             </div>
 
             <div style={styles.birthdayList}>
@@ -153,6 +221,123 @@ export default function Dashboard() {
             </div>
           </section>
         )}
+
+        <section style={styles.feedLayout}>
+          <div>
+            <section id="army-feed-form" style={styles.feedComposer}>
+              <div style={styles.feedComposerHeader}>
+                <div style={styles.myAvatar}>
+                  {user?.profile_picture ? (
+                    <img
+                      src={imageUrl(user.profile_picture)}
+                      alt={displayName}
+                      style={styles.myAvatarImg}
+                    />
+                  ) : (
+                    getInitial(displayName)
+                  )}
+                </div>
+
+                <div>
+                  <h2 style={styles.feedTitle}>💜 ARMY Feed</h2>
+                  <p style={styles.feedSubText}>
+                    All ARMY can share posts. Newest posts show first.
+                  </p>
+                </div>
+              </div>
+
+              <form style={styles.feedForm} onSubmit={handleCreatePost}>
+                <input
+                  style={styles.feedInput}
+                  placeholder="Post title..."
+                  value={postForm.title}
+                  onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
+                />
+
+                <textarea
+                  style={styles.feedTextarea}
+                  placeholder="Share something with Purple Family..."
+                  rows={4}
+                  value={postForm.content}
+                  onChange={(e) => setPostForm({ ...postForm, content: e.target.value })}
+                />
+
+                <button style={styles.postBtn} type="submit" disabled={posting}>
+                  {posting ? "Posting..." : "Post to ARMY Feed 💜"}
+                </button>
+              </form>
+            </section>
+
+            <section style={styles.feedList}>
+              {posts.length === 0 ? (
+                <div style={styles.emptyFeed}>
+                  <h3>No ARMY posts yet 💜</h3>
+                  <p>Be the first to write something beautiful.</p>
+                </div>
+              ) : (
+                posts.map((post) => {
+                  const author = getAuthorName(post);
+                  const canDelete = user?.is_admin || user?.id === post.owner_id;
+
+                  return (
+                    <article key={post.id} style={styles.feedPost}>
+                      <div style={styles.postHeader}>
+                        <div style={styles.postAuthorBox}>
+                          <div style={styles.postAvatar}>
+                            {post.profile_picture ? (
+                              <img
+                                src={imageUrl(post.profile_picture)}
+                                alt={author}
+                                style={styles.postAvatarImg}
+                              />
+                            ) : (
+                              getInitial(author)
+                            )}
+                          </div>
+
+                          <div>
+                            <strong style={styles.postAuthor}>{author}</strong>
+                            <p style={styles.postDate}>{formatDate(post.created_at)}</p>
+                          </div>
+                        </div>
+
+                        {canDelete && (
+                          <button
+                            style={styles.deletePostBtn}
+                            onClick={() => handleDeletePost(post)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+
+                      <h3 style={styles.postTitle}>{post.title}</h3>
+                      <p style={styles.postContent}>{post.content}</p>
+
+                      {post.bias && (
+                        <span style={styles.biasPill}>💜 Bias: {post.bias}</span>
+                      )}
+                    </article>
+                  );
+                })
+              )}
+            </section>
+          </div>
+
+          <aside style={styles.quickPanel}>
+            <h3 style={styles.quickTitle}>Quick Actions</h3>
+            {cards.map((card) => (
+              <button
+                key={card.title}
+                style={styles.quickBtn}
+                onClick={() => navigate(card.path)}
+              >
+                <span>{card.icon}</span>
+                {card.title}
+              </button>
+            ))}
+          </aside>
+        </section>
 
         <section style={styles.sectionHeader}>
           <p style={styles.kicker}>Explore</p>
@@ -274,15 +459,7 @@ const styles = {
     flexDirection: "column",
     justifyContent: "flex-end",
     border: "1px solid rgba(255,255,255,0.15)",
-
-    backgroundImage: `
-    linear-gradient(
-      to top,
-      rgba(0,0,0,0.75),
-      rgba(0,0,0,0.15)
-    ),
-    url(${btsHero})
-  `,
+    backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.15)), url(${btsHero})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     boxShadow: "0 25px 70px rgba(76,29,149,0.18)",
@@ -314,20 +491,9 @@ const styles = {
     boxShadow: "0 16px 36px rgba(76,29,149,0.08)",
   },
 
-  statIcon: {
-    fontSize: "2rem",
-  },
-
-  statNumber: {
-    color: "#4c1d95",
-    fontSize: "2.1rem",
-    marginTop: "10px",
-  },
-
-  statText: {
-    color: "#7c6a92",
-    fontWeight: 700,
-  },
+  statIcon: { fontSize: "2rem" },
+  statNumber: { color: "#4c1d95", fontSize: "2.1rem", marginTop: "10px" },
+  statText: { color: "#7c6a92", fontWeight: 700 },
 
   birthdayBox: {
     width: "min(1280px,100%)",
@@ -343,14 +509,8 @@ const styles = {
     boxShadow: "0 16px 36px rgba(76,29,149,0.08)",
   },
 
-  boxTitle: {
-    color: "#831843",
-    marginBottom: "6px",
-  },
-
-  boxText: {
-    color: "#9d174d",
-  },
+  boxTitle: { color: "#831843", marginBottom: "6px" },
+  boxText: { color: "#9d174d" },
 
   birthdayList: {
     display: "flex",
@@ -365,6 +525,224 @@ const styles = {
     background: "white",
     color: "#7c3aed",
     fontWeight: 900,
+  },
+
+  feedLayout: {
+    width: "min(1280px,100%)",
+    margin: "32px auto 0",
+    display: "grid",
+    gridTemplateColumns: "1fr 310px",
+    gap: "24px",
+    alignItems: "start",
+  },
+
+  feedComposer: {
+    padding: "28px",
+    borderRadius: "32px",
+    background: "rgba(255,255,255,0.86)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 18px 45px rgba(76,29,149,0.08)",
+    marginBottom: "20px",
+  },
+
+  feedComposerHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    marginBottom: "18px",
+  },
+
+  myAvatar: {
+    width: "58px",
+    height: "58px",
+    borderRadius: "50%",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    display: "grid",
+    placeItems: "center",
+    fontWeight: 900,
+    fontSize: "1.4rem",
+    overflow: "hidden",
+    flexShrink: 0,
+  },
+
+  myAvatarImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+
+  feedTitle: {
+    color: "#241039",
+    marginBottom: "4px",
+  },
+
+  feedSubText: {
+    color: "#7c6a92",
+    fontWeight: 700,
+  },
+
+  feedForm: {
+    display: "grid",
+    gap: "12px",
+  },
+
+  feedInput: {
+    padding: "14px 16px",
+    borderRadius: "16px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    outline: "none",
+    color: "#241039",
+  },
+
+  feedTextarea: {
+    padding: "14px 16px",
+    borderRadius: "16px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    outline: "none",
+    resize: "vertical",
+    color: "#241039",
+    lineHeight: 1.7,
+  },
+
+  postBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    padding: "14px 20px",
+    fontWeight: 900,
+    cursor: "pointer",
+    boxShadow: "0 14px 28px rgba(124,58,237,0.2)",
+  },
+
+  feedList: {
+    display: "grid",
+    gap: "16px",
+  },
+
+  feedPost: {
+    padding: "24px",
+    borderRadius: "28px",
+    background: "white",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 16px 35px rgba(76,29,149,0.08)",
+  },
+
+  postHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "12px",
+    alignItems: "center",
+    marginBottom: "14px",
+  },
+
+  postAuthorBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+  },
+
+  postAvatar: {
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    color: "white",
+    display: "grid",
+    placeItems: "center",
+    fontWeight: 900,
+    overflow: "hidden",
+    flexShrink: 0,
+  },
+
+  postAvatarImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+
+  postAuthor: {
+    color: "#4c1d95",
+  },
+
+  postDate: {
+    color: "#9ca3af",
+    fontSize: "0.85rem",
+    marginTop: "3px",
+  },
+
+  deletePostBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "#fee2e2",
+    color: "#991b1b",
+    padding: "8px 13px",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+
+  postTitle: {
+    color: "#241039",
+    fontSize: "1.35rem",
+    marginBottom: "8px",
+  },
+
+  postContent: {
+    color: "#4b3b5f",
+    lineHeight: 1.8,
+    whiteSpace: "pre-wrap",
+    marginBottom: "14px",
+  },
+
+  biasPill: {
+    display: "inline-flex",
+    padding: "8px 13px",
+    borderRadius: "999px",
+    background: "#f3e8ff",
+    color: "#6d28d9",
+    fontWeight: 900,
+    fontSize: "0.85rem",
+  },
+
+  emptyFeed: {
+    padding: "46px 20px",
+    borderRadius: "28px",
+    background: "white",
+    border: "1px solid rgba(124,58,237,0.14)",
+    textAlign: "center",
+    color: "#7c6a92",
+  },
+
+  quickPanel: {
+    position: "sticky",
+    top: "100px",
+    padding: "22px",
+    borderRadius: "28px",
+    background: "rgba(255,255,255,0.86)",
+    border: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 18px 45px rgba(76,29,149,0.08)",
+  },
+
+  quickTitle: {
+    color: "#241039",
+    marginBottom: "14px",
+  },
+
+  quickBtn: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    border: "1px solid rgba(124,58,237,0.16)",
+    background: "white",
+    color: "#6d28d9",
+    borderRadius: "18px",
+    padding: "13px 14px",
+    cursor: "pointer",
+    fontWeight: 900,
+    marginBottom: "10px",
+    textAlign: "left",
   },
 
   sectionHeader: {
@@ -413,17 +791,8 @@ const styles = {
     boxShadow: "0 12px 24px rgba(124,58,237,0.22)",
   },
 
-  cardTitle: {
-    color: "#4c1d95",
-    marginBottom: "10px",
-    fontSize: "1.25rem",
-  },
-
-  cardText: {
-    color: "#7c6a92",
-    lineHeight: 1.7,
-    marginBottom: "22px",
-  },
+  cardTitle: { color: "#4c1d95", marginBottom: "10px", fontSize: "1.25rem" },
+  cardText: { color: "#7c6a92", lineHeight: 1.7, marginBottom: "22px" },
 
   cardButton: {
     border: "none",

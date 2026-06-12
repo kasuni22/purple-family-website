@@ -290,18 +290,45 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db), current
 @app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).order_by(models.Post.created_at.desc()).all()
-    return [
-        {
-            "id": p.id,
-            "title": p.title,
-            "content": p.content,
-            "owner_id": p.owner_id,
-            "created_at": p.created_at,
-            "username": db.query(models.User).filter(
-                models.User.id == p.owner_id).first().username
-        }
-        for p in posts
-    ]
+    result = []
+
+    for p in posts:
+        owner = db.query(models.User).filter(models.User.id == p.owner_id).first()
+        result.append(
+            {
+                "id": p.id,
+                "title": p.title,
+                "content": p.content,
+                "owner_id": p.owner_id,
+                "created_at": p.created_at,
+                "username": owner.username if owner else "Deleted ARMY",
+                "nickname": owner.nickname if owner else None,
+                "profile_picture": owner.profile_picture if owner else None,
+                "bias": owner.bias if owner else None,
+                "can_delete": False,
+            }
+        )
+
+    return result
+
+
+@app.delete("/posts/{post_id}")
+def delete_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    if not current_user.is_admin and post.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this post")
+
+    db.delete(post)
+    db.commit()
+
+    return {"detail": "Post deleted"}
 
 # ─── WALLPAPER ROUTES ──────────────────────────────────────
 
