@@ -373,16 +373,17 @@ export default function Quiz() {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="quiz-container" style={styles.container}>
       <Navbar />
 
-      <div style={styles.page}>
-        <aside style={styles.sidebar}>
+      <div className="quiz-page" style={styles.page}>
+        <aside className="quiz-sidebar" style={styles.sidebar}>
           <h2 style={styles.sideTitle}>🎮 Quiz Topics</h2>
 
           {topics.map((topic) => (
             <div
               key={topic.id}
+              className="quiz-topic-card"
               onClick={() => changeTopic(topic.id)}
               style={{
                 ...styles.topicCard,
@@ -428,8 +429,8 @@ export default function Quiz() {
           </button>
         </aside>
 
-        <main style={styles.mainArea}>
-          <div style={styles.topBar}>
+        <main className="quiz-main-area" style={styles.mainArea}>
+          <div className="quiz-top-bar" style={styles.topBar}>
             <div>
               <h1 style={styles.title}>{activeTopic ? `${activeTopic.icon || "📚"} ${activeTopic.name}` : "Quiz Games"}</h1>
               <p style={styles.subtitle}>All ARMY can add questions. Images are optional 💜</p>
@@ -438,8 +439,8 @@ export default function Quiz() {
           </div>
 
           {viewMode === "leaderboard" ? (
-            <div style={styles.leaderboardCard}>
-              <div style={styles.leaderHeader}>
+            <div className="quiz-leaderboard-card" style={styles.leaderboardCard}>
+              <div className="quiz-leader-header" style={styles.leaderHeader}>
                 <div>
                   <h2 style={styles.leaderTitle}>🏆 Top ARMY Rankings</h2>
                   <p style={styles.leaderSubtitle}>Highest scores from all quiz topics 💜</p>
@@ -450,9 +451,9 @@ export default function Quiz() {
               {leaderboard.length === 0 ? (
                 <div style={styles.emptyCard}>No scores yet. Play a quiz first 💜</div>
               ) : (
-                <div style={styles.rankList}>
+                <div className="quiz-rank-list" style={styles.rankList}>
                   {leaderboard.map((item, index) => (
-                    <div key={item.id} style={index < 3 ? styles.topRankRow : styles.rankRow}>
+                    <div key={item.id} className="quiz-rank-row" style={index < 3 ? styles.topRankRow : styles.rankRow}>
                       <div style={styles.rankNo}>{getRankIcon(index)}</div>
 
                       <div style={styles.rankAvatar}>
@@ -484,8 +485,8 @@ export default function Quiz() {
               )}
             </div>
           ) : viewMode === "myScores" ? (
-            <div style={styles.leaderboardCard}>
-              <div style={styles.leaderHeader}>
+            <div className="quiz-leaderboard-card" style={styles.leaderboardCard}>
+              <div className="quiz-leader-header" style={styles.leaderHeader}>
                 <div>
                   <h2 style={styles.leaderTitle}>💜 My Quiz Scores</h2>
                   <p style={styles.leaderSubtitle}>Your latest quiz history</p>
@@ -496,9 +497,9 @@ export default function Quiz() {
               {myScores.length === 0 ? (
                 <div style={styles.emptyCard}>You have not played any quiz yet 💜</div>
               ) : (
-                <div style={styles.rankList}>
+                <div className="quiz-rank-list" style={styles.rankList}>
                   {myScores.map((item) => (
-                    <div key={item.id} style={styles.rankRow}>
+                    <div key={item.id} className="quiz-rank-row" style={styles.rankRow}>
                       <div style={styles.rankAvatar}>
                         {item.profile_picture ? (
                           <img
@@ -541,7 +542,7 @@ export default function Quiz() {
               <button onClick={openAddQuestionForm} style={styles.primaryBtn}>➕ Add First Question</button>
             </div>
           ) : !showResult ? (
-            <div style={styles.quizCard}>
+            <div className="quiz-card" style={styles.quizCard}>
               <div style={styles.progressText}>
                 Question {current + 1} of {activeQuestions.length} • Score: {score}
               </div>
@@ -554,7 +555,7 @@ export default function Quiz() {
                 />
               </div>
 
-              <div style={styles.questionHeaderRow}>
+              <div className="quiz-question-header-row" style={styles.questionHeaderRow}>
                 <h2 style={styles.questionNo}>Question {String(current + 1).padStart(2, "0")}</h2>
                 <div style={styles.cardActions}>
                   {currentQuestion.can_edit && <button onClick={() => openEditQuestionForm(currentQuestion)} style={styles.editBtn}>Edit</button>}
@@ -563,16 +564,16 @@ export default function Quiz() {
               </div>
 
               {currentQuestion.image_url && (
-                <div style={styles.questionImageWrap}>
+                <div className="quiz-question-image-wrap" style={styles.questionImageWrap}>
                   <img src={imageSrc(currentQuestion.image_url)} alt="Quiz" style={styles.questionImage} />
                 </div>
               )}
 
               <h2 style={styles.question}>{currentQuestion.question}</h2>
 
-              <div style={styles.options}>
+              <div className="quiz-options" style={styles.options}>
                 {optionList.map((option, i) => (
-                  <button key={i} onClick={() => handleAnswer(option)} style={getOptionStyle(option)}>
+                  <button key={i} className="quiz-option-btn" onClick={() => handleAnswer(option)} style={getOptionStyle(option)}>
                     <span style={styles.optionLetter}>{["A", "B", "C", "D"][i]}</span>
                     <span>{option}</span>
                     {answered && option === currentQuestion.correct_answer && <b> ✅</b>}
@@ -588,7 +589,7 @@ export default function Quiz() {
               )}
             </div>
           ) : (
-            <div style={styles.resultCard}>
+            <div className="quiz-result-card" style={styles.resultCard}>
               <div style={styles.resultEmoji}>{score === activeQuestions.length ? "🏆" : score >= activeQuestions.length / 2 ? "⭐" : "💜"}</div>
               <h2 style={styles.resultTitle}>Quiz Complete!</h2>
               <div style={styles.scoreCircle}>
@@ -606,7 +607,7 @@ export default function Quiz() {
 
       {showTopicForm && (
         <div style={styles.modalOverlay}>
-          <form onSubmit={submitTopic} style={styles.smallModalCard}>
+          <form onSubmit={submitTopic} className="quiz-small-modal-card" style={styles.smallModalCard}>
             <div style={styles.modalHeader}>
               <h2 style={styles.modalTitle}>{topicForm.id ? "Edit Topic" : "Add Topic"}</h2>
               <button type="button" onClick={closeTopicForm} style={styles.closeBtn}>×</button>
@@ -629,7 +630,7 @@ export default function Quiz() {
               required
             />
 
-            <div style={styles.modalActions}>
+            <div className="quiz-modal-actions" style={styles.modalActions}>
               <button type="button" onClick={closeTopicForm} style={styles.cancelBtn}>Cancel</button>
               <button type="submit" style={styles.saveBtn}>{topicForm.id ? "Save Topic" : "Add Topic"}</button>
             </div>
@@ -639,7 +640,7 @@ export default function Quiz() {
 
       {showQuestionForm && (
         <div style={styles.modalOverlay}>
-          <form onSubmit={submitQuestion} style={styles.modalCard}>
+          <form onSubmit={submitQuestion} className="quiz-modal-card" style={styles.modalCard}>
             <div style={styles.modalHeader}>
               <h2 style={styles.modalTitle}>{questionForm.id ? "Edit Quiz Question" : "Add Quiz Question"}</h2>
               <button type="button" onClick={closeQuestionForm} style={styles.closeBtn}>×</button>
@@ -671,7 +672,7 @@ export default function Quiz() {
             <input type="file" accept="image/*" onChange={handleFileChange} style={styles.input} />
             {preview && <img src={preview} alt="Preview" style={styles.previewImage} />}
 
-            <div style={styles.formGrid}>
+            <div className="quiz-form-grid" style={styles.formGrid}>
               {["option_a", "option_b", "option_c", "option_d"].map((key, idx) => (
                 <div key={key}>
                   <label style={styles.label}>Option {String.fromCharCode(65 + idx)}</label>
@@ -707,7 +708,7 @@ export default function Quiz() {
                 ))}
             </select>
 
-            <div style={styles.modalActions}>
+            <div className="quiz-modal-actions" style={styles.modalActions}>
               <button type="button" onClick={closeQuestionForm} style={styles.cancelBtn}>Cancel</button>
               <button type="submit" style={styles.saveBtn}>{questionForm.id ? "Save Changes" : "Add Question"}</button>
             </div>
@@ -715,8 +716,158 @@ export default function Quiz() {
         </div>
       )}
 
+      <QuizResponsiveStyles />
       <Footer />
     </div>
+  );
+}
+
+
+function QuizResponsiveStyles() {
+  return (
+    <style>{`
+      @media (max-width: 768px) {
+        .quiz-page {
+          padding: 24px 14px !important;
+          grid-template-columns: 1fr !important;
+          gap: 18px !important;
+        }
+
+        .quiz-sidebar {
+          position: static !important;
+          top: auto !important;
+          padding: 18px !important;
+          border-radius: 26px !important;
+          max-height: none !important;
+        }
+
+        .quiz-main-area {
+          padding: 22px 16px !important;
+          border-radius: 28px !important;
+        }
+
+        .quiz-top-bar {
+          align-items: stretch !important;
+          text-align: center !important;
+          justify-content: center !important;
+        }
+
+        .quiz-top-bar > div,
+        .quiz-top-bar button {
+          width: 100% !important;
+        }
+
+        .quiz-card,
+        .quiz-leaderboard-card,
+        .quiz-result-card {
+          padding: 20px 16px !important;
+          border-radius: 26px !important;
+        }
+
+        .quiz-question-header-row {
+          align-items: stretch !important;
+        }
+
+        .quiz-question-header-row > h2,
+        .quiz-question-header-row > div {
+          width: 100% !important;
+        }
+
+        .quiz-question-image-wrap {
+          margin-bottom: 18px !important;
+        }
+
+        .quiz-question-image-wrap img {
+          max-height: 240px !important;
+          border-radius: 20px !important;
+        }
+
+        .quiz-options {
+          gap: 12px !important;
+        }
+
+        .quiz-option-btn {
+          padding: 14px 13px !important;
+          border-radius: 18px !important;
+          align-items: flex-start !important;
+          gap: 10px !important;
+          font-size: 0.95rem !important;
+        }
+
+        .quiz-leader-header {
+          text-align: center !important;
+          align-items: stretch !important;
+        }
+
+        .quiz-leader-header > div,
+        .quiz-leader-header button {
+          width: 100% !important;
+        }
+
+        .quiz-rank-row {
+          grid-template-columns: 42px 46px 1fr !important;
+          gap: 10px !important;
+          padding: 12px !important;
+        }
+
+        .quiz-rank-row > div:last-child {
+          grid-column: 1 / -1 !important;
+          align-items: flex-start !important;
+          background: rgba(124,58,237,0.08) !important;
+          padding: 10px 12px !important;
+          border-radius: 14px !important;
+          margin-top: 4px !important;
+        }
+
+        .quiz-modal-card,
+        .quiz-small-modal-card {
+          width: min(94vw, 760px) !important;
+          max-height: 88vh !important;
+          padding: 20px 16px !important;
+          border-radius: 26px !important;
+        }
+
+        .quiz-form-grid {
+          grid-template-columns: 1fr !important;
+          gap: 10px !important;
+        }
+
+        .quiz-modal-actions {
+          justify-content: stretch !important;
+        }
+
+        .quiz-modal-actions button {
+          width: 100% !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .quiz-page {
+          padding: 20px 10px !important;
+        }
+
+        .quiz-sidebar,
+        .quiz-main-area {
+          border-radius: 24px !important;
+        }
+
+        .quiz-topic-card {
+          padding: 13px !important;
+          border-radius: 18px !important;
+        }
+
+        .quiz-main-area h1 {
+          font-size: 2rem !important;
+          line-height: 1.05 !important;
+        }
+
+        .quiz-card h2,
+        .quiz-result-card h2,
+        .quiz-leaderboard-card h2 {
+          font-size: 1.55rem !important;
+        }
+      }
+    `}</style>
   );
 }
 
