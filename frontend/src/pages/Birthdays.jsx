@@ -224,8 +224,8 @@ export default function Birthdays() {
     <>
       <Navbar />
 
-      <main style={styles.page}>
-        <section style={styles.hero}>
+      <main className="birthdays-page" style={styles.page}>
+        <section className="birthdays-hero" style={styles.hero}>
           <div>
             <div style={styles.badge}>🎂 Purple Birthday Calendar</div>
             <h1 style={styles.title}>Celebrate every ARMY beautifully</h1>
@@ -235,14 +235,14 @@ export default function Birthdays() {
             </p>
           </div>
 
-          <div style={styles.heroCard}>
+          <div className="birthdays-hero-card" style={styles.heroCard}>
             <span style={styles.heroEmoji}>🎉</span>
             <h2>{todayBirthdays.length}</h2>
             <p>Birthdays Today</p>
           </div>
         </section>
 
-        <section style={styles.statsGrid}>
+        <section className="birthdays-stats" style={styles.statsGrid}>
           <div style={styles.statCard}>
             <span>👥</span>
             <h3>{birthdays.length}</h3>
@@ -262,7 +262,7 @@ export default function Birthdays() {
           </div>
         </section>
 
-        <div style={styles.tabNav}>
+        <div className="birthdays-tabs" style={styles.tabNav}>
           {[
             ["army", "🎂 ARMY Birthdays"],
             ["wishes", "🎉 Birthday Wishes"],
@@ -282,8 +282,8 @@ export default function Birthdays() {
         </div>
 
         {activeTab === "army" && (
-          <section style={styles.panel}>
-            <div style={styles.sectionHead}>
+          <section className="birthdays-panel" style={styles.panel}>
+            <div className="birthdays-section-head" style={styles.sectionHead}>
               <div>
                 <h2 style={styles.sectionTitle}>ARMY Birthday Calendar</h2>
                 <p style={styles.sectionText}>
@@ -298,10 +298,10 @@ export default function Birthdays() {
             </div>
 
             {todayBirthdays.length > 0 && (
-              <div style={styles.todayCard}>
+              <div className="birthdays-today-card" style={styles.todayCard}>
                 <h3>🎉 Today's Birthday Stars</h3>
 
-                <div style={styles.todayList}>
+                <div className="birthdays-today-list" style={styles.todayList}>
                   {todayBirthdays.map((m) => (
                     <div key={m.id} style={styles.todayItem}>
                       {m.profile_picture ? (
@@ -326,7 +326,7 @@ export default function Birthdays() {
               </div>
             )}
 
-            <div style={styles.controls}>
+            <div className="birthdays-controls" style={styles.controls}>
               <input
                 style={styles.search}
                 placeholder="Search by name or nickname..."
@@ -351,7 +351,7 @@ export default function Birthdays() {
                 <p>Update your profile to add your birthday.</p>
               </div>
             ) : (
-              <div style={styles.memberList}>
+              <div className="birthdays-member-list" style={styles.memberList}>
                 {filteredArmy.map((member) => (
                   <div
                     key={member.id}
@@ -362,7 +362,7 @@ export default function Birthdays() {
                         : {}),
                     }}
                   >
-                    <div style={styles.memberLeft}>
+                    <div className="birthdays-member-left" style={styles.memberLeft}>
                       {member.profile_picture ? (
                         <img
                           src={imageUrl(member.profile_picture)}
@@ -385,12 +385,12 @@ export default function Birthdays() {
                       </div>
                     </div>
 
-                    <div style={styles.memberInfo}>
+                    <div className="birthdays-member-info" style={styles.memberInfo}>
                       <span style={styles.listDate}>🎂 {formatDate(member.birthday)}</span>
                       {member.bias && <span style={styles.listBias}>💜 Bias: {member.bias}</span>}
                     </div>
 
-                    <div style={styles.memberActions}>
+                    <div className="birthdays-member-actions" style={styles.memberActions}>
                       {isBirthdayToday(member.birthday) && (
                         <div style={styles.listTodayBadge}>🎉 Today</div>
                       )}
@@ -413,8 +413,8 @@ export default function Birthdays() {
         )}
 
         {activeTab === "wishes" && (
-          <section style={styles.panel}>
-            <div style={styles.wishesHeader}>
+          <section className="birthdays-panel" style={styles.panel}>
+            <div className="birthdays-wishes-header" style={styles.wishesHeader}>
               <div>
                 <h2 style={styles.sectionTitle}>Birthday Wishes</h2>
                 <p style={styles.sectionText}>Share lovely purple wishes.</p>
@@ -429,10 +429,10 @@ export default function Birthdays() {
             </div>
 
             {showPostForm && (
-              <div style={styles.formCard}>
+              <div className="birthdays-form-card" style={styles.formCard}>
                 <h3 style={styles.cardTitle}>Add Birthday Wish 💜</h3>
 
-                <form onSubmit={handlePost} style={styles.form}>
+                <form className="birthdays-form" onSubmit={handlePost} style={styles.form}>
                   <input
                     style={styles.input}
                     placeholder="For who? nickname / username"
@@ -476,10 +476,10 @@ export default function Birthdays() {
                 <p>Be the first to send one.</p>
               </div>
             ) : (
-              <div style={styles.wishList}>
+              <div className="birthdays-wish-list" style={styles.wishList}>
                 {birthdayPosts.map((post) => (
-                  <article key={post.id} style={styles.wishCard}>
-                    <div style={styles.wishHeader}>
+                  <article className="birthdays-wish-card" key={post.id} style={styles.wishCard}>
+                    <div className="birthdays-wish-header" style={styles.wishHeader}>
                       <div style={styles.avatarSm}>
                         {post.posted_by?.[0]?.toUpperCase()}
                       </div>
@@ -518,7 +518,7 @@ export default function Birthdays() {
                         </div>
                       ))}
 
-                      <div style={styles.commentForm}>
+                      <div className="birthdays-comment-form" style={styles.commentForm}>
                         <input
                           style={styles.commentInput}
                           placeholder="Add a comment 💜"
@@ -547,8 +547,8 @@ export default function Birthdays() {
         )}
 
         {activeTab === "bts" && (
-          <section style={styles.panel}>
-            <div style={styles.sectionHead}>
+          <section className="birthdays-panel" style={styles.panel}>
+            <div className="birthdays-section-head" style={styles.sectionHead}>
               <div>
                 <h2 style={styles.sectionTitle}>BTS Birthdays & Special Days</h2>
                 <button
@@ -574,14 +574,14 @@ export default function Birthdays() {
               </select>
             </div>
             {showSpecialForm && (
-              <div style={styles.formCard}>
+              <div className="birthdays-form-card" style={styles.formCard}>
                 <h3>
                   {editingSpecialDay
                     ? "Edit Special Day"
                     : "Add Special Day"}
                 </h3>
 
-                <form onSubmit={saveSpecialDay} style={styles.form}>
+                <form className="birthdays-form" onSubmit={saveSpecialDay} style={styles.form}>
                   <input
                     style={styles.input}
                     placeholder="Title"
@@ -627,7 +627,7 @@ export default function Birthdays() {
               </div>
             )}
 
-            <div style={styles.grid}>
+            <div className="birthdays-grid" style={styles.grid}>
 
               {filteredBts.map((member) => (
                 <div
@@ -657,7 +657,7 @@ export default function Birthdays() {
                     🌟 ARMY Special Days
                   </h2>
 
-                  <div style={styles.grid}>
+                  <div className="birthdays-grid" style={styles.grid}>
                     {specialDays.map((day) => (
                       <div key={day.id} style={styles.card}>
                         <h3>{day.title}</h3>
@@ -711,9 +711,169 @@ export default function Birthdays() {
           </section>
         )}
       </main>
+        <BirthdaysResponsiveStyles />
 
       <Footer />
     </>
+  );
+}
+
+
+function BirthdaysResponsiveStyles() {
+  return (
+    <style>{`
+      @media (max-width: 768px) {
+        .birthdays-page {
+          padding: 24px 14px !important;
+          overflow-x: hidden !important;
+        }
+
+        .birthdays-hero {
+          grid-template-columns: 1fr !important;
+          padding: 32px 22px !important;
+          border-radius: 28px !important;
+          text-align: center !important;
+          gap: 18px !important;
+        }
+
+        .birthdays-hero-card {
+          min-height: 170px !important;
+          border-radius: 26px !important;
+        }
+
+        .birthdays-stats {
+          grid-template-columns: 1fr !important;
+          gap: 14px !important;
+        }
+
+        .birthdays-tabs {
+          justify-content: flex-start !important;
+          overflow-x: auto !important;
+          flex-wrap: nowrap !important;
+          padding: 4px 2px 8px !important;
+          scrollbar-width: none !important;
+        }
+
+        .birthdays-tabs::-webkit-scrollbar {
+          display: none !important;
+        }
+
+        .birthdays-tabs button {
+          flex: 0 0 auto !important;
+          white-space: nowrap !important;
+          padding: 11px 16px !important;
+          font-size: 0.9rem !important;
+        }
+
+        .birthdays-panel {
+          padding: 20px !important;
+          border-radius: 28px !important;
+        }
+
+        .birthdays-section-head,
+        .birthdays-wishes-header {
+          flex-direction: column !important;
+          align-items: stretch !important;
+          text-align: left !important;
+        }
+
+        .birthdays-controls {
+          flex-direction: column !important;
+          gap: 12px !important;
+        }
+
+        .birthdays-controls input,
+        .birthdays-controls select {
+          width: 100% !important;
+          min-width: 0 !important;
+        }
+
+        .birthdays-today-card {
+          padding: 20px !important;
+          border-radius: 24px !important;
+        }
+
+        .birthdays-today-list {
+          flex-direction: column !important;
+        }
+
+        .birthdays-member-list {
+          gap: 12px !important;
+        }
+
+        .birthdays-member-list > div {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          padding: 18px !important;
+          border-radius: 22px !important;
+        }
+
+        .birthdays-member-left,
+        .birthdays-member-info,
+        .birthdays-member-actions {
+          width: 100% !important;
+          justify-content: flex-start !important;
+        }
+
+        .birthdays-member-info {
+          gap: 8px !important;
+          flex-direction: column !important;
+          align-items: flex-start !important;
+        }
+
+        .birthdays-member-actions button {
+          width: 100% !important;
+        }
+
+        .birthdays-grid {
+          grid-template-columns: 1fr !important;
+          gap: 16px !important;
+        }
+
+        .birthdays-form-card,
+        .birthdays-wish-card {
+          padding: 20px !important;
+          border-radius: 24px !important;
+        }
+
+        .birthdays-form input,
+        .birthdays-form textarea,
+        .birthdays-form button {
+          width: 100% !important;
+        }
+
+        .birthdays-wish-header {
+          align-items: flex-start !important;
+        }
+
+        .birthdays-comment-form {
+          flex-direction: column !important;
+        }
+
+        .birthdays-comment-form input,
+        .birthdays-comment-form button {
+          width: 100% !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .birthdays-page {
+          padding: 20px 12px !important;
+        }
+
+        .birthdays-hero {
+          padding: 28px 18px !important;
+        }
+
+        .birthdays-hero-card {
+          min-height: 150px !important;
+        }
+
+        .birthdays-panel {
+          padding: 16px !important;
+        }
+      }
+    `}</style>
   );
 }
 
