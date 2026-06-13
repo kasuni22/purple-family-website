@@ -7,16 +7,33 @@ import btsHero from "../assets/bts-hero1.jpg";
 
 const API_BASE = "http://127.0.0.1:8000";
 
+const BTS_EVENTS = [
+  { name: "BTS Debut", month: 6, day: 13, type: "Special Day" },
+  { name: "ARMY Day", month: 7, day: 9, type: "Special Day" },
+];
+
+const getTodayBtsEvents = () => {
+  const today = new Date();
+  const todayMonth = today.getMonth() + 1;
+  const todayDate = today.getDate();
+
+  return BTS_EVENTS.filter(
+    (event) => event.month === todayMonth && event.day === todayDate
+  );
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [birthdays, setBirthdays] = useState([]);
+  const [todayCount, setTodayCount] = useState(0);
   const [members, setMembers] = useState([]);
   const [posts, setPosts] = useState([]);
   const [postForm, setPostForm] = useState({ title: "", content: "" });
   const [posting, setPosting] = useState(false);
 
   const displayName = user?.nickname || user?.username || "ARMY";
+  const todayBtsEvents = getTodayBtsEvents();
 
   useEffect(() => {
     loadDashboard();
@@ -31,8 +48,12 @@ export default function Dashboard() {
         API.get("/posts").catch(() => ({ data: [] })),
       ]);
 
+      const birthdayData = birthdayRes.data || [];
+      const btsEventsToday = getTodayBtsEvents();
+
       setUser(meRes.data);
-      setBirthdays(birthdayRes.data || []);
+      setBirthdays(birthdayData);
+      setTodayCount(birthdayData.length + btsEventsToday.length);
       setMembers(membersRes.data || []);
       setPosts(postsRes.data || []);
     } catch {
@@ -194,7 +215,7 @@ export default function Dashboard() {
 
           <div style={styles.statCard}>
             <span style={styles.statIcon}>🎂</span>
-            <h3 style={styles.statNumber}>{birthdays.length}</h3>
+            <h3 style={styles.statNumber}>{todayCount}</h3>
             <p style={styles.statText}>Today Birthdays</p>
           </div>
 
@@ -205,7 +226,7 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {birthdays.length > 0 && (
+        {todayCount > 0 && (
           <section style={styles.birthdayBox}>
             <div>
               <h2 style={styles.boxTitle}>🎉 Today&apos;s Birthday</h2>
@@ -214,8 +235,14 @@ export default function Dashboard() {
 
             <div style={styles.birthdayList}>
               {birthdays.map((b) => (
-                <span key={b.id} style={styles.birthdayPill}>
+                <span key={`army-${b.id}`} style={styles.birthdayPill}>
                   💜 {b.nickname || b.username}
+                </span>
+              ))}
+
+              {todayBtsEvents.map((event) => (
+                <span key={`bts-${event.name}`} style={styles.birthdayPill}>
+                  🎉 {event.name} • {event.type}
                 </span>
               ))}
             </div>
