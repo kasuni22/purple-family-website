@@ -3,22 +3,31 @@ import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import jinImg from "../assets/bts-members/jin.jpg";
+import sugaImg from "../assets/bts-members/suga.jpg";
+import jhopeImg from "../assets/bts-members/jhope.jpg";
+import rmImg from "../assets/bts-members/rm.jpg";
+import jiminImg from "../assets/bts-members/jimin.jpg";
+import vImg from "../assets/bts-members/v.jpg";
+import jungkookImg from "../assets/bts-members/jungkook.jpg";
+import btsDebutImg from "../assets/bts-members/bts-debut.png";
+import armyDayImg from "../assets/bts-members/army-day.jpg";
 
 const MONTHS = [
-  "All", "January", "February", "March", "April", "May", "June",
+  "All", "January", "February", "March", "April", "May", "June",  
   "July", "August", "September", "October", "November", "December",
 ];
 
 const DEFAULT_BTS_EVENTS = [
-  { id: "jin", name: "Jin", date: "December 4", month: 12, day: 4, image: "/bts/jin.png", emoji: "🐹" },
-  { id: "suga", name: "SUGA", date: "March 9", month: 3, day: 9, image: "/bts/suga.png", emoji: "🐱" },
-  { id: "jhope", name: "j-hope", date: "February 18", month: 2, day: 18, image: "/bts/jhope.png", emoji: "🐿️" },
-  { id: "rm", name: "RM", date: "September 12", month: 9, day: 12, image: "/bts/rm.png", emoji: "🐨" },
-  { id: "jimin", name: "Jimin", date: "October 13", month: 10, day: 13, image: "/bts/jimin.png", emoji: "🐥" },
-  { id: "v", name: "V", date: "December 30", month: 12, day: 30, image: "/bts/v.png", emoji: "🐯" },
-  { id: "jungkook", name: "Jung Kook", date: "September 1", month: 9, day: 1, image: "/bts/jungkook.png", emoji: "🐰" },
-  { id: "bts-debut", name: "BTS Debut", date: "June 13", month: 6, day: 13, image: "/bts/bts-debut.png", emoji: "💜", special: true },
-  { id: "army-day", name: "ARMY Day", date: "July 9", month: 7, day: 9, image: "/bts/army-day.png", emoji: "💜", special: true },
+  { id: "jin", name: "Jin", date: "December 4", month: 12, day: 4, image: jinImg, emoji: "🐹" },
+  { id: "suga", name: "SUGA", date: "March 9", month: 3, day: 9, image: sugaImg, emoji: "🐱" },
+  { id: "jhope", name: "j-hope", date: "February 18", month: 2, day: 18, image: jhopeImg, emoji: "🐿️" },
+  { id: "rm", name: "RM", date: "September 12", month: 9, day: 12, image: rmImg, emoji: "🐨" },
+  { id: "jimin", name: "Jimin", date: "October 13", month: 10, day: 13, image: jiminImg, emoji: "🐥" },
+  { id: "v", name: "V", date: "December 30", month: 12, day: 30, image: vImg, emoji: "🐯" },
+  { id: "jungkook", name: "Jung Kook", date: "September 1", month: 9, day: 1, image: jungkookImg, emoji: "🐰" },
+  { id: "bts-debut", name: "BTS Debut", date: "June 13", month: 6, day: 13, image: btsDebutImg, emoji: "💜", special: true },
+  { id: "army-day", name: "ARMY Day", date: "July 9", month: 7, day: 9, image: armyDayImg, emoji: "💜", special: true },
 ];
 
 const getSavedBtsEvents = () => {
