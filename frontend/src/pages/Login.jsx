@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import API from "../api/axios";
 import logo from "../assets/logo.svg";
-import { Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -26,19 +26,16 @@ export default function Login() {
   };
 
   return (
-    <main style={styles.page}>
-      <section style={styles.card}>
-        <div style={styles.left}>
-          <img src={logo} alt="Purple Family" style={styles.logo} />
-          <h1 style={styles.title}>Welcome back ARMY 💜</h1>
-          <p style={styles.subtitle}>
-            Login to continue your Purple Family journey.
-          </p>
+    <main className="auth-page">
+      <section className="auth-card login-card">
+        <div className="auth-left">
+          <img src={logo} alt="Purple Family" className="auth-logo" />
+          <h1>Welcome back ARMY 💜</h1>
+          <p>Login to continue your Purple Family journey.</p>
 
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <label style={styles.label}>Email Address</label>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <label>Email Address</label>
             <input
-              style={styles.input}
               placeholder="army@email.com"
               type="email"
               value={form.email}
@@ -46,200 +43,239 @@ export default function Login() {
               required
             />
 
-            <label style={styles.label}>Password</label>
-            <div style={styles.passwordWrapper}>
+            <label>Password</label>
+            <div className="password-box">
               <input
-                style={styles.passwordInput}
                 placeholder="Enter your password"
                 type={showPassword ? "text" : "password"}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 required
               />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={styles.eyeButton}
-              >
+              <button type="button" onClick={() => setShowPassword(!showPassword)}>
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
 
-            <button style={styles.button} type="submit" disabled={loading}>
+            <button className="auth-submit" type="submit" disabled={loading}>
               {loading ? "Logging in..." : "Login 💜"}
             </button>
           </form>
 
-          <p style={styles.bottomText}>
-            New ARMY? <Link to="/register" style={styles.link}>Join the Family</Link>
+          <p className="auth-bottom">
+            New ARMY? <Link to="/register">Join the Family</Link>
           </p>
         </div>
 
-        <div style={styles.right}>
-          <div style={styles.glass}>
-            <span style={styles.bigEmoji}>🎤</span>
-            <h2 style={styles.panelTitle}>Purple Family</h2>
-            <p style={styles.panelText}>
-              Birthdays, wallpapers, sing-along, quizzes and ARMY memories in one beautiful place.
-            </p>
+        <div className="auth-right">
+          <div className="auth-glass">
+            <span>🎤</span>
+            <h2>Purple Family</h2>
+            <p>Birthdays, wallpapers, sing-along, quizzes and ARMY memories in one beautiful place.</p>
           </div>
         </div>
       </section>
+
+      <AuthStyles />
     </main>
   );
 }
 
-const styles = {
-  page: {
-    minHeight: "100vh",
-    display: "grid",
-    placeItems: "center",
-    padding: "24px",
-  },
+function AuthStyles() {
+  return (
+    <style>{`
+      .auth-page{
+        min-height:100vh;
+        display:grid;
+        place-items:center;
+        padding:24px;
+      }
 
-  card: {
-    width: "min(1050px, 100%)",
-    minHeight: "620px",
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    background: "rgba(255,255,255,0.82)",
-    border: "1px solid rgba(124,58,237,0.16)",
-    borderRadius: "34px",
-    overflow: "hidden",
-    boxShadow: "0 30px 80px rgba(76,29,149,0.18)",
-  },
+      .auth-card{
+        width:min(1050px,100%);
+        min-height:620px;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        background:rgba(255,255,255,.82);
+        border:1px solid rgba(124,58,237,.16);
+        border-radius:34px;
+        overflow:hidden;
+        box-shadow:0 30px 80px rgba(76,29,149,.18);
+      }
 
-  left: {
-    padding: "56px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-  },
+      .auth-left{
+        padding:56px;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+      }
 
-  logo: {
-    width: "64px",
-    marginBottom: "22px",
-  },
+      .auth-logo{
+        width:64px;
+        margin-bottom:22px;
+      }
 
-  title: {
-    fontSize: "2.7rem",
-    color: "#241039",
-    lineHeight: 1,
-    letterSpacing: "-0.05em",
-    marginBottom: "14px",
-  },
+      .auth-left h1{
+        font-size:2.7rem;
+        color:#241039;
+        line-height:1;
+        letter-spacing:-.05em;
+        margin-bottom:14px;
+      }
 
-  subtitle: {
-    color: "#7c6a92",
-    lineHeight: 1.7,
-    marginBottom: "30px",
-  },
+      .auth-left p{
+        color:#7c6a92;
+        line-height:1.7;
+        margin-bottom:30px;
+      }
 
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
+      .auth-form{
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+      }
 
-  label: {
-    color: "#4c1d95",
-    fontWeight: 800,
-    fontSize: "0.9rem",
-  },
+      .auth-form label{
+        color:#4c1d95;
+        font-weight:800;
+        font-size:.9rem;
+      }
 
-  input: {
-    padding: "14px 16px",
-    borderRadius: "16px",
-    border: "1px solid rgba(124,58,237,0.22)",
-    background: "white",
-    color: "#241039",
-    fontSize: "1rem",
-    outline: "none",
-  },
-  passwordWrapper: {
-    position: "relative",
-  },
+      .auth-form input{
+        width:100%;
+        padding:14px 16px;
+        border-radius:16px;
+        border:1px solid rgba(124,58,237,.22);
+        background:white;
+        color:#241039;
+        font-size:1rem;
+        outline:none;
+      }
 
-  passwordInput: {
-    width: "100%",
-    padding: "14px 50px 14px 16px",
-    borderRadius: "16px",
-    border: "1px solid rgba(124,58,237,0.22)",
-    background: "white",
-    color: "#241039",
-    fontSize: "1rem",
-    outline: "none",
-  },
+      .password-box{
+        position:relative;
+      }
 
-  eyeButton: {
-    position: "absolute",
-    right: "14px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    color: "#7c3aed",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+      .password-box input{
+        padding-right:50px;
+      }
 
-  button: {
-    marginTop: "12px",
-    padding: "15px",
-    borderRadius: "999px",
-    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
-    color: "white",
-    fontSize: "1rem",
-    fontWeight: 900,
-    cursor: "pointer",
-    border: "none",
-    boxShadow: "0 16px 30px rgba(124,58,237,0.25)",
-  },
+      .password-box button{
+        position:absolute;
+        right:14px;
+        top:50%;
+        transform:translateY(-50%);
+        background:transparent;
+        border:none;
+        cursor:pointer;
+        color:#7c3aed;
+        display:flex;
+      }
 
-  bottomText: {
-    marginTop: "24px",
-    color: "#7c6a92",
-  },
+      .auth-submit{
+        margin-top:12px;
+        padding:15px;
+        border-radius:999px;
+        background:linear-gradient(135deg,#7c3aed,#ec4899);
+        color:white;
+        font-size:1rem;
+        font-weight:900;
+        cursor:pointer;
+        border:none;
+        box-shadow:0 16px 30px rgba(124,58,237,.25);
+      }
 
-  link: {
-    color: "#7c3aed",
-    fontWeight: 900,
-  },
+      .auth-bottom{
+        margin-top:24px !important;
+        margin-bottom:0 !important;
+      }
 
-  right: {
-    position: "relative",
-    display: "grid",
-    placeItems: "center",
-    padding: "40px",
-    background:
-      "radial-gradient(circle at 30% 20%, rgba(236,72,153,0.55), transparent 35%), linear-gradient(135deg,#4c1d95,#7c3aed)",
-  },
+      .auth-bottom a{
+        color:#7c3aed;
+        font-weight:900;
+      }
 
-  glass: {
-    padding: "42px",
-    borderRadius: "30px",
-    background: "rgba(255,255,255,0.14)",
-    border: "1px solid rgba(255,255,255,0.25)",
-    backdropFilter: "blur(18px)",
-    color: "white",
-    textAlign: "center",
-  },
+      .auth-right{
+        display:grid;
+        place-items:center;
+        padding:40px;
+        background:radial-gradient(circle at 30% 20%,rgba(236,72,153,.55),transparent 35%),linear-gradient(135deg,#4c1d95,#7c3aed);
+      }
 
-  bigEmoji: {
-    fontSize: "4rem",
-  },
+      .auth-glass{
+        padding:42px;
+        border-radius:30px;
+        background:rgba(255,255,255,.14);
+        border:1px solid rgba(255,255,255,.25);
+        backdrop-filter:blur(18px);
+        color:white;
+        text-align:center;
+      }
 
-  panelTitle: {
-    fontSize: "2.3rem",
-    marginTop: "18px",
-  },
+      .auth-glass span{
+        font-size:4rem;
+      }
 
-  panelText: {
-    color: "rgba(255,255,255,0.82)",
-    lineHeight: 1.7,
-    marginTop: "12px",
-  },
-};
+      .auth-glass h2{
+        font-size:2.3rem;
+        margin-top:18px;
+      }
+
+      .auth-glass p{
+        color:rgba(255,255,255,.82);
+        line-height:1.7;
+        margin-top:12px;
+      }
+
+      @media(max-width:768px){
+        .auth-page{
+          padding:18px;
+          align-items:start;
+          padding-top:28px;
+        }
+
+        .auth-card{
+          min-height:auto;
+          grid-template-columns:1fr;
+          border-radius:28px;
+        }
+
+        .auth-left{
+          padding:34px 22px;
+          text-align:center;
+        }
+
+        .auth-logo{
+          width:58px;
+          margin:0 auto 18px;
+        }
+
+        .auth-left h1{
+          font-size:2.1rem;
+        }
+
+        .auth-left p{
+          font-size:.95rem;
+          margin-bottom:24px;
+        }
+
+        .auth-form{
+          text-align:left;
+        }
+
+        .auth-form input{
+          padding:14px;
+          border-radius:14px;
+        }
+
+        .auth-submit{
+          padding:15px;
+        }
+
+        .auth-right{
+          display:none;
+        }
+      }
+    `}</style>
+  );
+}
