@@ -12,15 +12,15 @@ export default function Footer() {
           </p>
 
           <div style={styles.stats}>
-            <div style={styles.statCard}>
+            <a
+              href="https://chat.whatsapp.com/DxIhmvj7N6jI6xKMaBOmeO"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.statCard}
+            >
               <Users size={18} />
-              <span>ARMY Community</span>
-            </div>
-
-            <div style={styles.statCard}>
-              <Music2 size={18} />
-              <span>BTS Music</span>
-            </div>
+              <span>WhatsApp Community</span>
+            </a>
           </div>
         </div>
 
@@ -81,13 +81,17 @@ const styles = {
   },
 
   statCard: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "12px 16px",
-    borderRadius: "16px",
-    background: "rgba(255,255,255,0.1)",
-  },
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  padding: "12px 16px",
+  borderRadius: "16px",
+  background: "#25D366",
+  color: "white",
+  textDecoration: "none",
+  transition: "0.3s",
+  cursor: "pointer",
+},
 
   links: {
     display: "grid",

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.svg";
 import btsHero from "../assets/bts-hero.jpeg";
@@ -5,6 +6,13 @@ import Footer from "../components/Footer";
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 700);
+
+useEffect(() => {
+  const resize = () => setIsMobile(window.innerWidth <= 700);
+  window.addEventListener("resize", resize);
+  return () => window.removeEventListener("resize", resize);
+}, []);
 
   const scrollToFeatures = () => {
     document.getElementById("features").scrollIntoView({ behavior: "smooth" });
@@ -38,44 +46,50 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <div style={styles.hero}>
-        {/* BTS background image - hidden/faded */}
-        <div style={styles.heroBgImage}>
-          <img src={btsHero} alt="" style={styles.bgImg}
-            onError={(e) => e.target.style.display = "none"} />
-        </div>
+      <div style={isMobile ? styles.mobileHero : styles.hero}>
+  <div style={isMobile ? styles.mobileHeroContent : styles.heroContent}>
+    <div style={styles.badge}>🇱🇰 Sri Lankan ARMY Community</div>
+    <h1 style={isMobile ? styles.mobileHeroTitle : styles.heroTitle}>
+      Welcome to<br />Purple Family 💜
+    </h1>
+    <p style={styles.subtitle}>
+      Connect with Sri Lankan ARMYs, celebrate birthdays, share BTS
+      wallpapers, sing along, play quizzes and spread purple love.
+    </p>
 
-        <div style={styles.heroContent}>
-          <div style={styles.badge}>🇱🇰 Sri Lankan ARMY Community</div>
-          <h1 style={styles.heroTitle}>Welcome to<br />Purple Family 💜</h1>
-          <p style={styles.subtitle}>
-            Connect with Sri Lankan ARMYs, celebrate birthdays, share BTS
-            wallpapers, sing along, play quizzes and spread purple love.
-          </p>
+    <div style={isMobile ? styles.mobileActions : styles.actions}>
+      <button onClick={() => navigate("/register")} style={styles.primaryBtn}>
+        Join the Family 💜
+      </button>
 
-          <div style={styles.actions}>
-            <button onClick={() => navigate("/register")} style={styles.primaryBtn}>
-              Join the Family 💜
-            </button>
+      <button onClick={() => navigate("/login")} style={styles.secondaryBtn}>
+        I&apos;m already ARMY
+      </button>
+    </div>
 
-            <button onClick={() => navigate("/login")} style={styles.secondaryBtn}>
-              I&apos;m already ARMY
-            </button>
-          </div>
+    <button onClick={scrollToFeatures} style={styles.exploreBtn}>
+      Explore more ↓
+    </button>
+  </div>
 
-          <button onClick={scrollToFeatures} style={styles.exploreBtn}>
-            Explore more ↓
-          </button>
-        </div>
+  <div style={isMobile ? styles.mobileHeroArt : styles.heroArt}>
+    <div style={styles.artCircle1}>💜</div>
+    <div style={styles.artCircle2}>🎵</div>
+    <div style={styles.artCircle3}>⭐</div>
+    <div style={isMobile ? styles.mobileArtMain : styles.artMain}>
+      BTS<br />💜<br />ARMY
+    </div>
+  </div>
 
-        <div style={styles.heroArt}>
-          <div style={styles.artCircle1}>💜</div>
-          <div style={styles.artCircle2}>🎵</div>
-          <div style={styles.artCircle3}>⭐</div>
-          <div style={styles.artMain}>BTS<br />💜<br />ARMY</div>
-        </div>
-      </div>
-
+  <div style={isMobile ? styles.mobileHeroBgImage : styles.heroBgImage}>
+    <img
+      src={btsHero}
+      alt=""
+      style={isMobile ? styles.mobileBgImg : styles.bgImg}
+      onError={(e) => (e.target.style.display = "none")}
+    />
+  </div>
+</div>
       {/* Features Section */}
       <section id="features" style={styles.section}>
         <div style={styles.sectionHeader}>
@@ -130,7 +144,7 @@ export default function Landing() {
               <span style={styles.wFeature}>🇱🇰 SL ARMY only</span>
             </div>
           </div>
-          <a href="https://chat.whatsapp.com/your-link-here"
+          <a href="https://chat.whatsapp.com/DxIhmvj7N6jI6xKMaBOmeO"
             target="_blank" rel="noopener noreferrer"
             style={styles.whatsappBtn}>
             Join WhatsApp Community 💬
@@ -282,9 +296,16 @@ const styles = {
     fontSize: "1rem",
   },
   heroArt: {
-    flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-    position: "relative", height: "400px", zIndex: 1, marginLeft: "-850px", pointerEvents: "none"
-  },
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  position: "relative",
+  height: "400px",
+  zIndex: 1,
+  marginLeft: "-850px",
+  pointerEvents: "none",
+},
   artCircle1: { position: "absolute", top: "1%", left: "40%", fontSize: "4rem" },
   artCircle2: { position: "absolute", top: "1%", right: "30%", fontSize: "3rem" },
   artCircle3: { position: "absolute", bottom: "20%", left: "38%", fontSize: "2.5rem" },
@@ -460,15 +481,77 @@ const styles = {
   },
 
   mobileHero: {
-    flexDirection: "column",
-  },
+  display: "flex",
+  flexDirection: "column",
+  padding: "40px 18px",
+  maxWidth: "100%",
+  margin: "0 auto",
+  position: "relative",
+  overflow: "hidden",
+  gap: "28px",
+},
 
-  mobileNav: {
-    flexDirection: "column",
-    gap: "16px",
-  },
+mobileHeroContent: {
+  position: "relative",
+  zIndex: 3,
+  textAlign: "center",
+},
 
-  mobileButtons: {
-    width: "100%",
-  },
+mobileHeroTitle: {
+  fontSize: "2.45rem",
+  color: "#2d0a4e",
+  lineHeight: 1.12,
+  marginBottom: "1rem",
+  fontWeight: "bold",
+},
+
+mobileActions: {
+  display: "grid",
+  gridTemplateColumns: "1fr",
+  gap: "12px",
+  marginBottom: "22px",
+},
+
+mobileHeroArt: {
+  position: "relative",
+  zIndex: 2,
+  height: "260px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  pointerEvents: "none",
+},
+
+mobileArtMain: {
+  width: "170px",
+  height: "170px",
+  borderRadius: "50%",
+  background: "linear-gradient(135deg, #7c3aed, #b39ddb)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "1.5rem",
+  fontWeight: "bold",
+  color: "white",
+  textAlign: "center",
+  lineHeight: 1.4,
+  boxShadow: "0 20px 60px rgba(124, 58, 237, 0.3)",
+},
+
+mobileHeroBgImage: {
+  position: "relative",
+  zIndex: 1,
+  width: "100%",
+  height: "320px",
+  borderRadius: "28px",
+  overflow: "hidden",
+  boxShadow: "0 20px 45px rgba(76,29,149,0.16)",
+},
+
+mobileBgImg: {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  opacity: 0.55,
+},
 };
