@@ -85,8 +85,8 @@ export default function EditProfile() {
     <>
       <Navbar />
 
-      <main style={styles.page}>
-        <section style={styles.hero}>
+      <main className="edit-profile-page" style={styles.page}>
+        <section className="edit-profile-hero" style={styles.hero}>
           <div>
             <div style={styles.badge}>👤 ARMY Profile</div>
             <h1 style={styles.title}>Make your profile beautifully purple</h1>
@@ -95,16 +95,16 @@ export default function EditProfile() {
             </p>
           </div>
 
-          <div style={styles.heroCard}>
+          <div className="edit-profile-hero-card" style={styles.heroCard}>
             <span style={styles.heroIcon}>💜</span>
             <h2>{user?.nickname || user?.username || "ARMY"}</h2>
             <p>{user?.is_admin ? "Purple Family Admin" : "Purple Family Member"}</p>
           </div>
         </section>
 
-        <section style={styles.card}>
-          <aside style={styles.profileCard}>
-            <div style={styles.avatarWrap}>
+        <section className="edit-profile-card" style={styles.card}>
+          <aside className="edit-profile-side-card" style={styles.profileCard}>
+            <div className="edit-profile-avatar-wrap" style={styles.avatarWrap}>
               {preview ? (
                 <img src={preview} alt="Profile" style={styles.avatarImg} />
               ) : (
@@ -126,8 +126,8 @@ export default function EditProfile() {
             </div>
           </aside>
 
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <div style={styles.formHead}>
+          <form className="edit-profile-form" onSubmit={handleSubmit} style={styles.form}>
+            <div className="edit-profile-form-head" style={styles.formHead}>
               <h2 style={styles.formTitle}>Edit Your Profile</h2>
               <p style={styles.formText}>Keep your ARMY identity fresh and lovely.</p>
             </div>
@@ -171,7 +171,7 @@ export default function EditProfile() {
             />
 
             <label style={styles.label}>Profile Picture 📷</label>
-            <label style={styles.uploadBox}>
+            <label className="edit-profile-upload-box" style={styles.uploadBox}>
               <span>📸 Choose a profile photo</span>
               <small>PNG, JPG or JPEG</small>
               <input
@@ -193,12 +193,95 @@ export default function EditProfile() {
             </button>
           </form>
         </section>
+
+        <EditProfileResponsiveStyles />
       </main>
 
       <Footer />
     </>
   );
 }
+
+
+function EditProfileResponsiveStyles() {
+  return (
+    <style>{`
+      @media (max-width: 768px) {
+        .edit-profile-page {
+          padding: 24px 14px !important;
+        }
+
+        .edit-profile-hero {
+          grid-template-columns: 1fr !important;
+          padding: 32px 22px !important;
+          border-radius: 28px !important;
+          gap: 20px !important;
+          text-align: center !important;
+        }
+
+        .edit-profile-hero-card {
+          min-height: 190px !important;
+          border-radius: 26px !important;
+        }
+
+        .edit-profile-card {
+          grid-template-columns: 1fr !important;
+          padding: 18px !important;
+          border-radius: 28px !important;
+          gap: 18px !important;
+        }
+
+        .edit-profile-side-card {
+          padding: 26px 20px !important;
+          border-radius: 26px !important;
+        }
+
+        .edit-profile-avatar-wrap {
+          width: 118px !important;
+          height: 118px !important;
+        }
+
+        .edit-profile-form {
+          padding: 24px 18px !important;
+          border-radius: 26px !important;
+        }
+
+        .edit-profile-form-head {
+          text-align: center !important;
+        }
+
+        .edit-profile-upload-box {
+          text-align: center !important;
+          padding: 20px 16px !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .edit-profile-page {
+          padding: 20px 12px !important;
+        }
+
+        .edit-profile-hero {
+          padding: 28px 18px !important;
+        }
+
+        .edit-profile-hero-card {
+          min-height: 170px !important;
+        }
+
+        .edit-profile-card {
+          padding: 14px !important;
+        }
+
+        .edit-profile-side-card,
+        .edit-profile-form {
+          padding: 22px 16px !important;
+        }
+      }
+    `}</style>
+  );
+}
+
 
 const styles = {
   page: {
