@@ -181,8 +181,8 @@ export default function Members() {
     <>
       <Navbar />
 
-      <main style={styles.page}>
-        <section style={styles.hero}>
+      <main className="members-page" style={styles.page}>
+        <section className="members-hero" style={styles.hero}>
           <div>
             <div style={styles.badge}>👥 Purple Family Members</div>
             <h1 style={styles.title}>Meet OT7 and our SL ARMY family</h1>
@@ -192,14 +192,14 @@ export default function Members() {
             </p>
           </div>
 
-          <div style={styles.heroCard}>
+          <div className="members-hero-card" style={styles.heroCard}>
             <span style={styles.heroIcon}>💜</span>
             <h2>{members.length}</h2>
             <p>Total Members</p>
           </div>
         </section>
 
-        <section style={styles.tabs}>
+        <section className="members-tabs" style={styles.tabs}>
           <button
             onClick={() => {
               setActiveTab("ot7");
@@ -228,10 +228,10 @@ export default function Members() {
         </section>
 
         {activeTab === "ot7" && (
-          <section style={styles.panel}>
+          <section className="members-panel" style={styles.panel}>
             {!selectedMember ? (
               <>
-                <div style={styles.sectionHead}>
+                <div className="members-section-head" style={styles.sectionHead}>
                   <div>
                     <h2 style={styles.sectionTitle}>Know About OT7</h2>
                     <p style={styles.sectionText}>
@@ -240,10 +240,11 @@ export default function Members() {
                   </div>
                 </div>
 
-                <div style={styles.ot7Grid}>
+                <div className="members-ot7-grid" style={styles.ot7Grid}>
                   {BTS_MEMBERS.map((m) => (
                     <article
                       key={m.name}
+                      className="members-bts-card"
                       style={styles.btsCard}
                       onClick={() => {
                         setSelectedMember(m);
@@ -251,7 +252,7 @@ export default function Members() {
                         setMainDescText("");
                       }}
                     >
-                      <div style={styles.btsPhotoBox}>
+                      <div className="members-bts-photo-box" style={styles.btsPhotoBox}>
                         <img src={m.photo} alt={m.name} style={styles.btsPhoto} />
                         <span style={styles.photoTag}>{m.name}</span>
                       </div>
@@ -268,7 +269,7 @@ export default function Members() {
                 </div>
               </>
             ) : (
-              <section style={styles.memberDetail}>
+              <section className="members-detail" style={styles.memberDetail}>
                 <button
                   onClick={() => {
                     setSelectedMember(null);
@@ -280,8 +281,8 @@ export default function Members() {
                   ← Back to OT7
                 </button>
 
-                <div style={styles.detailCard}>
-                  <div style={styles.detailPhotoBox}>
+                <div className="members-detail-card" style={styles.detailCard}>
+                  <div className="members-detail-photo-box" style={styles.detailPhotoBox}>
                     <img
                       src={selectedMember.photo}
                       alt={selectedMember.name}
@@ -289,17 +290,17 @@ export default function Members() {
                     />
                   </div>
 
-                  <div style={styles.detailContent}>
+                  <div className="members-detail-content" style={styles.detailContent}>
                     <div style={styles.detailEmoji}>{selectedMember.emoji}</div>
                     <h2 style={styles.detailName}>{selectedMember.name}</h2>
                     <div style={styles.detailBadge}>{selectedMember.role}</div>
 
-                    <div style={styles.detailInfo}>
+                    <div className="members-detail-info" style={styles.detailInfo}>
                       <span>🎂 {selectedMember.born}</span>
                       <span>📍 {selectedMember.from}</span>
                     </div>
 
-                    <div style={styles.mainDescBox}>
+                    <div className="members-main-desc-box" style={styles.mainDescBox}>
                       <div style={styles.mainDescHeader}>
                         <span style={styles.mainDescLabel}>Main Description</span>
 
@@ -348,7 +349,7 @@ export default function Members() {
                   </div>
                 </div>
 
-                <div style={styles.descSection}>
+                <div className="members-desc-section" style={styles.descSection}>
                   <h3 style={styles.descTitle}>
                     💜 What ARMY says about {selectedMember.name}
                   </h3>
@@ -358,7 +359,7 @@ export default function Members() {
                   ) : (
                     (descriptions[selectedMember.name] || []).map((d) => (
                       <article key={d.id} style={styles.descCard}>
-                        <div style={styles.descHeader}>
+                        <div className="members-desc-header" style={styles.descHeader}>
                           <div style={styles.authorBox}>
                             <div style={styles.descAvatar}>
                               {getAuthorPhoto(d) ? (
@@ -382,7 +383,7 @@ export default function Members() {
                             </div>
                           </div>
 
-                          <div style={styles.descActions}>
+                          <div className="members-desc-actions" style={styles.descActions}>
                             {d.can_edit && editingDescId !== d.id && (
                               <button
                                 style={styles.smallEditBtn}
@@ -441,7 +442,7 @@ export default function Members() {
                     ))
                   )}
 
-                  <div style={styles.descForm}>
+                  <div className="members-desc-form" style={styles.descForm}>
                     <textarea
                       style={styles.descInput}
                       placeholder={`Share your thoughts about ${selectedMember.name} 💜`}
@@ -464,8 +465,8 @@ export default function Members() {
         )}
 
         {activeTab === "army" && (
-          <section style={styles.panel}>
-            <div style={styles.sectionHead}>
+          <section className="members-panel" style={styles.panel}>
+            <div className="members-section-head" style={styles.sectionHead}>
               <div>
                 <h2 style={styles.sectionTitle}>Our SL ARMY Family</h2>
                 <p style={styles.sectionText}>
@@ -474,7 +475,7 @@ export default function Members() {
               </div>
             </div>
 
-            <div style={styles.controls}>
+            <div className="members-controls" style={styles.controls}>
               <input
                 style={styles.search}
                 placeholder="Search name, nickname or country..."
@@ -506,9 +507,10 @@ export default function Members() {
             {filtered.length === 0 ? (
               <div style={styles.emptyMini}>No members found 💜</div>
             ) : (
-              <div style={styles.armyGrid}>
+              <div className="members-army-grid" style={styles.armyGrid}>
                 {filtered.map((member) => (
-                  <article key={member.id} style={styles.armyCard}>
+                  <article key={member.id} className="members-army-card"
+                    style={styles.armyCard}>
                     <div style={styles.avatar}>
                       {member.profile_picture ? (
                         <img
@@ -552,12 +554,171 @@ export default function Members() {
             )}
           </section>
         )}
+
+        <MembersResponsiveStyles />
       </main>
 
       <Footer />
     </>
   );
 }
+
+
+function MembersResponsiveStyles() {
+  return (
+    <style>{`
+      @media (max-width: 768px) {
+        .members-page {
+          padding: 24px 14px !important;
+          overflow-x: hidden !important;
+        }
+
+        .members-hero {
+          grid-template-columns: 1fr !important;
+          padding: 32px 22px !important;
+          border-radius: 28px !important;
+          gap: 18px !important;
+          text-align: center !important;
+        }
+
+        .members-hero-card {
+          min-height: 190px !important;
+          border-radius: 26px !important;
+        }
+
+        .members-tabs {
+          gap: 10px !important;
+          justify-content: stretch !important;
+        }
+
+        .members-tabs button {
+          flex: 1 1 100% !important;
+          width: 100% !important;
+          padding: 13px 16px !important;
+        }
+
+        .members-panel {
+          padding: 18px !important;
+          border-radius: 28px !important;
+        }
+
+        .members-section-head {
+          text-align: center !important;
+          justify-content: center !important;
+        }
+
+        .members-ot7-grid {
+          grid-template-columns: 1fr !important;
+          gap: 18px !important;
+        }
+
+        .members-bts-card {
+          border-radius: 26px !important;
+        }
+
+        .members-bts-photo-box {
+          height: 390px !important;
+        }
+
+        .members-detail {
+          gap: 16px !important;
+        }
+
+        .members-detail-card {
+          grid-template-columns: 1fr !important;
+          padding: 18px !important;
+          border-radius: 28px !important;
+          gap: 18px !important;
+        }
+
+        .members-detail-photo-box {
+          height: 430px !important;
+          border-radius: 24px !important;
+        }
+
+        .members-detail-content {
+          text-align: center !important;
+          align-items: center !important;
+        }
+
+        .members-detail-info {
+          justify-content: center !important;
+        }
+
+        .members-main-desc-box,
+        .members-desc-section {
+          padding: 18px !important;
+          border-radius: 24px !important;
+        }
+
+        .members-desc-header {
+          align-items: flex-start !important;
+        }
+
+        .members-desc-actions {
+          width: 100% !important;
+          justify-content: flex-start !important;
+        }
+
+        .members-desc-form {
+          gap: 10px !important;
+        }
+
+        .members-controls {
+          grid-template-columns: 1fr !important;
+          gap: 12px !important;
+        }
+
+        .members-army-grid {
+          grid-template-columns: 1fr !important;
+          gap: 16px !important;
+        }
+
+        .members-army-card {
+          border-radius: 26px !important;
+          padding: 24px 18px !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .members-page {
+          padding: 20px 12px !important;
+        }
+
+        .members-hero {
+          padding: 28px 18px !important;
+        }
+
+        .members-hero-card {
+          min-height: 170px !important;
+        }
+
+        .members-bts-photo-box {
+          height: 340px !important;
+        }
+
+        .members-detail-photo-box {
+          height: 360px !important;
+        }
+
+        .members-panel {
+          padding: 14px !important;
+        }
+      }
+
+      @media (max-width: 380px) {
+        .members-bts-photo-box {
+          height: 310px !important;
+        }
+
+        .members-detail-photo-box {
+          height: 330px !important;
+        }
+      }
+    `}</style>
+  );
+}
+
 
 const styles = {
   page: {
