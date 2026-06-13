@@ -148,9 +148,9 @@ export default function Dashboard() {
     <>
       <Navbar />
 
-      <main style={styles.page}>
-        <section style={styles.hero}>
-          <div style={styles.heroContent}>
+      <main className="dashboard-page" style={styles.page}>
+        <section className="dashboard-hero" style={styles.hero}>
+          <div className="dashboard-hero-content" style={styles.heroContent}>
             <div style={styles.badge}>💜 Welcome back, {displayName}</div>
 
             <h1 style={styles.title}>Your Purple Family ARMY Feed</h1>
@@ -177,7 +177,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div style={styles.heroPanel}>
+          <div className="dashboard-hero-panel" style={styles.heroPanel}>
             <h2 style={styles.panelTitle}>SL BTS ARMY</h2>
             <p style={styles.panelText}>
               A soft, modern and loving space for your purple community.
@@ -185,7 +185,7 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section style={styles.statsGrid}>
+        <section className="dashboard-stats" style={styles.statsGrid}>
           <div style={styles.statCard}>
             <span style={styles.statIcon}>👥</span>
             <h3 style={styles.statNumber}>{members.length}</h3>
@@ -222,7 +222,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        <section style={styles.feedLayout}>
+        <section className="dashboard-feed-layout" style={styles.feedLayout}>
           <div>
             <section id="army-feed-form" style={styles.feedComposer}>
               <div style={styles.feedComposerHeader}>
@@ -324,7 +324,7 @@ export default function Dashboard() {
             </section>
           </div>
 
-          <aside style={styles.quickPanel}>
+          <aside className="dashboard-quick-panel" style={styles.quickPanel}>
             <h3 style={styles.quickTitle}>Quick Actions</h3>
             {cards.map((card) => (
               <button
@@ -344,7 +344,7 @@ export default function Dashboard() {
           <h2 style={styles.sectionTitle}>What do you want to do?</h2>
         </section>
 
-        <section style={styles.cardGrid}>
+        <section className="dashboard-card-grid" style={styles.cardGrid}>
           {cards.map((card) => (
             <article key={card.title} style={styles.featureCard}>
               <div style={{ ...styles.cardIcon, background: card.color }}>
@@ -363,10 +363,67 @@ export default function Dashboard() {
             </article>
           ))}
         </section>
+        <DashboardResponsiveStyles />
       </main>
 
       <Footer />
     </>
+  );
+}
+function DashboardResponsiveStyles() {
+  return (
+    <style>{`
+      @media (max-width: 768px) {
+        .dashboard-page {
+          padding: 24px 14px !important;
+        }
+
+        .dashboard-hero {
+          grid-template-columns: 1fr !important;
+          gap: 18px !important;
+        }
+
+        .dashboard-hero-content {
+          padding: 32px 22px !important;
+          border-radius: 28px !important;
+          text-align: center !important;
+        }
+
+        .dashboard-hero-panel {
+          min-height: 260px !important;
+          border-radius: 28px !important;
+          padding: 26px !important;
+        }
+
+        .dashboard-stats {
+          grid-template-columns: 1fr !important;
+          gap: 14px !important;
+        }
+
+        .dashboard-feed-layout {
+          grid-template-columns: 1fr !important;
+          gap: 20px !important;
+        }
+
+        .dashboard-quick-panel {
+          position: static !important;
+        }
+
+        .dashboard-card-grid {
+          grid-template-columns: 1fr !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .dashboard-hero-content {
+          padding: 28px 18px !important;
+        }
+
+        .dashboard-hero-panel {
+          min-height: 220px !important;
+        }
+      }
+    `}</style>
   );
 }
 
