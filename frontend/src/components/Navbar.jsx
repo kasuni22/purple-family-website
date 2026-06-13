@@ -9,17 +9,17 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [todayBirthdays, setTodayBirthdays] = useState([]);
   const [open, setOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 700);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth <= 900;
+    const resize = () => {
+      const mobile = window.innerWidth <= 700;
       setIsMobile(mobile);
       if (!mobile) setOpen(false);
     };
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", resize);
 
     API.get("/auth/me")
       .then((res) => setUser(res.data))
@@ -29,7 +29,7 @@ export default function Navbar() {
       .then((res) => setTodayBirthdays(res.data || []))
       .catch(() => setTodayBirthdays([]));
 
-    return () => window.removeEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", resize);
   }, [navigate]);
 
   const handleLogout = () => {
@@ -51,64 +51,70 @@ export default function Navbar() {
   ];
 
   return (
-    <header style={isMobile ? styles.mobileHeader : styles.header}>
-      <div style={styles.topRow}>
-        <div style={styles.brand} onClick={() => navigate("/dashboard")}>
-          <img src={logo} alt="Purple Family" style={styles.logo} />
-          <div>
-            <strong style={styles.brandTitle}>Purple Family</strong>
-            <span style={styles.brandSub}>SL BTS ARMY</span>
-          </div>
+    <header style={styles.header}>
+      <div style={styles.brand} onClick={() => navigate("/dashboard")}>
+        <img src={logo} alt="Purple Family" style={styles.logo} />
+        <div>
+          <strong style={styles.brandTitle}>Purple Family</strong>
+          <span style={styles.brandSub}>SL BTS ARMY</span>
         </div>
-
-        {isMobile && (
-          <button style={styles.menuBtn} onClick={() => setOpen(!open)}>
-            {open ? "✕" : "☰"}
-          </button>
-        )}
       </div>
 
-      <nav
+      {isMobile && (
+        <button style={styles.menuBtn} onClick={() => setOpen(!open)}>
+          {open ? "✕" : "☰"}
+        </button>
+      )}
+
+      <div
         style={{
-          ...styles.navCenter,
-          ...(isMobile ? styles.mobileNav : {}),
-          ...(isMobile && !open ? styles.mobileNavClosed : {}),
+          ...styles.mobileMenuWrap,
+          ...(isMobile ? {} : styles.desktopWrap),
+          ...(isMobile && !open ? { display: "none" } : {}),
         }}
       >
-        {links.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            onClick={() => setOpen(false)}
-            style={({ isActive }) => ({
-              ...styles.navBtn,
-              ...(isMobile ? styles.mobileNavBtn : {}),
-              ...(isActive ? styles.activeNavBtn : {}),
-            })}
-          >
-            <span>{link.icon}</span>
-            {link.label}
-            {link.badge > 0 && <span style={styles.badge}>{link.badge}</span>}
-          </NavLink>
-        ))}
-      </nav>
+        <nav style={isMobile ? styles.mobileNavCenter : styles.navCenter}>
+          {links.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              onClick={() => setOpen(false)}
+              style={({ isActive }) => ({
+                ...styles.navBtn,
+                ...(isMobile ? styles.mobileNavBtn : {}),
+                ...(isActive ? styles.activeNavBtn : {}),
+              })}
+            >
+              <span>{link.icon}</span>
+              {link.label}
+              {link.badge > 0 && <span style={styles.badge}>{link.badge}</span>}
+            </NavLink>
+          ))}
+        </nav>
 
-      {user && (
-        <div style={isMobile ? styles.mobileNavRight : styles.navRight}>
-          <button onClick={() => navigate("/edit-profile")} style={styles.profileBtn}>
-            {profileImage ? (
-              <img src={profileImage} alt="profile" style={styles.profileImage} />
-            ) : (
-              <span style={styles.avatarFallback}>👤</span>
-            )}
-            <span>{user.nickname || user.username}</span>
-          </button>
+        {user && (
+          <div style={isMobile ? styles.mobileNavRight : styles.navRight}>
+            <button
+              onClick={() => {
+                setOpen(false);
+                navigate("/edit-profile");
+              }}
+              style={isMobile ? styles.mobileProfileBtn : styles.profileBtn}
+            >
+              {profileImage ? (
+                <img src={profileImage} alt="profile" style={styles.profileImage} />
+              ) : (
+                <span style={styles.avatarFallback}>👤</span>
+              )}
+              <span>{user.nickname || user.username}</span>
+            </button>
 
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            Logout
-          </button>
-        </div>
-      )}
+            <button onClick={handleLogout} style={isMobile ? styles.mobileLogoutBtn : styles.logoutBtn}>
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
     </header>
   );
 }
@@ -128,28 +134,19 @@ const styles = {
     backdropFilter: "blur(18px)",
     borderBottom: "1px solid rgba(124,58,237,0.14)",
     boxShadow: "0 12px 35px rgba(76,29,149,0.08)",
+    flexWrap: "wrap",
   },
 
-  mobileHeader: {
-    position: "sticky",
-    top: 0,
-    zIndex: 100,
-    padding: "12px 16px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    background: "rgba(255,255,255,0.92)",
-    backdropFilter: "blur(18px)",
-    borderBottom: "1px solid rgba(124,58,237,0.14)",
-    boxShadow: "0 12px 35px rgba(76,29,149,0.08)",
-  },
-
-  topRow: {
-    width: "100%",
+  desktopWrap: {
+    flex: 1,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "12px",
+    gap: "18px",
+  },
+
+  mobileMenuWrap: {
+    width: "100%",
   },
 
   brand: {
@@ -160,10 +157,7 @@ const styles = {
     minWidth: "190px",
   },
 
-  logo: {
-    width: "44px",
-    height: "44px",
-  },
+  logo: { width: "44px", height: "44px" },
 
   brandTitle: {
     display: "block",
@@ -186,22 +180,18 @@ const styles = {
     flexWrap: "wrap",
   },
 
-  mobileNav: {
-    width: "100%",
+  mobileNavCenter: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "1fr",
     gap: "10px",
-    padding: "8px 0",
-  },
-
-  mobileNavClosed: {
-    display: "none",
+    width: "100%",
   },
 
   navBtn: {
     position: "relative",
     display: "inline-flex",
     alignItems: "center",
+    justifyContent: "center",
     gap: "7px",
     padding: "10px 14px",
     borderRadius: "999px",
@@ -215,9 +205,8 @@ const styles = {
 
   mobileNavBtn: {
     width: "100%",
-    justifyContent: "center",
     borderRadius: "16px",
-    padding: "12px 10px",
+    padding: "13px 14px",
   },
 
   activeNavBtn: {
@@ -248,13 +237,28 @@ const styles = {
   },
 
   mobileNavRight: {
-    width: "100%",
-    display: "flex",
+    display: "grid",
+    gridTemplateColumns: "1fr",
     gap: "10px",
+    marginTop: "10px",
+    width: "100%",
   },
 
   profileBtn: {
-    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    border: "1px solid rgba(124,58,237,0.2)",
+    background: "rgba(255,255,255,0.75)",
+    color: "#4c1d95",
+    borderRadius: "999px",
+    padding: "7px 12px",
+    cursor: "pointer",
+    fontWeight: 800,
+  },
+
+  mobileProfileBtn: {
+    width: "100%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -262,8 +266,8 @@ const styles = {
     border: "1px solid rgba(124,58,237,0.2)",
     background: "rgba(255,255,255,0.75)",
     color: "#4c1d95",
-    borderRadius: "999px",
-    padding: "8px 12px",
+    borderRadius: "16px",
+    padding: "13px 14px",
     cursor: "pointer",
     fontWeight: 800,
   },
@@ -276,9 +280,7 @@ const styles = {
     border: "2px solid #a855f7",
   },
 
-  avatarFallback: {
-    fontSize: "1.1rem",
-  },
+  avatarFallback: { fontSize: "1.1rem" },
 
   logoutBtn: {
     border: "none",
@@ -286,6 +288,17 @@ const styles = {
     color: "white",
     borderRadius: "999px",
     padding: "10px 15px",
+    cursor: "pointer",
+    fontWeight: 800,
+  },
+
+  mobileLogoutBtn: {
+    width: "100%",
+    border: "none",
+    background: "#241039",
+    color: "white",
+    borderRadius: "16px",
+    padding: "13px 14px",
     cursor: "pointer",
     fontWeight: 800,
   },
