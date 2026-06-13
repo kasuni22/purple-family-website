@@ -9,17 +9,26 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-const BTS_BIRTHDAYS = [
-  { name: "Jin", date: "December 4", month: 12, emoji: "🐹" },
-  { name: "SUGA", date: "March 9", month: 3, emoji: "🐱" },
-  { name: "j-hope", date: "February 18", month: 2, emoji: "🐿️" },
-  { name: "RM", date: "September 12", month: 9, emoji: "🐨" },
-  { name: "Jimin", date: "October 13", month: 10, emoji: "🐥" },
-  { name: "V", date: "December 30", month: 12, emoji: "🐯" },
-  { name: "Jung Kook", date: "September 1", month: 9, emoji: "🐰" },
-  { name: "BTS Debut", date: "June 13", month: 6, emoji: "💜", special: true },
-  { name: "ARMY Day", date: "July 9", month: 7, emoji: "💜", special: true },
+const DEFAULT_BTS_EVENTS = [
+  { id: "jin", name: "Jin", date: "December 4", month: 12, day: 4, image: "/bts/jin.png", emoji: "🐹" },
+  { id: "suga", name: "SUGA", date: "March 9", month: 3, day: 9, image: "/bts/suga.png", emoji: "🐱" },
+  { id: "jhope", name: "j-hope", date: "February 18", month: 2, day: 18, image: "/bts/jhope.png", emoji: "🐿️" },
+  { id: "rm", name: "RM", date: "September 12", month: 9, day: 12, image: "/bts/rm.png", emoji: "🐨" },
+  { id: "jimin", name: "Jimin", date: "October 13", month: 10, day: 13, image: "/bts/jimin.png", emoji: "🐥" },
+  { id: "v", name: "V", date: "December 30", month: 12, day: 30, image: "/bts/v.png", emoji: "🐯" },
+  { id: "jungkook", name: "Jung Kook", date: "September 1", month: 9, day: 1, image: "/bts/jungkook.png", emoji: "🐰" },
+  { id: "bts-debut", name: "BTS Debut", date: "June 13", month: 6, day: 13, image: "/bts/bts-debut.png", emoji: "💜", special: true },
+  { id: "army-day", name: "ARMY Day", date: "July 9", month: 7, day: 9, image: "/bts/army-day.png", emoji: "💜", special: true },
 ];
+
+const getSavedBtsEvents = () => {
+  try {
+    const saved = localStorage.getItem("purple_family_bts_events");
+    return saved ? JSON.parse(saved) : DEFAULT_BTS_EVENTS;
+  } catch {
+    return DEFAULT_BTS_EVENTS;
+  }
+};
 
 export default function Birthdays() {
   const [birthdays, setBirthdays] = useState([]);
@@ -39,6 +48,16 @@ export default function Birthdays() {
   const [specialDays, setSpecialDays] = useState([]);
   const [showSpecialForm, setShowSpecialForm] = useState(false);
   const [editingSpecialDay, setEditingSpecialDay] = useState(null);
+  const [btsEvents, setBtsEvents] = useState(getSavedBtsEvents);
+  const [showBtsForm, setShowBtsForm] = useState(false);
+  const [editingBtsEvent, setEditingBtsEvent] = useState(null);
+  const [btsForm, setBtsForm] = useState({
+    name: "",
+    month: 1,
+    day: 1,
+    image: "",
+    special: false,
+  });
 
   const [specialForm, setSpecialForm] = useState({
     title: "",
@@ -58,7 +77,7 @@ export default function Birthdays() {
       .catch(() => { });
   }, [navigate]);
 
-  const imageUrl = (path) => `http://127.0.0.1:8000/${path}`;
+  const imageUrl = (path) => `https://purple-family-website.onrender.com/${path}`;
 
   const isBirthdayToday = (birthday) => {
     if (!birthday) return false;
@@ -72,12 +91,40 @@ export default function Birthdays() {
     return date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
   };
 
+  const todayMonth = today.getMonth() + 1;
+  const todayDate = today.getDate();
+
   const todayBirthdays = birthdays.filter((m) => isBirthdayToday(m.birthday));
 
   const thisMonthBirthdays = birthdays.filter((m) => {
     if (!m.birthday) return false;
     return new Date(m.birthday).getMonth() === today.getMonth();
   });
+
+  const isBtsEventToday = (event) =>
+    Number(event.month) === todayMonth && Number(event.day) === todayDate;
+
+  const isSpecialDayToday = (day) => {
+    if (!day?.date) return false;
+    const date = new Date(day.date);
+    return date.getMonth() + 1 === todayMonth && date.getDate() === todayDate;
+  };
+
+  const isSpecialDayThisMonth = (day) => {
+    if (!day?.date) return false;
+    return new Date(day.date).getMonth() + 1 === todayMonth;
+  };
+
+  const todayBtsEvents = btsEvents.filter(isBtsEventToday);
+  const todaySpecialDays = specialDays.filter(isSpecialDayToday);
+  const thisMonthBtsEvents = btsEvents.filter((event) => Number(event.month) === todayMonth);
+  const thisMonthSpecialDays = specialDays.filter(isSpecialDayThisMonth);
+
+  const totalTodayEvents =
+    todayBirthdays.length + todayBtsEvents.length + todaySpecialDays.length;
+
+  const totalThisMonthEvents =
+    thisMonthBirthdays.length + thisMonthBtsEvents.length + thisMonthSpecialDays.length;
 
   const filteredArmy = birthdays.filter((m) => {
     if (!m.birthday) return false;
@@ -91,8 +138,8 @@ export default function Birthdays() {
     return matchMonth && matchSearch;
   });
 
-  const filteredBts = BTS_BIRTHDAYS.filter(
-    (m) => btsMonth === "All" || m.month === MONTHS.indexOf(btsMonth)
+  const filteredBts = btsEvents.filter(
+    (m) => btsMonth === "All" || Number(m.month) === MONTHS.indexOf(btsMonth)
   );
 
   const handlePost = async (e) => {
@@ -220,6 +267,70 @@ export default function Birthdays() {
     }
   };
 
+  const monthDayToDateLabel = (month, day) => `${MONTHS[Number(month)]} ${Number(day)}`;
+
+  const persistBtsEvents = (events) => {
+    setBtsEvents(events);
+    localStorage.setItem("purple_family_bts_events", JSON.stringify(events));
+  };
+
+  const openAddBtsEvent = () => {
+    setEditingBtsEvent(null);
+    setBtsForm({ name: "", month: todayMonth, day: todayDate, image: "", special: false });
+    setShowBtsForm(true);
+  };
+
+  const editBtsEvent = (event) => {
+    setEditingBtsEvent(event);
+    setBtsForm({
+      name: event.name || "",
+      month: Number(event.month) || 1,
+      day: Number(event.day) || 1,
+      image: event.image || "",
+      special: Boolean(event.special),
+    });
+    setShowBtsForm(true);
+  };
+
+  const saveBtsEvent = (e) => {
+    e.preventDefault();
+
+    const cleanName = btsForm.name.trim();
+    if (!cleanName) return alert("Name is required");
+
+    const month = Number(btsForm.month);
+    const day = Number(btsForm.day);
+
+    const payload = {
+      id: editingBtsEvent?.id || `${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
+      name: cleanName,
+      month,
+      day,
+      date: monthDayToDateLabel(month, day),
+      image: btsForm.image.trim(),
+      emoji: "💜",
+      special: Boolean(btsForm.special),
+    };
+
+    const updated = editingBtsEvent
+      ? btsEvents.map((item) => (item.id === editingBtsEvent.id ? payload : item))
+      : [...btsEvents, payload];
+
+    persistBtsEvents(updated);
+    setShowBtsForm(false);
+    setEditingBtsEvent(null);
+  };
+
+  const deleteBtsEvent = (event) => {
+    if (!window.confirm(`Delete "${event.name}"?`)) return;
+    persistBtsEvents(btsEvents.filter((item) => item.id !== event.id));
+  };
+
+  const resetBtsEvents = () => {
+    if (!window.confirm("Reset BTS birthdays and special days to default?")) return;
+    persistBtsEvents(DEFAULT_BTS_EVENTS);
+  };
+
   return (
     <>
       <Navbar />
@@ -237,7 +348,7 @@ export default function Birthdays() {
 
           <div className="birthdays-hero-card" style={styles.heroCard}>
             <span style={styles.heroEmoji}>🎉</span>
-            <h2>{todayBirthdays.length}</h2>
+            <h2>{totalTodayEvents}</h2>
             <p>Birthdays Today</p>
           </div>
         </section>
@@ -251,13 +362,13 @@ export default function Birthdays() {
 
           <div style={styles.statCard}>
             <span>📅</span>
-            <h3>{thisMonthBirthdays.length}</h3>
+            <h3>{totalThisMonthEvents}</h3>
             <p>This Month</p>
           </div>
 
           <div style={styles.statCard}>
             <span>🎉</span>
-            <h3>{todayBirthdays.length}</h3>
+            <h3>{totalTodayEvents}</h3>
             <p>Today</p>
           </div>
         </section>
@@ -551,15 +662,28 @@ export default function Birthdays() {
             <div className="birthdays-section-head" style={styles.sectionHead}>
               <div>
                 <h2 style={styles.sectionTitle}>BTS Birthdays & Special Days</h2>
-                <button
-                  onClick={() => {
-                    setEditingSpecialDay(null);
-                    setShowSpecialForm(!showSpecialForm);
-                  }}
-                  style={styles.addBtn}
-                >
-                  {showSpecialForm ? "Cancel" : "➕ Add Special Day"}
-                </button>
+                <div style={styles.inlineActions}>
+                  {currentUser?.is_admin && (
+                    <>
+                      <button onClick={openAddBtsEvent} style={styles.addBtn}>
+                        ➕ Add BTS Day
+                      </button>
+                      <button onClick={resetBtsEvents} style={styles.secondarySmallBtn}>
+                        Reset Defaults
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setEditingSpecialDay(null);
+                      setShowSpecialForm(!showSpecialForm);
+                    }}
+                    style={styles.addBtn}
+                  >
+                    {showSpecialForm ? "Cancel" : "➕ Add ARMY Special Day"}
+                  </button>
+                </div>
                 <p style={styles.sectionText}>OT7 forever. Important purple days.</p>
               </div>
 
@@ -573,6 +697,62 @@ export default function Birthdays() {
                 ))}
               </select>
             </div>
+            {showBtsForm && currentUser?.is_admin && (
+              <div className="birthdays-form-card" style={styles.formCard}>
+                <h3>{editingBtsEvent ? "Edit BTS Birthday / Special Day" : "Add BTS Birthday / Special Day"}</h3>
+
+                <form className="birthdays-form" onSubmit={saveBtsEvent} style={styles.form}>
+                  <input
+                    style={styles.input}
+                    placeholder="Name e.g. BTS Debut"
+                    value={btsForm.name}
+                    onChange={(e) => setBtsForm({ ...btsForm, name: e.target.value })}
+                    required
+                  />
+
+                  <select
+                    style={styles.input}
+                    value={btsForm.month}
+                    onChange={(e) => setBtsForm({ ...btsForm, month: Number(e.target.value) })}
+                  >
+                    {MONTHS.slice(1).map((month, index) => (
+                      <option key={month} value={index + 1}>{month}</option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    style={styles.input}
+                    value={btsForm.day}
+                    onChange={(e) => setBtsForm({ ...btsForm, day: Number(e.target.value) })}
+                    required
+                  />
+
+                  <input
+                    style={styles.input}
+                    placeholder="Image path e.g. /bts/bts-debut.png"
+                    value={btsForm.image}
+                    onChange={(e) => setBtsForm({ ...btsForm, image: e.target.value })}
+                  />
+
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={btsForm.special}
+                      onChange={(e) => setBtsForm({ ...btsForm, special: e.target.checked })}
+                    />
+                    Special Day
+                  </label>
+
+                  <button style={styles.button}>
+                    {editingBtsEvent ? "Update BTS Day" : "Create BTS Day"}
+                  </button>
+                </form>
+              </div>
+            )}
+
             {showSpecialForm && (
               <div className="birthdays-form-card" style={styles.formCard}>
                 <h3>
@@ -629,23 +809,55 @@ export default function Birthdays() {
 
             <div className="birthdays-grid" style={styles.grid}>
 
-              {filteredBts.map((member) => (
-                <div
-                  key={member.name}
-                  style={{
-                    ...styles.card,
-                    ...(member.special ? styles.specialCard : {}),
-                  }}
-                >
-                  <div style={styles.btsEmoji}>{member.emoji}</div>
-                  <h3 style={styles.username}>{member.name}</h3>
-                  <p style={styles.date}>🎂 {member.date}</p>
+              {filteredBts.map((member) => {
+                const isToday = isBtsEventToday(member);
 
-                  {member.special && (
-                    <div style={styles.specialBadge}>Special Day 💜</div>
-                  )}
-                </div>
-              ))}
+                return (
+                  <div
+                    key={member.id || member.name}
+                    style={{
+                      ...styles.card,
+                      ...(member.special ? styles.specialCard : {}),
+                      ...(isToday ? styles.todayRowBorder : {}),
+                    }}
+                  >
+                    {member.image ? (
+                      <img
+                        src={member.image}
+                        alt={member.name}
+                        style={styles.btsImage}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div style={styles.btsEmoji}>{member.emoji || "💜"}</div>
+                    )}
+
+                    <h3 style={styles.username}>{member.name}</h3>
+                    <p style={styles.date}>🎂 {member.date || monthDayToDateLabel(member.month, member.day)}</p>
+
+                    {member.special && (
+                      <div style={styles.specialBadge}>Special Day 💜</div>
+                    )}
+
+                    {isToday && (
+                      <div style={styles.todayBadge}>🎉 Today</div>
+                    )}
+
+                    {currentUser?.is_admin && (
+                      <div style={styles.cardActions}>
+                        <button style={styles.editBtn} onClick={() => editBtsEvent(member)}>
+                          Edit
+                        </button>
+                        <button style={styles.deleteBtn} onClick={() => deleteBtsEvent(member)}>
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {specialDays.length > 0 && (
                 <>
                   <h2
@@ -669,6 +881,10 @@ export default function Birthdays() {
 
                         {day.description && (
                           <p>{day.description}</p>
+                        )}
+
+                        {isSpecialDayToday(day) && (
+                          <div style={styles.todayBadge}>🎉 Today</div>
                         )}
 
                         <small>
@@ -1424,9 +1640,83 @@ const styles = {
     cursor: "pointer",
   },
 
+  btsImage: {
+    width: "94px",
+    height: "94px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    marginBottom: "14px",
+    border: "3px solid rgba(124,58,237,0.25)",
+    boxShadow: "0 14px 28px rgba(76,29,149,0.16)",
+  },
+
   btsEmoji: {
     fontSize: "3rem",
     marginBottom: "12px",
+  },
+
+  inlineActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+    margin: "12px 0",
+  },
+
+  secondarySmallBtn: {
+    border: "1px solid rgba(124,58,237,0.2)",
+    background: "white",
+    color: "#5b21b6",
+    borderRadius: "999px",
+    padding: "10px 16px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  checkboxLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    color: "#4c1d95",
+    fontWeight: 800,
+  },
+
+  cardActions: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "8px",
+    marginTop: "12px",
+  },
+
+  editBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "#dbeafe",
+    color: "#1d4ed8",
+    padding: "8px 14px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  deleteBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "#fee2e2",
+    color: "#b91c1c",
+    padding: "8px 14px",
+    cursor: "pointer",
+    fontWeight: 900,
+  },
+
+  todayBadge: {
+    display: "inline-flex",
+    padding: "7px 14px",
+    borderRadius: "999px",
+    background: "#22c55e",
+    color: "white",
+    fontSize: "0.8rem",
+    fontWeight: 900,
+    marginTop: "10px",
   },
 
   specialCard: {
