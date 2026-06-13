@@ -3,13 +3,24 @@ import { NavLink, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import logo from "../assets/logo.svg";
 
+const API_BASE = "https://purple-family-website.onrender.com";
+
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [todayBirthdays, setTodayBirthdays] = useState([]);
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 900;
+      setIsMobile(mobile);
+      if (!mobile) setOpen(false);
+    };
+
+    window.addEventListener("resize", handleResize);
+
     API.get("/auth/me")
       .then((res) => setUser(res.data))
       .catch(() => navigate("/login"));
@@ -17,14 +28,14 @@ export default function Navbar() {
     API.get("/birthdays/today")
       .then((res) => setTodayBirthdays(res.data || []))
       .catch(() => setTodayBirthdays([]));
+
+    return () => window.removeEventListener("resize", handleResize);
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
   };
-
-  const API_BASE = "https://purple-family-website.onrender.com";
 
   const profileImage = user?.profile_picture
     ? `${API_BASE}/${user.profile_picture}`
@@ -40,20 +51,30 @@ export default function Navbar() {
   ];
 
   return (
-    <header style={styles.header}>
-      <div style={styles.brand} onClick={() => navigate("/dashboard")}>
-        <img src={logo} alt="Purple Family" style={styles.logo} />
-        <div>
-          <strong style={styles.brandTitle}>Purple Family</strong>
-          <span style={styles.brandSub}>SL BTS ARMY</span>
+    <header style={isMobile ? styles.mobileHeader : styles.header}>
+      <div style={styles.topRow}>
+        <div style={styles.brand} onClick={() => navigate("/dashboard")}>
+          <img src={logo} alt="Purple Family" style={styles.logo} />
+          <div>
+            <strong style={styles.brandTitle}>Purple Family</strong>
+            <span style={styles.brandSub}>SL BTS ARMY</span>
+          </div>
         </div>
+
+        {isMobile && (
+          <button style={styles.menuBtn} onClick={() => setOpen(!open)}>
+            {open ? "✕" : "☰"}
+          </button>
+        )}
       </div>
 
-      <button style={styles.menuBtn} onClick={() => setOpen(!open)}>
-        ☰
-      </button>
-
-      <nav style={{ ...styles.navCenter, ...(open ? styles.navOpen : {}) }}>
+      <nav
+        style={{
+          ...styles.navCenter,
+          ...(isMobile ? styles.mobileNav : {}),
+          ...(isMobile && !open ? styles.mobileNavClosed : {}),
+        }}
+      >
         {links.map((link) => (
           <NavLink
             key={link.to}
@@ -61,6 +82,7 @@ export default function Navbar() {
             onClick={() => setOpen(false)}
             style={({ isActive }) => ({
               ...styles.navBtn,
+              ...(isMobile ? styles.mobileNavBtn : {}),
               ...(isActive ? styles.activeNavBtn : {}),
             })}
           >
@@ -72,7 +94,7 @@ export default function Navbar() {
       </nav>
 
       {user && (
-        <div style={styles.navRight}>
+        <div style={isMobile ? styles.mobileNavRight : styles.navRight}>
           <button onClick={() => navigate("/edit-profile")} style={styles.profileBtn}>
             {profileImage ? (
               <img src={profileImage} alt="profile" style={styles.profileImage} />
@@ -106,6 +128,28 @@ const styles = {
     backdropFilter: "blur(18px)",
     borderBottom: "1px solid rgba(124,58,237,0.14)",
     boxShadow: "0 12px 35px rgba(76,29,149,0.08)",
+  },
+
+  mobileHeader: {
+    position: "sticky",
+    top: 0,
+    zIndex: 100,
+    padding: "12px 16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    background: "rgba(255,255,255,0.92)",
+    backdropFilter: "blur(18px)",
+    borderBottom: "1px solid rgba(124,58,237,0.14)",
+    boxShadow: "0 12px 35px rgba(76,29,149,0.08)",
+  },
+
+  topRow: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
   },
 
   brand: {
@@ -142,6 +186,18 @@ const styles = {
     flexWrap: "wrap",
   },
 
+  mobileNav: {
+    width: "100%",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+    padding: "8px 0",
+  },
+
+  mobileNavClosed: {
+    display: "none",
+  },
+
   navBtn: {
     position: "relative",
     display: "inline-flex",
@@ -154,6 +210,14 @@ const styles = {
     fontSize: "0.88rem",
     border: "1px solid rgba(124,58,237,0.14)",
     background: "rgba(255,255,255,0.55)",
+    textDecoration: "none",
+  },
+
+  mobileNavBtn: {
+    width: "100%",
+    justifyContent: "center",
+    borderRadius: "16px",
+    padding: "12px 10px",
   },
 
   activeNavBtn: {
@@ -183,15 +247,23 @@ const styles = {
     justifyContent: "flex-end",
   },
 
+  mobileNavRight: {
+    width: "100%",
+    display: "flex",
+    gap: "10px",
+  },
+
   profileBtn: {
+    flex: 1,
     display: "flex",
     alignItems: "center",
+    justifyContent: "center",
     gap: "8px",
     border: "1px solid rgba(124,58,237,0.2)",
     background: "rgba(255,255,255,0.75)",
     color: "#4c1d95",
     borderRadius: "999px",
-    padding: "7px 12px",
+    padding: "8px 12px",
     cursor: "pointer",
     fontWeight: 800,
   },
@@ -219,17 +291,13 @@ const styles = {
   },
 
   menuBtn: {
-    display: "none",
     border: "1px solid rgba(124,58,237,0.18)",
     background: "white",
     color: "#4c1d95",
-    borderRadius: "12px",
-    padding: "9px 12px",
-    fontSize: "1.1rem",
+    borderRadius: "14px",
+    padding: "9px 13px",
+    fontSize: "1.15rem",
     cursor: "pointer",
-  },
-
-  navOpen: {
-    display: "flex",
+    fontWeight: 900,
   },
 };
