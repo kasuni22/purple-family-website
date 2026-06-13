@@ -489,6 +489,7 @@ const styles = {
   position: "relative",
   overflow: "hidden",
   gap: "28px",
+  width: "100%",
 },
 
 mobileHeroContent: {
@@ -546,6 +547,8 @@ mobileHeroBgImage: {
   borderRadius: "28px",
   overflow: "hidden",
   boxShadow: "0 20px 45px rgba(76,29,149,0.16)",
+  objectFit: "cover",
+  display: "block",
 },
 
 mobileBgImg: {
