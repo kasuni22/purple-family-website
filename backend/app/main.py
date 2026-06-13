@@ -7,6 +7,14 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import shutil
 import os
+import cloudinary
+import cloudinary.uploader
+
+cloudinary.config(
+    cloud_name = os.environ.get("CLOUDINARY_CLOUD_NAME", "dgdpuo8og"),
+    api_key = os.environ.get("CLOUDINARY_API_KEY", "758787818257213"),
+    api_secret = os.environ.get("CLOUDINARY_API_SECRET", "")
+)
 from typing import Optional
 from pydantic import BaseModel
 
@@ -1477,14 +1485,10 @@ def create_quiz_question(
     db.commit()
     db.refresh(new_question)
     if file and file.filename:
-        os.makedirs("uploads/quiz", exist_ok=True)
-        safe_name = f"quiz_{new_question.id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/quiz/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        new_question.image_url = file_path
-        db.commit()
-        db.refresh(new_question)
+     result = cloudinary.uploader.upload(file.file, folder="quiz")
+    new_question.image_url = result["secure_url"]
+    db.commit()
+    db.refresh(new_question)
     return serialize_quiz_question(new_question, current_user)
 
 @app.put("/quiz/questions/{question_id}")
@@ -1519,12 +1523,8 @@ def update_quiz_question(
     quiz_question.correct_answer = correct_answer
     quiz_question.image_url = image_url or quiz_question.image_url or ""
     if file and file.filename:
-        os.makedirs("uploads/quiz", exist_ok=True)
-        safe_name = f"quiz_{question_id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/quiz/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        quiz_question.image_url = file_path
+     result = cloudinary.uploader.upload(file.file, folder="quiz")
+    quiz_question.image_url = result["secure_url"]
     db.commit()
     db.refresh(quiz_question)
     return serialize_quiz_question(quiz_question, current_user)
