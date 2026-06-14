@@ -12,7 +12,11 @@ import jiminImg from "../assets/bts-members/jimin.jpg";
 import vImg from "../assets/bts-members/v.jpg";
 import jungkookImg from "../assets/bts-members/jungkook.jpg";
 
-const API_BASE = "http://127.0.0.1:8000";
+const getImageUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return `https://purple-family-website.onrender.com/${path}`;
+};
 
 const BTS_MEMBERS = [
   { name: "RM", emoji: "🐨", photo: rmImg, role: "Leader & Rapper", born: "September 12, 1994", from: "Ilsan, South Korea", desc: "Kim Namjoon is BTS's leader and the voice of the group. A deep thinker, art lover, and self-taught English speaker with incredible lyrical skills." },
@@ -172,7 +176,7 @@ export default function Members() {
   };
 
   const getAuthorPhoto = (desc) =>
-    desc.created_by_profile_picture ? `${API_BASE}/${desc.created_by_profile_picture}` : null;
+    desc.created_by_profile_picture ? getImageUrl(desc.created_by_profile_picture) : null;
 
   const getAuthorName = (desc) =>
     desc.created_by_nickname || desc.created_by_username || "ARMY";
@@ -514,7 +518,7 @@ export default function Members() {
                     <div style={styles.avatar}>
                       {member.profile_picture ? (
                         <img
-                          src={`${API_BASE}/${member.profile_picture}`}
+                          src={getImageUrl(member.profile_picture)}
                           alt={member.nickname || member.username}
                           style={styles.avatarImg}
                         />

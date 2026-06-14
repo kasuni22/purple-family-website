@@ -14,7 +14,7 @@ import btsDebutImg from "../assets/bts-members/bts-debut.png";
 import armyDayImg from "../assets/bts-members/army-day.jpg";
 
 const MONTHS = [
-  "All", "January", "February", "March", "April", "May", "June",  
+  "All", "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
@@ -86,7 +86,11 @@ export default function Birthdays() {
       .catch(() => { });
   }, [navigate]);
 
-  const imageUrl = (path) => `https://purple-family-website.onrender.com/${path}`;
+  const imageUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    return `https://purple-family-website.onrender.com/${path}`;
+  };
 
   const isBirthdayToday = (birthday) => {
     if (!birthday) return false;
@@ -936,7 +940,7 @@ export default function Birthdays() {
           </section>
         )}
       </main>
-        <BirthdaysResponsiveStyles />
+      <BirthdaysResponsiveStyles />
 
       <Footer />
     </>

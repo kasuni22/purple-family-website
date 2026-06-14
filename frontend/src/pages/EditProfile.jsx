@@ -4,7 +4,11 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-const API_BASE = "http://127.0.0.1:8000";
+const getImageUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return `https://purple-family-website.onrender.com/${path}`;
+};
 
 export default function EditProfile() {
   const [form, setForm] = useState({
@@ -42,7 +46,7 @@ export default function EditProfile() {
         });
 
         if (res.data.profile_picture) {
-          setPreview(`${API_BASE}/${res.data.profile_picture}`);
+          setPreview(getImageUrl(res.data.profile_picture));
         }
       })
       .catch(() => navigate("/login"));
