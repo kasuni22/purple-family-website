@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE = "https://purple-family-website.onrender.com";
 
 export default function Wallpapers() {
   const [wallpapers, setWallpapers] = useState([]);
@@ -53,11 +53,9 @@ export default function Wallpapers() {
   const getFileUrl = (path) => {
     if (!path) return "";
 
-    if (path.startsWith("http") && path.includes("cloudinary")) {
-      return path.replace("/upload/", "/upload/q_auto,f_auto,w_800/");
-    }
-
-    return path.startsWith("http") ? path : `${API_BASE}/${path}`;
+    return path.startsWith("http")
+      ? path
+      : `${API_BASE}/${path}`;
   };
 
   const formatDate = (value) => {
@@ -214,8 +212,16 @@ export default function Wallpapers() {
   const filtered =
     filter === "All" ? wallpapers : wallpapers.filter((w) => w.member === filter);
 
-  const handleDownload = (wallpaper) => {
-    window.location.href = `${API_BASE}/wallpapers/${wallpaper.id}/download`;
+  const handleDownload = async (wallpaper) => {
+    try {
+      window.open(
+        `${API_BASE}/wallpapers/${wallpaper.id}/download`,
+        "_blank"
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Download failed");
+    }
   };
 
   return (
