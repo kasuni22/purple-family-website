@@ -6,6 +6,23 @@ import Footer from "../components/Footer";
 
 const API_BASE = "https://purple-family-website.onrender.com";
 
+const safeDownloadName = (title) => {
+  return (title || "purple-family-wallpaper")
+    .trim()
+    .replace(/[^a-z0-9-_ ]/gi, "")
+    .replace(/\s+/g, "-")
+    .toLowerCase();
+};
+
+const getCloudinaryDownloadUrl = (url, title) => {
+  if (!url || !url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
+    return url;
+  }
+
+  const filename = safeDownloadName(title);
+  return url.replace("/upload/", `/upload/fl_attachment:${filename}/`);
+};
+
 export default function Wallpapers() {
   const [wallpapers, setWallpapers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -212,15 +229,32 @@ export default function Wallpapers() {
   const filtered =
     filter === "All" ? wallpapers : wallpapers.filter((w) => w.member === filter);
 
-  const handleDownload = async (wallpaper) => {
+  const handleDownload = (wallpaper) => {
     try {
+      const fileUrl = getFileUrl(wallpaper.file_path);
+
+      if (!fileUrl) {
+        alert("Wallpaper file not found");
+        return;
+      }
+
+      const downloadUrl = getCloudinaryDownloadUrl(fileUrl, wallpaper.title);
+
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.download = safeDownloadName(wallpaper.title);
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error(err);
       window.open(
         `${API_BASE}/wallpapers/${wallpaper.id}/download`,
         "_blank"
       );
-    } catch (err) {
-      console.error(err);
-      alert("Download failed");
     }
   };
 

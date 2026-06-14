@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware 
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -498,22 +498,44 @@ def unlike_wallpaper(wallpaper_id: int, db: Session = Depends(get_db), current_u
 @app.get("/wallpapers/{wallpaper_id}/download")
 def download_wallpaper(wallpaper_id: int, db: Session = Depends(get_db)):
     wallpaper = db.query(models.Wallpaper).filter(models.Wallpaper.id == wallpaper_id).first()
+
     if not wallpaper:
         raise HTTPException(status_code=404, detail="Wallpaper not found")
 
     file_path = wallpaper.file_path
-    if not file_path or not os.path.exists(file_path):
+
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Wallpaper URL not found")
+
+    # New uploads are stored in Cloudinary, so file_path is a remote URL.
+    # Redirect to Cloudinary instead of checking local server files.
+    if file_path.startswith("http://") or file_path.startswith("https://"):
+        return RedirectResponse(url=file_path, status_code=302)
+
+    # Backward compatibility for any old local files.
+    if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
     filename = os.path.basename(file_path)
     _, ext = os.path.splitext(filename)
+
     if not ext:
         ext = ".jpg"
 
-    disp_name = (wallpaper.title or filename) + ext if not (wallpaper.title and wallpaper.title.endswith(ext)) else (wallpaper.title or filename)
+    disp_name = (
+        (wallpaper.title or filename) + ext
+        if not (wallpaper.title and wallpaper.title.endswith(ext))
+        else (wallpaper.title or filename)
+    )
 
     headers = {"Content-Disposition": f'attachment; filename="{disp_name}"'}
-    return FileResponse(file_path, media_type="application/octet-stream", filename=disp_name, headers=headers)
+
+    return FileResponse(
+        file_path,
+        media_type="application/octet-stream",
+        filename=disp_name,
+        headers=headers,
+    )
 
 # ─── BIRTHDAY ROUTES ───────────────────────────────────────
 
