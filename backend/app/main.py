@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware 
 from fastapi.responses import FileResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -55,11 +54,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Static files for wallpapers
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
 
 BTS_ALBUMS_SEED = [
     {"name": "ARIRANG", "year": 2025},
@@ -813,12 +807,8 @@ def create_album(
     db.refresh(album)
 
     if file and file.filename:
-        os.makedirs("uploads/albums", exist_ok=True)
-        safe_name = f"album_{album.id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/albums/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        album.image_url = file_path
+        result = cloudinary.uploader.upload(file.file, folder="albums")
+        album.image_url = result["secure_url"]
         db.commit()
         db.refresh(album)
 
@@ -851,12 +841,8 @@ def update_album(
     album.image_url = image_url or album.image_url or ""
 
     if file and file.filename:
-        os.makedirs("uploads/albums", exist_ok=True)
-        safe_name = f"album_{album_id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/albums/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        album.image_url = file_path
+        result = cloudinary.uploader.upload(file.file, folder="albums")
+        album.image_url = result["secure_url"]
 
     db.commit()
     db.refresh(album)
@@ -923,12 +909,8 @@ def update_solo_album(
     album.image_url = image_url or album.image_url or ""
 
     if file and file.filename:
-        os.makedirs("uploads/solo_albums", exist_ok=True)
-        safe_name = f"solo_album_{album_id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/solo_albums/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        album.image_url = file_path
+        result = cloudinary.uploader.upload(file.file, folder="solo-albums")
+        album.image_url = result["secure_url"]
 
     db.commit()
     db.refresh(album)
@@ -982,15 +964,8 @@ def update_profile(
         current_user.birthday = date.fromisoformat(birthday)
 
     if file and file.filename:
-        os.makedirs("uploads/profile", exist_ok=True)
-
-        filename = f"user_{current_user.id}_{file.filename}"
-        filepath = f"uploads/profile/{filename}"
-
-        with open(filepath, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        current_user.profile_picture = filepath
+        result = cloudinary.uploader.upload(file.file, folder="profiles")
+        current_user.profile_picture = result["secure_url"]
 
     db.commit()
     db.refresh(current_user)
@@ -1035,8 +1010,8 @@ def create_birthday_post(
     image_path = None
     if file and file.filename:
         image_path = f"uploads/{file.filename}"
-        with open(image_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        result = cloudinary.uploader.upload(file.file, folder="birthday-posts")
+        image_path = result["secure_url"]
 
     post = models.BirthdayPost(
         message=message,
@@ -1521,8 +1496,8 @@ def update_quiz_question(
     quiz_question.correct_answer = correct_answer
     quiz_question.image_url = image_url or quiz_question.image_url or ""
     if file and file.filename:
-     result = cloudinary.uploader.upload(file.file, folder="quiz")
-    quiz_question.image_url = result["secure_url"]
+        result = cloudinary.uploader.upload(file.file, folder="quiz")
+        quiz_question.image_url = result["secure_url"]
     db.commit()
     db.refresh(quiz_question)
     return serialize_quiz_question(quiz_question, current_user)
