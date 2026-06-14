@@ -687,15 +687,6 @@ export default function Birthdays() {
                     </>
                   )}
 
-                  <button
-                    onClick={() => {
-                      setEditingSpecialDay(null);
-                      setShowSpecialForm(!showSpecialForm);
-                    }}
-                    style={styles.addBtn}
-                  >
-                    {showSpecialForm ? "Cancel" : "➕ Add ARMY Special Day"}
-                  </button>
                 </div>
                 <p style={styles.sectionText}>OT7 forever. Important purple days.</p>
               </div>
