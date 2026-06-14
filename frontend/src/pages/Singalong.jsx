@@ -306,9 +306,26 @@ export default function Singalong() {
     <div style={styles.container}>
       <Navbar />
       <style>{`
-        @keyframes singalongShimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
+        @keyframes softPulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.86;
+          }
+          50% {
+            transform: scale(1.08);
+            opacity: 1;
+          }
+        }
+
+        @keyframes dotBounce {
+          0%, 80%, 100% {
+            transform: translateY(0);
+            opacity: 0.45;
+          }
+          40% {
+            transform: translateY(-9px);
+            opacity: 1;
+          }
         }
       `}</style>
       <div style={styles.content}>
@@ -521,17 +538,22 @@ export default function Singalong() {
             <h3 style={styles.sectionTitle}>{galleryTitle}</h3>
 
             {loading ? (
-              <div style={styles.albumCardsGrid}>
-                {[1, 2, 3, 4].map((item) => (
-                  <div key={item} style={styles.albumCard}>
-                    <div style={styles.skeletonArtwork} />
-                    <div style={styles.skeletonBody}>
-                      <div style={styles.skeletonTitle} />
-                      <div style={styles.skeletonLine} />
-                      <div style={styles.skeletonLineSmall} />
-                    </div>
-                  </div>
-                ))}
+              <div style={styles.loadingContainer}>
+                <div style={styles.loadingIconWrap}>
+                  <span style={styles.loadingIcon}>🎵</span>
+                </div>
+
+                <h2 style={styles.loadingTitle}>Loading BTS Albums...</h2>
+
+                <p style={styles.loadingText}>
+                  Preparing your Purple Family music library 💜
+                </p>
+
+                <div style={styles.loadingDots}>
+                  <span style={{ ...styles.loadingDot, animationDelay: "0s" }} />
+                  <span style={{ ...styles.loadingDot, animationDelay: "0.18s" }} />
+                  <span style={{ ...styles.loadingDot, animationDelay: "0.36s" }} />
+                </div>
               </div>
             ) : albumCardsToShow.length === 0 ? (
               <div style={styles.emptyCard}>No albums found! 💜</div>
@@ -680,6 +702,61 @@ const styles = {
   lyrics: { color: "#2d0a4e", lineHeight: 2, fontFamily: "inherit", whiteSpace: "pre-wrap", fontSize: "1rem" },
   selectPrompt: { display: "flex", alignItems: "center", justifyContent: "center", background: "white", borderRadius: "12px", border: "1px solid #d4b8ff", minHeight: "180px", color: "#888" },
   emptyCard: { background: "white", borderRadius: "12px", padding: "2rem", textAlign: "center", border: "1px solid #d4b8ff", color: "#888" },
+  loadingContainer: {
+    minHeight: "360px",
+    borderRadius: "24px",
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(243,232,255,0.72))",
+    border: "1px solid #d4b8ff",
+    boxShadow: "0 18px 45px rgba(76,29,149,0.08)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
+    padding: "2rem",
+  },
+  loadingIconWrap: {
+    width: "86px",
+    height: "86px",
+    borderRadius: "28px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
+    display: "grid",
+    placeItems: "center",
+    boxShadow: "0 20px 40px rgba(124,58,237,0.28)",
+    marginBottom: "1.2rem",
+    animation: "softPulse 1.8s ease-in-out infinite",
+  },
+  loadingIcon: {
+    fontSize: "3.2rem",
+    lineHeight: 1,
+  },
+  loadingTitle: {
+    color: "#2d0a4e",
+    fontSize: "2rem",
+    fontWeight: 900,
+    margin: "0 0 0.6rem",
+    letterSpacing: "-0.03em",
+  },
+  loadingText: {
+    color: "#7c3aed",
+    fontSize: "1.05rem",
+    margin: 0,
+    lineHeight: 1.7,
+  },
+  loadingDots: {
+    display: "flex",
+    gap: "10px",
+    marginTop: "1.4rem",
+  },
+  loadingDot: {
+    width: "11px",
+    height: "11px",
+    borderRadius: "50%",
+    background: "#7c3aed",
+    display: "inline-block",
+    animation: "dotBounce 1.2s ease-in-out infinite",
+  },
   modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" },
   modalCard: { background: "white", borderRadius: "16px", padding: "2rem", width: "90%", maxWidth: "560px", maxHeight: "90vh", overflowY: "auto", border: "2px solid #d4b8ff", boxShadow: "0 10px 40px rgba(124,58,237,0.2)" },
   modalForm: { display: "flex", flexDirection: "column", gap: "0.9rem" },
