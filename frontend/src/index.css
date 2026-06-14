@@ -161,3 +161,14 @@ img {
     padding: 22px 14px;
   }
 }
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.wallpaper-img-loading {
+  animation: shimmer 1.5s infinite;
+  background: linear-gradient(90deg, #f3e8ff 25%, #e9d5ff 50%, #f3e8ff 75%);
+  background-size: 200% 100%;
+}

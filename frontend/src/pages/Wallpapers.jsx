@@ -310,6 +310,11 @@ export default function Wallpapers() {
                     alt={w.title}
                     className="wallpapers-image"
                     style={styles.image}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.parentElement.style.background = "#f3e8ff";
+                    }}
                   />
 
                   {w.member && <span style={styles.memberBadge}>{w.member}</span>}
@@ -836,10 +841,12 @@ const styles = {
   },
 
   imageWrap: {
-    position: "relative",
-    height: "320px",
-    background: "#f3e8ff",
-  },
+  position: "relative",
+  height: "320px",
+  background: "linear-gradient(90deg, #f3e8ff 25%, #e9d5ff 50%, #f3e8ff 75%)",
+  backgroundSize: "200% 100%",
+  animation: "shimmer 1.5s infinite",
+},
 
   image: {
     width: "100%",
