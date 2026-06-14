@@ -38,6 +38,9 @@ export default function Wallpapers() {
 
   const getFileUrl = (path) => {
     if (!path) return "";
+    if (path.startsWith("http") && path.includes("cloudinary")) {
+      return path.replace("/upload/", "/upload/q_auto,f_auto,w_600/");
+    }
     return path.startsWith("http")
       ? path
       : `https://purple-family-website.onrender.com/${path}`;
@@ -841,12 +844,12 @@ const styles = {
   },
 
   imageWrap: {
-  position: "relative",
-  height: "320px",
-  background: "linear-gradient(90deg, #f3e8ff 25%, #e9d5ff 50%, #f3e8ff 75%)",
-  backgroundSize: "200% 100%",
-  animation: "shimmer 1.5s infinite",
-},
+    position: "relative",
+    height: "320px",
+    background: "linear-gradient(90deg, #f3e8ff 25%, #e9d5ff 50%, #f3e8ff 75%)",
+    backgroundSize: "200% 100%",
+    animation: "shimmer 1.5s infinite",
+  },
 
   image: {
     width: "100%",
