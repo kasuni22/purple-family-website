@@ -340,10 +340,8 @@ def upload_wallpaper(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    file_path = f"uploads/{file.filename}"
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    result = cloudinary.uploader.upload(file.file, folder="wallpapers")
+    file_path = result["secure_url"]
 
     wallpaper = models.Wallpaper(
         title=title,
