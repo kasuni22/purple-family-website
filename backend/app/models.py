@@ -154,11 +154,24 @@ class SpecialDay(Base):
     __tablename__ = "special_days"
 
     id = Column(Integer, primary_key=True, index=True)
+
     title = Column(String, nullable=False)
     date = Column(Date, nullable=False)
+
     description = Column(String, nullable=True)
-    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
+
+    image_url = Column(String, nullable=True)
+
+    created_by_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        server_default=func.now()
+    )
 
     created_by = relationship("User")
 
