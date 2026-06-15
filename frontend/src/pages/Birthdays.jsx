@@ -677,14 +677,9 @@ export default function Birthdays() {
                 <h2 style={styles.sectionTitle}>BTS Birthdays & Special Days</h2>
                 <div style={styles.inlineActions}>
                   {currentUser?.is_admin && (
-                    <>
-                      <button onClick={openAddBtsEvent} style={styles.addBtn}>
-                        ➕ Add BTS Day
-                      </button>
-                      <button onClick={resetBtsEvents} style={styles.secondarySmallBtn}>
-                        Reset Defaults
-                      </button>
-                    </>
+                    <button onClick={openAddBtsEvent} style={styles.addBtn}>
+                      ➕ Add BTS Day
+                    </button>
                   )}
 
                 </div>
