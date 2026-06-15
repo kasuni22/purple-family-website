@@ -3,99 +3,123 @@ import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import jinImg from "../assets/bts-members/jin.jpg";
-import sugaImg from "../assets/bts-members/suga.jpg";
-import jhopeImg from "../assets/bts-members/jhope.jpg";
-import rmImg from "../assets/bts-members/rm.jpg";
-import jiminImg from "../assets/bts-members/jimin.jpg";
-import vImg from "../assets/bts-members/v.jpg";
-import jungkookImg from "../assets/bts-members/jungkook.jpg";
-import btsDebutImg from "../assets/bts-members/bts-debut.png";
-import armyDayImg from "../assets/bts-members/army-day.jpg";
+
+const API_BASE = "https://purple-family-website.onrender.com";
 
 const MONTHS = [
-  "All", "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "All",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 const DEFAULT_BTS_EVENTS = [
-  { id: "jin", name: "Jin", date: "December 4", month: 12, day: 4, image: jinImg, emoji: "🐹" },
-  { id: "suga", name: "SUGA", date: "March 9", month: 3, day: 9, image: sugaImg, emoji: "🐱" },
-  { id: "jhope", name: "j-hope", date: "February 18", month: 2, day: 18, image: jhopeImg, emoji: "🐿️" },
-  { id: "rm", name: "RM", date: "September 12", month: 9, day: 12, image: rmImg, emoji: "🐨" },
-  { id: "jimin", name: "Jimin", date: "October 13", month: 10, day: 13, image: jiminImg, emoji: "🐥" },
-  { id: "v", name: "V", date: "December 30", month: 12, day: 30, image: vImg, emoji: "🐯" },
-  { id: "jungkook", name: "Jung Kook", date: "September 1", month: 9, day: 1, image: jungkookImg, emoji: "🐰" },
-  { id: "bts-debut", name: "BTS Debut", date: "June 13", month: 6, day: 13, image: btsDebutImg, emoji: "💜", special: true },
-  { id: "army-day", name: "ARMY Day", date: "July 9", month: 7, day: 9, image: armyDayImg, emoji: "💜", special: true },
+  { id: "default-jin", name: "Jin", date: "December 4", month: 12, day: 4, emoji: "🐹" },
+  { id: "default-suga", name: "SUGA", date: "March 9", month: 3, day: 9, emoji: "🐱" },
+  { id: "default-jhope", name: "j-hope", date: "February 18", month: 2, day: 18, emoji: "🐿️" },
+  { id: "default-rm", name: "RM", date: "September 12", month: 9, day: 12, emoji: "🐨" },
+  { id: "default-jimin", name: "Jimin", date: "October 13", month: 10, day: 13, emoji: "🐥" },
+  { id: "default-v", name: "V", date: "December 30", month: 12, day: 30, emoji: "🐯" },
+  { id: "default-jungkook", name: "Jung Kook", date: "September 1", month: 9, day: 1, emoji: "🐰" },
+  { id: "default-bts-debut", name: "BTS Debut", date: "June 13", month: 6, day: 13, emoji: "💜", special: true },
+  { id: "default-army-day", name: "ARMY Day", date: "July 9", month: 7, day: 9, emoji: "💜", special: true },
 ];
 
-const getSavedBtsEvents = () => {
-  try {
-    const saved = localStorage.getItem("purple_family_bts_events");
-    return saved ? JSON.parse(saved) : DEFAULT_BTS_EVENTS;
-  } catch {
-    return DEFAULT_BTS_EVENTS;
-  }
-};
-
 export default function Birthdays() {
+  const navigate = useNavigate();
+  const today = new Date();
+
   const [birthdays, setBirthdays] = useState([]);
   const [birthdayPosts, setBirthdayPosts] = useState([]);
+  const [specialDays, setSpecialDays] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+
   const [search, setSearch] = useState("");
   const [monthFilter, setMonthFilter] = useState("All");
   const [btsMonth, setBtsMonth] = useState("All");
   const [activeTab, setActiveTab] = useState("army");
+
   const [showPostForm, setShowPostForm] = useState(false);
   const [postForm, setPostForm] = useState({
     for_username: "",
     message: "",
     file: null,
   });
-  const [commentText, setCommentText] = useState({});
-  const [specialDays, setSpecialDays] = useState([]);
-  const [showSpecialForm, setShowSpecialForm] = useState(false);
-  const [editingSpecialDay, setEditingSpecialDay] = useState(null);
-  const [btsEvents, setBtsEvents] = useState(getSavedBtsEvents);
-  const [showBtsForm, setShowBtsForm] = useState(false);
-  const [editingBtsEvent, setEditingBtsEvent] = useState(null);
-  const [btsForm, setBtsForm] = useState({
-    name: "",
-    month: 1,
-    day: 1,
-    image: "",
-    special: false,
-  });
 
-  const [specialForm, setSpecialForm] = useState({
+  const [commentText, setCommentText] = useState({});
+
+  const [showBtsForm, setShowBtsForm] = useState(false);
+  const [editingBtsDay, setEditingBtsDay] = useState(null);
+  const [btsForm, setBtsForm] = useState({
     title: "",
     date: "",
     description: "",
+    file: null,
+    image_url: "",
   });
 
-  const navigate = useNavigate();
-  const today = new Date();
-
   useEffect(() => {
-    API.get("/auth/me").then((res) => setCurrentUser(res.data)).catch(() => navigate("/login"));
-    API.get("/birthdays").then((res) => setBirthdays(res.data || []));
-    API.get("/birthday-posts").then((res) => setBirthdayPosts(res.data || []));
-    API.get("/special-days")
-      .then((res) => setSpecialDays(res.data || []))
-      .catch(() => { });
-  }, [navigate]);
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    try {
+      const [meRes, birthdaysRes, postsRes, specialRes] = await Promise.all([
+        API.get("/auth/me"),
+        API.get("/birthdays"),
+        API.get("/birthday-posts"),
+        API.get("/special-days"),
+      ]);
+
+      setCurrentUser(meRes.data);
+      setBirthdays(birthdaysRes.data || []);
+      setBirthdayPosts(postsRes.data || []);
+      setSpecialDays(specialRes.data || []);
+    } catch {
+      navigate("/login");
+    }
+  };
+
+  const refreshBirthdayPosts = async () => {
+    const res = await API.get("/birthday-posts");
+    setBirthdayPosts(res.data || []);
+  };
+
+  const refreshSpecialDays = async () => {
+    const res = await API.get("/special-days");
+    setSpecialDays(res.data || []);
+  };
 
   const imageUrl = (path) => {
     if (!path) return "";
-    if (path.startsWith("http")) return path;
-    return `https://purple-family-website.onrender.com/${path}`;
+    if (path.startsWith("http") || path.startsWith("blob:")) return path;
+    return `${API_BASE}/${path}`;
   };
 
-  const isBirthdayToday = (birthday) => {
-    if (!birthday) return false;
-    const date = new Date(birthday);
-    return date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
+  const monthDayToLabel = (month, day) => {
+    const monthName = MONTHS[Number(month)] || "";
+    return `${monthName} ${Number(day)}`;
+  };
+
+  const getMonthFromDate = (dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return date.getMonth() + 1;
+  };
+
+  const getDayFromDate = (dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return date.getDate();
   };
 
   const formatDate = (dateStr) => {
@@ -104,8 +128,29 @@ export default function Birthdays() {
     return date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
   };
 
-  const todayMonth = today.getMonth() + 1;
-  const todayDate = today.getDate();
+  const isBirthdayToday = (birthday) => {
+    if (!birthday) return false;
+    const date = new Date(birthday);
+    return (
+      date.getMonth() === today.getMonth() &&
+      date.getDate() === today.getDate()
+    );
+  };
+
+  const isMonthMatch = (monthNumber, selectedMonth) => {
+    return selectedMonth === "All" || Number(monthNumber) === MONTHS.indexOf(selectedMonth);
+  };
+
+  const isDefaultEventToday = (event) => {
+    return Number(event.month) === today.getMonth() + 1 && Number(event.day) === today.getDate();
+  };
+
+  const isApiDayToday = (day) => {
+    return (
+      getMonthFromDate(day.date) === today.getMonth() + 1 &&
+      getDayFromDate(day.date) === today.getDate()
+    );
+  };
 
   const todayBirthdays = birthdays.filter((m) => isBirthdayToday(m.birthday));
 
@@ -114,45 +159,30 @@ export default function Birthdays() {
     return new Date(m.birthday).getMonth() === today.getMonth();
   });
 
-  const isBtsEventToday = (event) =>
-    Number(event.month) === todayMonth && Number(event.day) === todayDate;
+  const todayBtsEventsCount =
+    DEFAULT_BTS_EVENTS.filter(isDefaultEventToday).length +
+    specialDays.filter(isApiDayToday).length;
 
-  const isSpecialDayToday = (day) => {
-    if (!day?.date) return false;
-    const date = new Date(day.date);
-    return date.getMonth() + 1 === todayMonth && date.getDate() === todayDate;
-  };
+  const filteredArmy = birthdays.filter((member) => {
+    if (!member.birthday) return false;
 
-  const isSpecialDayThisMonth = (day) => {
-    if (!day?.date) return false;
-    return new Date(day.date).getMonth() + 1 === todayMonth;
-  };
-
-  const todayBtsEvents = btsEvents.filter(isBtsEventToday);
-  const todaySpecialDays = specialDays.filter(isSpecialDayToday);
-  const thisMonthBtsEvents = btsEvents.filter((event) => Number(event.month) === todayMonth);
-  const thisMonthSpecialDays = specialDays.filter(isSpecialDayThisMonth);
-
-  const totalTodayEvents =
-    todayBirthdays.length + todayBtsEvents.length + todaySpecialDays.length;
-
-  const totalThisMonthEvents =
-    thisMonthBirthdays.length + thisMonthBtsEvents.length + thisMonthSpecialDays.length;
-
-  const filteredArmy = birthdays.filter((m) => {
-    if (!m.birthday) return false;
-    const date = new Date(m.birthday);
+    const birthday = new Date(member.birthday);
     const matchMonth =
-      monthFilter === "All" || date.getMonth() === MONTHS.indexOf(monthFilter) - 1;
+      monthFilter === "All" ||
+      birthday.getMonth() === MONTHS.indexOf(monthFilter) - 1;
 
-    const name = `${m.username || ""} ${m.nickname || ""}`.toLowerCase();
+    const name = `${member.username || ""} ${member.nickname || ""}`.toLowerCase();
     const matchSearch = name.includes(search.toLowerCase());
 
     return matchMonth && matchSearch;
   });
 
-  const filteredBts = btsEvents.filter(
-    (m) => btsMonth === "All" || Number(m.month) === MONTHS.indexOf(btsMonth)
+  const filteredDefaultBts = DEFAULT_BTS_EVENTS.filter((event) =>
+    isMonthMatch(event.month, btsMonth)
+  );
+
+  const filteredAddedBtsDays = specialDays.filter((day) =>
+    isMonthMatch(getMonthFromDate(day.date), btsMonth)
   );
 
   const handlePost = async (e) => {
@@ -168,17 +198,16 @@ export default function Birthdays() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      const res = await API.get("/birthday-posts");
-      setBirthdayPosts(res.data || []);
+      await refreshBirthdayPosts();
       setPostForm({ for_username: "", message: "", file: null });
       setShowPostForm(false);
-    } catch {
-      alert("Failed to post");
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to post birthday wish");
     }
   };
 
   const handleComment = async (postId) => {
-    if (!commentText[postId]) return;
+    if (!commentText[postId]?.trim()) return;
 
     const formData = new FormData();
     formData.append("content", commentText[postId]);
@@ -188,160 +217,85 @@ export default function Birthdays() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      const res = await API.get("/birthday-posts");
-      setBirthdayPosts(res.data || []);
+      await refreshBirthdayPosts();
       setCommentText({ ...commentText, [postId]: "" });
     } catch {
       alert("Failed to comment");
     }
   };
 
-
-  const loadBirthdayData = async () => {
-    const res = await API.get("/birthdays");
-    setBirthdays(res.data || []);
+  const openAddBtsDay = () => {
+    setEditingBtsDay(null);
+    setBtsForm({
+      title: "",
+      date: "",
+      description: "",
+      file: null,
+      image_url: "",
+    });
+    setShowBtsForm(true);
   };
 
-  const handleRemoveMember = async (member) => {
-    const displayName = member.nickname || member.username || "this member";
-
-    if (!window.confirm(`Remove ${displayName} from Purple Family? This will delete their account permanently.`)) {
-      return;
-    }
-
-    try {
-      await API.delete(`/members/${member.id}`);
-      await loadBirthdayData();
-      alert(`${displayName} removed successfully.`);
-    } catch (err) {
-      console.error("Remove member error:", err.response?.data || err.message);
-      alert(err.response?.data?.detail || "Failed to remove member. Admin only.");
-    }
+  const editBtsDay = (day) => {
+    setEditingBtsDay(day);
+    setBtsForm({
+      title: day.title || "",
+      date: day.date || "",
+      description: day.description || "",
+      file: null,
+      image_url: day.image_url || "",
+    });
+    setShowBtsForm(true);
   };
 
-  const refreshSpecialDays = async () => {
-    const res = await API.get("/special-days");
-    setSpecialDays(res.data || []);
-  };
-
-  const saveSpecialDay = async (e) => {
+  const saveBtsDay = async (e) => {
     e.preventDefault();
 
     const formData = new FormData();
-    formData.append("title", specialForm.title);
-    formData.append("date", specialForm.date);
-    formData.append("description", specialForm.description);
+    formData.append("title", btsForm.title);
+    formData.append("date", btsForm.date);
+    formData.append("description", btsForm.description || "");
+
+    // Backend can save this to Cloudinary when /special-days accepts file.
+    // Safe to keep here; current FastAPI will ignore extra form-data if file support is not added yet.
+    if (btsForm.file) formData.append("file", btsForm.file);
+    if (btsForm.image_url) formData.append("image_url", btsForm.image_url);
 
     try {
-      if (editingSpecialDay) {
-        await API.put(
-          `/special-days/${editingSpecialDay.id}`,
-          formData
-        );
+      if (editingBtsDay) {
+        await API.put(`/special-days/${editingBtsDay.id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       } else {
-        await API.post("/special-days", formData);
+        await API.post("/special-days", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       }
 
       await refreshSpecialDays();
-
-      setSpecialForm({
+      setShowBtsForm(false);
+      setEditingBtsDay(null);
+      setBtsForm({
         title: "",
         date: "",
         description: "",
+        file: null,
+        image_url: "",
       });
-
-      setEditingSpecialDay(null);
-      setShowSpecialForm(false);
     } catch (err) {
-      alert(err.response?.data?.detail || "Failed");
+      alert(err.response?.data?.detail || "Failed to save BTS day");
     }
   };
 
-  const editSpecialDay = (day) => {
-    setEditingSpecialDay(day);
-
-    setSpecialForm({
-      title: day.title,
-      date: day.date,
-      description: day.description || "",
-    });
-
-    setShowSpecialForm(true);
-  };
-
-  const deleteSpecialDay = async (day) => {
-    if (!window.confirm(`Delete "${day.title}" ?`)) return;
+  const deleteBtsDay = async (day) => {
+    if (!window.confirm(`Delete "${day.title}"?`)) return;
 
     try {
       await API.delete(`/special-days/${day.id}`);
       await refreshSpecialDays();
     } catch (err) {
-      alert(err.response?.data?.detail || "Failed");
+      alert(err.response?.data?.detail || "Failed to delete BTS day");
     }
-  };
-
-  const monthDayToDateLabel = (month, day) => `${MONTHS[Number(month)]} ${Number(day)}`;
-
-  const persistBtsEvents = (events) => {
-    setBtsEvents(events);
-    localStorage.setItem("purple_family_bts_events", JSON.stringify(events));
-  };
-
-  const openAddBtsEvent = () => {
-    setEditingBtsEvent(null);
-    setBtsForm({ name: "", month: todayMonth, day: todayDate, image: "", special: false });
-    setShowBtsForm(true);
-  };
-
-  const editBtsEvent = (event) => {
-    setEditingBtsEvent(event);
-    setBtsForm({
-      name: event.name || "",
-      month: Number(event.month) || 1,
-      day: Number(event.day) || 1,
-      image: event.image || "",
-      special: Boolean(event.special),
-    });
-    setShowBtsForm(true);
-  };
-
-  const saveBtsEvent = (e) => {
-    e.preventDefault();
-
-    const cleanName = btsForm.name.trim();
-    if (!cleanName) return alert("Name is required");
-
-    const month = Number(btsForm.month);
-    const day = Number(btsForm.day);
-
-    const payload = {
-      id: editingBtsEvent?.id || `${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
-      name: cleanName,
-      month,
-      day,
-      date: monthDayToDateLabel(month, day),
-      image: btsForm.image.trim(),
-      emoji: "💜",
-      special: Boolean(btsForm.special),
-    };
-
-    const updated = editingBtsEvent
-      ? btsEvents.map((item) => (item.id === editingBtsEvent.id ? payload : item))
-      : [...btsEvents, payload];
-
-    persistBtsEvents(updated);
-    setShowBtsForm(false);
-    setEditingBtsEvent(null);
-  };
-
-  const deleteBtsEvent = (event) => {
-    if (!window.confirm(`Delete "${event.name}"?`)) return;
-    persistBtsEvents(btsEvents.filter((item) => item.id !== event.id));
-  };
-
-  const resetBtsEvents = () => {
-    if (!window.confirm("Reset BTS birthdays and special days to default?")) return;
-    persistBtsEvents(DEFAULT_BTS_EVENTS);
   };
 
   return (
@@ -352,17 +306,21 @@ export default function Birthdays() {
         <section className="birthdays-hero" style={styles.hero}>
           <div>
             <div style={styles.badge}>🎂 Purple Birthday Calendar</div>
-            <h1 style={styles.title}>Celebrate every ARMY beautifully</h1>
-            <p style={styles.subtitle}>
-              Track birthdays, send wishes, celebrate BTS special days and make
-              your Purple Family feel loved.
+
+            <h1 style={styles.heroTitle}>
+              Celebrate every ARMY beautifully
+            </h1>
+
+            <p style={styles.heroText}>
+              Track ARMY birthdays, send purple wishes, and celebrate permanent
+              BTS special days with your Purple Family.
             </p>
           </div>
 
           <div className="birthdays-hero-card" style={styles.heroCard}>
             <span style={styles.heroEmoji}>🎉</span>
-            <h2>{totalTodayEvents}</h2>
-            <p>Birthdays Today</p>
+            <h2>{todayBirthdays.length + todayBtsEventsCount}</h2>
+            <p>Special Moments Today</p>
           </div>
         </section>
 
@@ -370,19 +328,19 @@ export default function Birthdays() {
           <div style={styles.statCard}>
             <span>👥</span>
             <h3>{birthdays.length}</h3>
-            <p>Total Birthdays</p>
+            <p>Total ARMY Birthdays</p>
           </div>
 
           <div style={styles.statCard}>
             <span>📅</span>
-            <h3>{totalThisMonthEvents}</h3>
-            <p>This Month</p>
+            <h3>{thisMonthBirthdays.length}</h3>
+            <p>ARMY Birthdays This Month</p>
           </div>
 
           <div style={styles.statCard}>
-            <span>🎉</span>
-            <h3>{totalTodayEvents}</h3>
-            <p>Today</p>
+            <span>💜</span>
+            <h3>{DEFAULT_BTS_EVENTS.length + specialDays.length}</h3>
+            <p>BTS Special Days</p>
           </div>
         </section>
 
@@ -390,7 +348,7 @@ export default function Birthdays() {
           {[
             ["army", "🎂 ARMY Birthdays"],
             ["wishes", "🎉 Birthday Wishes"],
-            ["bts", "💜 BTS Birthdays"],
+            ["bts", "💜 BTS Days"],
           ].map(([key, label]) => (
             <button
               key={key}
@@ -425,23 +383,23 @@ export default function Birthdays() {
               <div className="birthdays-today-card" style={styles.todayCard}>
                 <h3>🎉 Today's Birthday Stars</h3>
 
-                <div className="birthdays-today-list" style={styles.todayList}>
-                  {todayBirthdays.map((m) => (
-                    <div key={m.id} style={styles.todayItem}>
-                      {m.profile_picture ? (
+                <div style={styles.todayList}>
+                  {todayBirthdays.map((member) => (
+                    <div key={member.id} style={styles.todayItem}>
+                      {member.profile_picture ? (
                         <img
-                          src={imageUrl(m.profile_picture)}
-                          alt={m.username}
+                          src={imageUrl(member.profile_picture)}
+                          alt={member.username}
                           style={styles.avatarSmImg}
                         />
                       ) : (
                         <div style={styles.avatarSm}>
-                          {(m.nickname || m.username)?.[0]?.toUpperCase()}
+                          {(member.nickname || member.username)?.[0]?.toUpperCase()}
                         </div>
                       )}
 
                       <div>
-                        <strong>{m.nickname || m.username}</strong>
+                        <strong>{member.nickname || member.username}</strong>
                         <p>Happy Birthday! 🎂💜</p>
                       </div>
                     </div>
@@ -453,7 +411,7 @@ export default function Birthdays() {
             <div className="birthdays-controls" style={styles.controls}>
               <input
                 style={styles.search}
-                placeholder="Search by name or nickname..."
+                placeholder="Search name or nickname..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -463,8 +421,8 @@ export default function Birthdays() {
                 value={monthFilter}
                 onChange={(e) => setMonthFilter(e.target.value)}
               >
-                {MONTHS.map((m) => (
-                  <option key={m}>{m}</option>
+                {MONTHS.map((month) => (
+                  <option key={month}>{month}</option>
                 ))}
               </select>
             </div>
@@ -472,65 +430,45 @@ export default function Birthdays() {
             {filteredArmy.length === 0 ? (
               <div style={styles.emptyCard}>
                 <h3>No birthdays found 💜</h3>
-                <p>Update your profile to add your birthday.</p>
+                <p>Try another month or search name.</p>
               </div>
             ) : (
-              <div className="birthdays-member-list" style={styles.memberList}>
-                {filteredArmy.map((member) => (
-                  <div
-                    key={member.id}
-                    style={{
-                      ...styles.memberRow,
-                      ...(isBirthdayToday(member.birthday)
-                        ? styles.todayRowBorder
-                        : {}),
-                    }}
-                  >
-                    <div className="birthdays-member-left" style={styles.memberLeft}>
+              <div className="birthdays-grid" style={styles.grid}>
+                {filteredArmy.map((member) => {
+                  const isToday = isBirthdayToday(member.birthday);
+
+                  return (
+                    <article
+                      key={member.id}
+                      style={{
+                        ...styles.card,
+                        ...(isToday ? styles.todayBorder : {}),
+                      }}
+                    >
+                      {isToday && <div style={styles.todayBadge}>🎉 Today</div>}
+
                       {member.profile_picture ? (
                         <img
                           src={imageUrl(member.profile_picture)}
                           alt={member.username}
-                          style={styles.listAvatarImg}
+                          style={styles.avatarImg}
                         />
                       ) : (
-                        <div style={styles.listAvatar}>
+                        <div style={styles.avatar}>
                           {(member.nickname || member.username)?.[0]?.toUpperCase()}
                         </div>
                       )}
 
-                      <div>
-                        <h3 style={styles.listUsername}>
-                          {member.nickname || member.username}
-                        </h3>
-                        {member.username && member.nickname && (
-                          <p style={styles.listSubName}>@{member.username}</p>
-                        )}
-                      </div>
-                    </div>
+                      <h3 style={styles.username}>
+                        {member.nickname || member.username}
+                      </h3>
 
-                    <div className="birthdays-member-info" style={styles.memberInfo}>
-                      <span style={styles.listDate}>🎂 {formatDate(member.birthday)}</span>
-                      {member.bias && <span style={styles.listBias}>💜 Bias: {member.bias}</span>}
-                    </div>
+                      <p style={styles.date}>🎂 {formatDate(member.birthday)}</p>
 
-                    <div className="birthdays-member-actions" style={styles.memberActions}>
-                      {isBirthdayToday(member.birthday) && (
-                        <div style={styles.listTodayBadge}>🎉 Today</div>
-                      )}
-
-                      {currentUser?.is_admin && currentUser?.id !== member.id && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveMember(member)}
-                          style={styles.removeMemberBtn}
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                      {member.bias && <p style={styles.bias}>💜 Bias: {member.bias}</p>}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -538,10 +476,12 @@ export default function Birthdays() {
 
         {activeTab === "wishes" && (
           <section className="birthdays-panel" style={styles.panel}>
-            <div className="birthdays-wishes-header" style={styles.wishesHeader}>
+            <div className="birthdays-section-head" style={styles.wishesHeader}>
               <div>
                 <h2 style={styles.sectionTitle}>Birthday Wishes</h2>
-                <p style={styles.sectionText}>Share lovely purple wishes.</p>
+                <p style={styles.sectionText}>
+                  Share a loving purple wish for an ARMY birthday.
+                </p>
               </div>
 
               <button
@@ -553,16 +493,19 @@ export default function Birthdays() {
             </div>
 
             {showPostForm && (
-              <div className="birthdays-form-card" style={styles.formCard}>
+              <div style={styles.formCard}>
                 <h3 style={styles.cardTitle}>Add Birthday Wish 💜</h3>
 
-                <form className="birthdays-form" onSubmit={handlePost} style={styles.form}>
+                <form onSubmit={handlePost} style={styles.form}>
                   <input
                     style={styles.input}
                     placeholder="For who? nickname / username"
                     value={postForm.for_username}
                     onChange={(e) =>
-                      setPostForm({ ...postForm, for_username: e.target.value })
+                      setPostForm({
+                        ...postForm,
+                        for_username: e.target.value,
+                      })
                     }
                     required
                   />
@@ -573,7 +516,10 @@ export default function Birthdays() {
                     rows={4}
                     value={postForm.message}
                     onChange={(e) =>
-                      setPostForm({ ...postForm, message: e.target.value })
+                      setPostForm({
+                        ...postForm,
+                        message: e.target.value,
+                      })
                     }
                     required
                   />
@@ -581,9 +527,12 @@ export default function Birthdays() {
                   <input
                     type="file"
                     accept="image/*"
-                    style={styles.file}
+                    style={styles.fileInput}
                     onChange={(e) =>
-                      setPostForm({ ...postForm, file: e.target.files[0] })
+                      setPostForm({
+                        ...postForm,
+                        file: e.target.files?.[0] || null,
+                      })
                     }
                   />
 
@@ -600,10 +549,10 @@ export default function Birthdays() {
                 <p>Be the first to send one.</p>
               </div>
             ) : (
-              <div className="birthdays-wish-list" style={styles.wishList}>
+              <div style={styles.wishList}>
                 {birthdayPosts.map((post) => (
-                  <article className="birthdays-wish-card" key={post.id} style={styles.wishCard}>
-                    <div className="birthdays-wish-header" style={styles.wishHeader}>
+                  <article key={post.id} style={styles.wishCard}>
+                    <div style={styles.wishHeader}>
                       <div style={styles.avatarSm}>
                         {post.posted_by?.[0]?.toUpperCase()}
                       </div>
@@ -614,7 +563,7 @@ export default function Birthdays() {
                           {" "}
                           wishes Happy Birthday to{" "}
                         </span>
-                        <strong style={{ color: "#7c3aed" }}>
+                        <strong style={styles.purpleText}>
                           {post.for_username}
                         </strong>
 
@@ -635,10 +584,10 @@ export default function Birthdays() {
                     )}
 
                     <div style={styles.comments}>
-                      {post.comments.map((c) => (
-                        <div key={c.id} style={styles.comment}>
-                          <span style={styles.commentUser}>💜 {c.owner}</span>
-                          <span style={styles.commentText}>{c.content}</span>
+                      {post.comments?.map((comment) => (
+                        <div key={comment.id} style={styles.comment}>
+                          <span style={styles.commentUser}>💜 {comment.owner}</span>
+                          <span style={styles.commentText}>{comment.content}</span>
                         </div>
                       ))}
 
@@ -675,20 +624,17 @@ export default function Birthdays() {
             <div className="birthdays-section-head" style={styles.sectionHead}>
               <div>
                 <h2 style={styles.sectionTitle}>BTS Birthdays & Special Days</h2>
-                <div style={styles.inlineActions}>
-                  {currentUser?.is_admin && (
-                    <>
-                      <button onClick={openAddBtsEvent} style={styles.addBtn}>
-                        ➕ Add BTS Day
-                      </button>
-                      <button onClick={resetBtsEvents} style={styles.secondarySmallBtn}>
-                        Reset Defaults
-                      </button>
-                    </>
-                  )}
 
+                <div style={styles.inlineActions}>
+                  <button onClick={openAddBtsDay} style={styles.addBtn}>
+                    ➕ Add BTS Day
+                  </button>
                 </div>
-                <p style={styles.sectionText}>OT7 forever. Important purple days.</p>
+
+                <p style={styles.sectionText}>
+                  Default BTS birthdays stay permanent. ARMY-added days are saved
+                  online and can be edited by the creator.
+                </p>
               </div>
 
               <select
@@ -696,85 +642,25 @@ export default function Birthdays() {
                 value={btsMonth}
                 onChange={(e) => setBtsMonth(e.target.value)}
               >
-                {MONTHS.map((m) => (
-                  <option key={m}>{m}</option>
+                {MONTHS.map((month) => (
+                  <option key={month}>{month}</option>
                 ))}
               </select>
             </div>
-            {showBtsForm && currentUser?.is_admin && (
-              <div className="birthdays-form-card" style={styles.formCard}>
-                <h3>{editingBtsEvent ? "Edit BTS Birthday / Special Day" : "Add BTS Birthday / Special Day"}</h3>
 
-                <form className="birthdays-form" onSubmit={saveBtsEvent} style={styles.form}>
-                  <input
-                    style={styles.input}
-                    placeholder="Name e.g. BTS Debut"
-                    value={btsForm.name}
-                    onChange={(e) => setBtsForm({ ...btsForm, name: e.target.value })}
-                    required
-                  />
-
-                  <select
-                    style={styles.input}
-                    value={btsForm.month}
-                    onChange={(e) => setBtsForm({ ...btsForm, month: Number(e.target.value) })}
-                  >
-                    {MONTHS.slice(1).map((month, index) => (
-                      <option key={month} value={index + 1}>{month}</option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="number"
-                    min="1"
-                    max="31"
-                    style={styles.input}
-                    value={btsForm.day}
-                    onChange={(e) => setBtsForm({ ...btsForm, day: Number(e.target.value) })}
-                    required
-                  />
-
-                  <input
-                    style={styles.input}
-                    placeholder="Image path e.g. /bts/bts-debut.png"
-                    value={btsForm.image}
-                    onChange={(e) => setBtsForm({ ...btsForm, image: e.target.value })}
-                  />
-
-                  <label style={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      checked={btsForm.special}
-                      onChange={(e) => setBtsForm({ ...btsForm, special: e.target.checked })}
-                    />
-                    Special Day
-                  </label>
-
-                  <button style={styles.button}>
-                    {editingBtsEvent ? "Update BTS Day" : "Create BTS Day"}
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {showSpecialForm && (
-              <div className="birthdays-form-card" style={styles.formCard}>
-                <h3>
-                  {editingSpecialDay
-                    ? "Edit Special Day"
-                    : "Add Special Day"}
+            {showBtsForm && (
+              <div style={styles.formCard}>
+                <h3 style={styles.cardTitle}>
+                  {editingBtsDay ? "Edit BTS Day" : "Add BTS Day"}
                 </h3>
 
-                <form className="birthdays-form" onSubmit={saveSpecialDay} style={styles.form}>
+                <form onSubmit={saveBtsDay} style={styles.form}>
                   <input
                     style={styles.input}
-                    placeholder="Title"
-                    value={specialForm.title}
+                    placeholder="Title e.g. Jimin Live Day"
+                    value={btsForm.title}
                     onChange={(e) =>
-                      setSpecialForm({
-                        ...specialForm,
-                        title: e.target.value,
-                      })
+                      setBtsForm({ ...btsForm, title: e.target.value })
                     }
                     required
                   />
@@ -782,162 +668,186 @@ export default function Birthdays() {
                   <input
                     type="date"
                     style={styles.input}
-                    value={specialForm.date}
+                    value={btsForm.date}
                     onChange={(e) =>
-                      setSpecialForm({
-                        ...specialForm,
-                        date: e.target.value,
-                      })
+                      setBtsForm({ ...btsForm, date: e.target.value })
                     }
                     required
                   />
 
                   <textarea
                     style={styles.textarea}
-                    placeholder="Description"
-                    value={specialForm.description}
+                    placeholder="Description optional"
+                    value={btsForm.description}
                     onChange={(e) =>
-                      setSpecialForm({
-                        ...specialForm,
-                        description: e.target.value,
+                      setBtsForm({ ...btsForm, description: e.target.value })
+                    }
+                    rows={3}
+                  />
+
+                  <input
+                    style={styles.input}
+                    placeholder="Image URL optional"
+                    value={btsForm.image_url}
+                    onChange={(e) =>
+                      setBtsForm({ ...btsForm, image_url: e.target.value })
+                    }
+                  />
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={styles.fileInput}
+                    onChange={(e) =>
+                      setBtsForm({
+                        ...btsForm,
+                        file: e.target.files?.[0] || null,
                       })
                     }
                   />
 
-                  <button style={styles.button}>
-                    {editingSpecialDay ? "Update" : "Create"}
-                  </button>
+                  {btsForm.file && (
+                    <p style={styles.uploadHint}>
+                      Selected image: {btsForm.file.name}
+                    </p>
+                  )}
+
+                  <div style={styles.formActions}>
+                    <button style={styles.button} type="submit">
+                      {editingBtsDay ? "Update BTS Day 💜" : "Create BTS Day 💜"}
+                    </button>
+
+                    <button
+                      type="button"
+                      style={styles.cancelBtn}
+                      onClick={() => {
+                        setShowBtsForm(false);
+                        setEditingBtsDay(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </form>
               </div>
             )}
 
             <div className="birthdays-grid" style={styles.grid}>
-
-              {filteredBts.map((member) => {
-                const isToday = isBtsEventToday(member);
+              {filteredDefaultBts.map((event) => {
+                const isToday = isDefaultEventToday(event);
 
                 return (
-                  <div
-                    key={member.id || member.name}
+                  <article
+                    key={event.id}
                     style={{
                       ...styles.card,
-                      ...(member.special ? styles.specialCard : {}),
-                      ...(isToday ? styles.todayRowBorder : {}),
+                      ...(event.special ? styles.specialCard : {}),
+                      ...(isToday ? styles.todayBorder : {}),
                     }}
                   >
-                    {member.image ? (
-                      <img
-                        src={member.image}
-                        alt={member.name}
-                        style={styles.btsImage}
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div style={styles.btsEmoji}>{member.emoji || "💜"}</div>
-                    )}
+                    {isToday && <div style={styles.todayBadge}>🎉 Today</div>}
 
-                    <h3 style={styles.username}>{member.name}</h3>
-                    <p style={styles.date}>🎂 {member.date || monthDayToDateLabel(member.month, member.day)}</p>
+                    <div style={styles.btsEmoji}>{event.emoji}</div>
 
-                    {member.special && (
+                    <h3 style={styles.username}>{event.name}</h3>
+                    <p style={styles.date}>🎂 {event.date}</p>
+
+                    {event.special && (
                       <div style={styles.specialBadge}>Special Day 💜</div>
                     )}
 
-                    {isToday && (
-                      <div style={styles.todayBadge}>🎉 Today</div>
-                    )}
-
-                    {currentUser?.is_admin && (
-                      <div style={styles.cardActions}>
-                        <button style={styles.editBtn} onClick={() => editBtsEvent(member)}>
-                          Edit
-                        </button>
-                        <button style={styles.deleteBtn} onClick={() => deleteBtsEvent(member)}>
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                    <div style={styles.permanentBadge}>
+                      Permanent
+                    </div>
+                  </article>
                 );
               })}
-              {specialDays.length > 0 && (
-                <>
-                  <h2
+
+              {filteredAddedBtsDays.map((day) => {
+                const isToday = isApiDayToday(day);
+                const image = day.image_url || day.image_path;
+
+                return (
+                  <article
+                    key={day.id}
                     style={{
-                      marginTop: "30px",
-                      marginBottom: "20px",
+                      ...styles.card,
+                      ...styles.addedDayCard,
+                      ...(isToday ? styles.todayBorder : {}),
                     }}
                   >
-                    🌟 ARMY Special Days
-                  </h2>
+                    {isToday && <div style={styles.todayBadge}>🎉 Today</div>}
 
-                  <div className="birthdays-grid" style={styles.grid}>
-                    {specialDays.map((day) => (
-                      <div key={day.id} style={styles.card}>
-                        <h3>{day.title}</h3>
+                    {image ? (
+                      <img
+                        src={imageUrl(image)}
+                        alt={day.title}
+                        style={styles.btsImage}
+                      />
+                    ) : (
+                      <div style={styles.btsEmoji}>💜</div>
+                    )}
 
-                        <p>
-                          📅{" "}
-                          {new Date(day.date).toLocaleDateString()}
-                        </p>
+                    <h3 style={styles.username}>{day.title}</h3>
 
-                        {day.description && (
-                          <p>{day.description}</p>
-                        )}
+                    <p style={styles.date}>
+                      🎂 {formatDate(day.date)}
+                    </p>
 
-                        {isSpecialDayToday(day) && (
-                          <div style={styles.todayBadge}>🎉 Today</div>
-                        )}
+                    {day.description && (
+                      <p style={styles.dayDescription}>{day.description}</p>
+                    )}
 
-                        <small>
-                          by{" "}
-                          {day.created_by_nickname ||
-                            day.created_by_username}
-                        </small>
+                    <small style={styles.creatorText}>
+                      Added by{" "}
+                      {day.created_by_nickname ||
+                        day.created_by_username ||
+                        "ARMY"}
+                    </small>
 
-                        {(day.can_edit || day.can_delete) && (
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "8px",
-                              marginTop: "10px",
-                            }}
+                    <div style={styles.specialBadge}>ARMY Added 💜</div>
+
+                    {(day.can_edit || day.can_delete) && (
+                      <div style={styles.cardActions}>
+                        {day.can_edit && (
+                          <button
+                            style={styles.editBtn}
+                            onClick={() => editBtsDay(day)}
                           >
-                            {day.can_edit && (
-                              <button
-                                onClick={() => editSpecialDay(day)}
-                              >
-                                ✏️ Edit
-                              </button>
-                            )}
+                            Edit
+                          </button>
+                        )}
 
-                            {day.can_delete && (
-                              <button
-                                onClick={() => deleteSpecialDay(day)}
-                              >
-                                🗑️ Delete
-                              </button>
-                            )}
-                          </div>
+                        {day.can_delete && (
+                          <button
+                            style={styles.deleteBtn}
+                            onClick={() => deleteBtsDay(day)}
+                          >
+                            Delete
+                          </button>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </>
-              )}
+                    )}
+                  </article>
+                );
+              })}
             </div>
+
+            {filteredDefaultBts.length === 0 && filteredAddedBtsDays.length === 0 && (
+              <div style={styles.emptyCard}>
+                <h3>No BTS days found for this month 💜</h3>
+                <p>Add a new BTS day for your Purple Family.</p>
+              </div>
+            )}
           </section>
         )}
       </main>
-      <BirthdaysResponsiveStyles />
 
+      <BirthdaysResponsiveStyles />
       <Footer />
     </>
   );
 }
-
 
 function BirthdaysResponsiveStyles() {
   return (
@@ -981,116 +891,46 @@ function BirthdaysResponsiveStyles() {
         .birthdays-tabs button {
           flex: 0 0 auto !important;
           white-space: nowrap !important;
-          padding: 11px 16px !important;
-          font-size: 0.9rem !important;
         }
 
         .birthdays-panel {
-          padding: 20px !important;
+          padding: 22px 16px !important;
           border-radius: 28px !important;
         }
 
-        .birthdays-section-head,
-        .birthdays-wishes-header {
+        .birthdays-section-head {
           flex-direction: column !important;
           align-items: stretch !important;
-          text-align: left !important;
         }
 
         .birthdays-controls {
           flex-direction: column !important;
-          gap: 12px !important;
-        }
-
-        .birthdays-controls input,
-        .birthdays-controls select {
-          width: 100% !important;
-          min-width: 0 !important;
-        }
-
-        .birthdays-today-card {
-          padding: 20px !important;
-          border-radius: 24px !important;
-        }
-
-        .birthdays-today-list {
-          flex-direction: column !important;
-        }
-
-        .birthdays-member-list {
-          gap: 12px !important;
-        }
-
-        .birthdays-member-list > div {
-          flex-direction: column !important;
-          align-items: flex-start !important;
-          padding: 18px !important;
-          border-radius: 22px !important;
-        }
-
-        .birthdays-member-left,
-        .birthdays-member-info,
-        .birthdays-member-actions {
-          width: 100% !important;
-          justify-content: flex-start !important;
-        }
-
-        .birthdays-member-info {
-          gap: 8px !important;
-          flex-direction: column !important;
-          align-items: flex-start !important;
-        }
-
-        .birthdays-member-actions button {
-          width: 100% !important;
         }
 
         .birthdays-grid {
           grid-template-columns: 1fr !important;
-          gap: 16px !important;
         }
 
-        .birthdays-form-card,
-        .birthdays-wish-card {
+        .birthdays-today-card {
           padding: 20px !important;
-          border-radius: 24px !important;
-        }
-
-        .birthdays-form input,
-        .birthdays-form textarea,
-        .birthdays-form button {
-          width: 100% !important;
-        }
-
-        .birthdays-wish-header {
-          align-items: flex-start !important;
         }
 
         .birthdays-comment-form {
           flex-direction: column !important;
         }
 
-        .birthdays-comment-form input,
         .birthdays-comment-form button {
           width: 100% !important;
         }
       }
 
       @media (max-width: 480px) {
-        .birthdays-page {
-          padding: 20px 12px !important;
-        }
-
         .birthdays-hero {
           padding: 28px 18px !important;
         }
 
-        .birthdays-hero-card {
-          min-height: 150px !important;
-        }
-
         .birthdays-panel {
-          padding: 16px !important;
+          padding: 18px 14px !important;
         }
       }
     `}</style>
@@ -1109,11 +949,11 @@ const styles = {
     padding: "50px",
     borderRadius: "36px",
     background:
-      "linear-gradient(135deg,rgba(255,255,255,0.92),rgba(243,232,255,0.9))",
+      "linear-gradient(135deg,rgba(255,255,255,0.94),rgba(243,232,255,0.92))",
     border: "1px solid rgba(124,58,237,0.16)",
     boxShadow: "0 25px 70px rgba(76,29,149,0.14)",
     display: "grid",
-    gridTemplateColumns: "1fr 260px",
+    gridTemplateColumns: "1fr 270px",
     gap: "24px",
     alignItems: "center",
   },
@@ -1128,7 +968,7 @@ const styles = {
     marginBottom: "18px",
   },
 
-  title: {
+  heroTitle: {
     fontSize: "clamp(2.3rem,5vw,4.6rem)",
     lineHeight: 0.95,
     letterSpacing: "-0.06em",
@@ -1136,10 +976,11 @@ const styles = {
     marginBottom: "18px",
   },
 
-  subtitle: {
+  heroText: {
     color: "#6b5a80",
     lineHeight: 1.8,
-    maxWidth: "680px",
+    maxWidth: "700px",
+    fontSize: "1.05rem",
   },
 
   heroCard: {
@@ -1203,7 +1044,7 @@ const styles = {
     margin: "0 auto",
     padding: "30px",
     borderRadius: "34px",
-    background: "rgba(255,255,255,0.72)",
+    background: "rgba(255,255,255,0.76)",
     border: "1px solid rgba(124,58,237,0.14)",
     boxShadow: "0 18px 45px rgba(76,29,149,0.08)",
   },
@@ -1218,13 +1059,21 @@ const styles = {
 
   sectionTitle: {
     color: "#241039",
-    fontSize: "clamp(1.7rem,3vw,2.5rem)",
+    fontSize: "clamp(1.7rem,3vw,2.6rem)",
     letterSpacing: "-0.04em",
-    marginBottom: "6px",
+    marginBottom: "8px",
   },
 
   sectionText: {
     color: "#7c6a92",
+    lineHeight: 1.7,
+  },
+
+  inlineActions: {
+    display: "flex",
+    gap: "10px",
+    margin: "14px 0",
+    flexWrap: "wrap",
   },
 
   todayCard: {
@@ -1265,6 +1114,7 @@ const styles = {
     borderRadius: "16px",
     border: "1px solid rgba(124,58,237,0.2)",
     outline: "none",
+    background: "white",
   },
 
   select: {
@@ -1277,118 +1127,6 @@ const styles = {
     outline: "none",
   },
 
-  memberList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-  },
-
-  memberRow: {
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "18px",
-    padding: "18px 22px",
-    borderRadius: "24px",
-    background: "rgba(255,255,255,0.92)",
-    border: "1px solid rgba(124,58,237,0.14)",
-    boxShadow: "0 12px 28px rgba(76,29,149,0.07)",
-  },
-
-  todayRowBorder: {
-    border: "2px solid #f59e0b",
-    background: "linear-gradient(135deg,#fff7ed,#ffffff)",
-  },
-
-  memberLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    minWidth: 0,
-  },
-
-  listAvatar: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "50%",
-    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
-    color: "white",
-    display: "grid",
-    placeItems: "center",
-    fontSize: "1.35rem",
-    fontWeight: 900,
-    flexShrink: 0,
-  },
-
-  listAvatarImg: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "3px solid #a855f7",
-    flexShrink: 0,
-  },
-
-  listUsername: {
-    color: "#4c1d95",
-    margin: 0,
-    fontSize: "1.1rem",
-  },
-
-  listSubName: {
-    color: "#9ca3af",
-    margin: "4px 0 0",
-    fontSize: "0.85rem",
-    fontWeight: 700,
-  },
-
-  memberInfo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "18px",
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-    color: "#7c6a92",
-    fontWeight: 800,
-  },
-
-  memberActions: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-  },
-
-  removeMemberBtn: {
-    border: "none",
-    borderRadius: "999px",
-    background: "#fee2e2",
-    color: "#991b1b",
-    padding: "9px 16px",
-    cursor: "pointer",
-    fontWeight: 900,
-  },
-
-  listDate: {
-    color: "#7c3aed",
-  },
-
-  listBias: {
-    color: "#7c6a92",
-  },
-
-  listTodayBadge: {
-    background: "#f59e0b",
-    color: "white",
-    padding: "7px 14px",
-    borderRadius: "999px",
-    fontSize: "0.82rem",
-    fontWeight: 900,
-    whiteSpace: "nowrap",
-  },
-
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
@@ -1398,11 +1136,25 @@ const styles = {
   card: {
     position: "relative",
     padding: "28px",
+    minHeight: "260px",
     borderRadius: "28px",
-    background: "rgba(255,255,255,0.9)",
+    background: "rgba(255,255,255,0.94)",
     border: "1px solid rgba(124,58,237,0.14)",
     textAlign: "center",
     boxShadow: "0 16px 35px rgba(76,29,149,0.08)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  specialCard: {
+    background: "linear-gradient(135deg,#f3e8ff,#fdf2f8)",
+    border: "2px solid rgba(124,58,237,0.32)",
+  },
+
+  addedDayCard: {
+    background: "linear-gradient(135deg,#ffffff,#faf5ff)",
   },
 
   todayBorder: {
@@ -1421,6 +1173,7 @@ const styles = {
     borderRadius: "999px",
     fontSize: "0.78rem",
     fontWeight: 900,
+    whiteSpace: "nowrap",
   },
 
   avatar: {
@@ -1465,19 +1218,104 @@ const styles = {
     border: "2px solid #a855f7",
   },
 
+  btsEmoji: {
+    width: "82px",
+    height: "82px",
+    borderRadius: "50%",
+    background: "linear-gradient(135deg,#f3e8ff,#fdf2f8)",
+    border: "2px solid rgba(124,58,237,0.18)",
+    display: "grid",
+    placeItems: "center",
+    fontSize: "2.6rem",
+    marginBottom: "18px",
+  },
+
+  btsImage: {
+    width: "92px",
+    height: "92px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "3px solid #c084fc",
+    boxShadow: "0 12px 24px rgba(76,29,149,0.16)",
+    marginBottom: "18px",
+  },
+
   username: {
     color: "#4c1d95",
     marginBottom: "8px",
+    fontSize: "1.25rem",
   },
 
   date: {
     color: "#7c3aed",
-    fontWeight: 800,
-    marginBottom: "8px",
+    fontWeight: 900,
+    marginBottom: "10px",
   },
 
   bias: {
     color: "#7c6a92",
+  },
+
+  specialBadge: {
+    display: "inline-flex",
+    padding: "7px 14px",
+    borderRadius: "999px",
+    background: "#7c3aed",
+    color: "white",
+    fontSize: "0.8rem",
+    fontWeight: 900,
+    marginTop: "6px",
+  },
+
+  permanentBadge: {
+    display: "inline-flex",
+    padding: "6px 12px",
+    borderRadius: "999px",
+    background: "#ecfeff",
+    color: "#0e7490",
+    fontSize: "0.76rem",
+    fontWeight: 900,
+    marginTop: "10px",
+  },
+
+  dayDescription: {
+    color: "#6b5a80",
+    lineHeight: 1.6,
+    marginTop: "6px",
+    marginBottom: "10px",
+  },
+
+  creatorText: {
+    color: "#9b7cc5",
+    marginTop: "4px",
+  },
+
+  cardActions: {
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginTop: "14px",
+  },
+
+  editBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "#dbeafe",
+    color: "#1d4ed8",
+    padding: "8px 14px",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+
+  deleteBtn: {
+    border: "none",
+    borderRadius: "999px",
+    background: "#fee2e2",
+    color: "#b91c1c",
+    padding: "8px 14px",
+    fontWeight: 900,
+    cursor: "pointer",
   },
 
   emptyCard: {
@@ -1486,6 +1324,7 @@ const styles = {
     background: "white",
     textAlign: "center",
     color: "#7c6a92",
+    border: "1px solid rgba(124,58,237,0.12)",
   },
 
   wishesHeader: {
@@ -1505,6 +1344,7 @@ const styles = {
     padding: "13px 22px",
     fontWeight: 900,
     cursor: "pointer",
+    boxShadow: "0 14px 28px rgba(124,58,237,0.22)",
   },
 
   formCard: {
@@ -1513,6 +1353,7 @@ const styles = {
     background: "white",
     border: "1px solid rgba(124,58,237,0.14)",
     marginBottom: "24px",
+    boxShadow: "0 12px 26px rgba(76,29,149,0.08)",
   },
 
   cardTitle: {
@@ -1531,6 +1372,7 @@ const styles = {
     borderRadius: "16px",
     border: "1px solid rgba(124,58,237,0.2)",
     outline: "none",
+    background: "#faf7ff",
   },
 
   textarea: {
@@ -1539,11 +1381,23 @@ const styles = {
     border: "1px solid rgba(124,58,237,0.2)",
     outline: "none",
     resize: "vertical",
+    background: "#faf7ff",
   },
 
-  file: {
+  fileInput: {
     color: "#4c1d95",
-    fontWeight: 700,
+    fontWeight: 800,
+  },
+
+  uploadHint: {
+    color: "#7c6a92",
+    fontSize: "0.9rem",
+  },
+
+  formActions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
   },
 
   button: {
@@ -1551,7 +1405,17 @@ const styles = {
     borderRadius: "999px",
     background: "linear-gradient(135deg,#7c3aed,#ec4899)",
     color: "white",
-    padding: "14px",
+    padding: "14px 22px",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+
+  cancelBtn: {
+    border: "1px solid rgba(124,58,237,0.2)",
+    borderRadius: "999px",
+    background: "white",
+    color: "#6d28d9",
+    padding: "14px 22px",
     fontWeight: 900,
     cursor: "pointer",
   },
@@ -1577,6 +1441,10 @@ const styles = {
 
   wishTo: {
     color: "#7c6a92",
+  },
+
+  purpleText: {
+    color: "#7c3aed",
   },
 
   postDate: {
@@ -1642,99 +1510,5 @@ const styles = {
     padding: "12px 18px",
     fontWeight: 900,
     cursor: "pointer",
-  },
-
-  btsImage: {
-    width: "94px",
-    height: "94px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    marginBottom: "14px",
-    border: "3px solid rgba(124,58,237,0.25)",
-    boxShadow: "0 14px 28px rgba(76,29,149,0.16)",
-  },
-
-  btsEmoji: {
-    fontSize: "3rem",
-    marginBottom: "12px",
-  },
-
-  inlineActions: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    flexWrap: "wrap",
-    margin: "12px 0",
-  },
-
-  secondarySmallBtn: {
-    border: "1px solid rgba(124,58,237,0.2)",
-    background: "white",
-    color: "#5b21b6",
-    borderRadius: "999px",
-    padding: "10px 16px",
-    cursor: "pointer",
-    fontWeight: 900,
-  },
-
-  checkboxLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    color: "#4c1d95",
-    fontWeight: 800,
-  },
-
-  cardActions: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "8px",
-    marginTop: "12px",
-  },
-
-  editBtn: {
-    border: "none",
-    borderRadius: "999px",
-    background: "#dbeafe",
-    color: "#1d4ed8",
-    padding: "8px 14px",
-    cursor: "pointer",
-    fontWeight: 900,
-  },
-
-  deleteBtn: {
-    border: "none",
-    borderRadius: "999px",
-    background: "#fee2e2",
-    color: "#b91c1c",
-    padding: "8px 14px",
-    cursor: "pointer",
-    fontWeight: 900,
-  },
-
-  todayBadge: {
-    display: "inline-flex",
-    padding: "7px 14px",
-    borderRadius: "999px",
-    background: "#22c55e",
-    color: "white",
-    fontSize: "0.8rem",
-    fontWeight: 900,
-    marginTop: "10px",
-  },
-
-  specialCard: {
-    background: "linear-gradient(135deg,#f3e8ff,#fdf2f8)",
-    border: "2px solid rgba(124,58,237,0.35)",
-  },
-
-  specialBadge: {
-    display: "inline-flex",
-    padding: "7px 14px",
-    borderRadius: "999px",
-    background: "#7c3aed",
-    color: "white",
-    fontSize: "0.8rem",
-    fontWeight: 900,
   },
 };
