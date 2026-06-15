@@ -168,13 +168,11 @@ class BtsMemberDescriptionOut(BaseModel):
     class Config:
         from_attributes = True
 
-
 class SpecialDayOut(BaseModel):
     id: int
     title: str
     date: date
     description: Optional[str] = None
-    image_url: Optional[str] = None
     created_by_id: int
     created_by_username: Optional[str] = None
     created_by_nickname: Optional[str] = None
@@ -184,3 +182,8 @@ class SpecialDayOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class WallpaperUpdate(BaseModel):
+    title: Optional[str] = None
+    member: Optional[str] = None

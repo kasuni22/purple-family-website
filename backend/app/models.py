@@ -25,7 +25,7 @@ class User(Base):
     song_favorites = relationship("SongFavorite", back_populates="user", cascade="all, delete-orphan")
     albums = relationship("Album", back_populates="created_by")
     bts_descriptions = relationship("BtsMemberDescription", back_populates="created_by", cascade="all, delete-orphan")
-    special_days = relationship("SpecialDay", back_populates="created_by", cascade="all, delete-orphan")
+    special_days = relationship("SpecialDay", cascade="all, delete-orphan")
 
 class Post(Base):
     __tablename__ = "posts"
@@ -157,11 +157,11 @@ class SpecialDay(Base):
     title = Column(String, nullable=False)
     date = Column(Date, nullable=False)
     description = Column(String, nullable=True)
-    image_url = Column(String, nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
-    created_by = relationship("User", back_populates="special_days")
+    created_by = relationship("User")
+
 
 class BtsMemberDescription(Base):
     __tablename__ = "bts_member_descriptions"
@@ -205,3 +205,19 @@ class QuizQuestion(Base):
 
     created_by = relationship("User")
     topic = relationship("QuizTopic", back_populates="questions")
+
+class QuizScore(Base):
+    __tablename__ = "quiz_scores"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    topic_id = Column(Integer, ForeignKey("quiz_topics.id"), nullable=False)
+
+    score = Column(Integer, nullable=False)
+    total_questions = Column(Integer, nullable=False)
+
+    created_at = Column(DateTime, server_default=func.now())
+
+    user = relationship("User")
+    topic = relationship("QuizTopic")

@@ -579,7 +579,7 @@ def get_today_birthdays(db: Session = Depends(get_db)):
         for u in today_birthdays
     ]
 
-def serialize_special_day(day, current_user):
+def serialize_special_day(day: models.SpecialDay, current_user: models.User):
     creator = day.created_by
 
     return {
@@ -587,29 +587,12 @@ def serialize_special_day(day, current_user):
         "title": day.title,
         "date": day.date,
         "description": day.description,
-        "image_url": day.image_url,
-
         "created_by_id": day.created_by_id,
-
-        "created_by_username":
-            creator.username if creator else None,
-
-        "created_by_nickname":
-            creator.nickname if creator else None,
-
+        "created_by_username": creator.username if creator else None,
+        "created_by_nickname": creator.nickname if creator else None,
         "created_at": day.created_at,
-
-        "can_edit":
-            bool(
-                current_user.is_admin
-                or day.created_by_id == current_user.id
-            ),
-
-        "can_delete":
-            bool(
-                current_user.is_admin
-                or day.created_by_id == current_user.id
-            ),
+        "can_edit": bool(current_user.is_admin or day.created_by_id == current_user.id),
+        "can_delete": bool(current_user.is_admin or day.created_by_id == current_user.id),
     }
 
 
@@ -629,29 +612,20 @@ def get_special_days(
 def create_special_day(
     title: str = Form(...),
     date: str = Form(...),
-    description: str = Form(""),
-    file: UploadFile = File(None),
-
+    description: Optional[str] = Form(""),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
     from datetime import date as date_class
 
-    image_url = ""
-
-    if file and file.filename:
-        result = cloudinary.uploader.upload(
-            file.file,
-            folder="special-days"
-        )
-
-        image_url = result["secure_url"]
+    clean_title = title.strip()
+    if not clean_title:
+        raise HTTPException(status_code=400, detail="Title is required")
 
     day = models.SpecialDay(
-        title=title.strip(),
+        title=clean_title,
         date=date_class.fromisoformat(date),
-        description=description,
-        image_url=image_url,
+        description=description or "",
         created_by_id=current_user.id,
     )
 
@@ -659,10 +633,7 @@ def create_special_day(
     db.commit()
     db.refresh(day)
 
-    return serialize_special_day(
-        day,
-        current_user
-    )
+    return serialize_special_day(day, current_user)
 
 
 @app.put("/special-days/{day_id}")
