@@ -676,7 +676,7 @@ export default function Birthdays() {
               <div>
                 <h2 style={styles.sectionTitle}>BTS Birthdays & Special Days</h2>
                 <div style={styles.inlineActions}>
-                  {currentUser?.is_admin && (
+                  {currentUser && (
                     <button onClick={openAddBtsEvent} style={styles.addBtn}>
                       ➕ Add BTS Day
                     </button>
@@ -696,7 +696,7 @@ export default function Birthdays() {
                 ))}
               </select>
             </div>
-            {showBtsForm && currentUser?.is_admin && (
+            {showBtsForm && currentUser && (
               <div className="birthdays-form-card" style={styles.formCard}>
                 <h3>{editingBtsEvent ? "Edit BTS Birthday / Special Day" : "Add BTS Birthday / Special Day"}</h3>
 
