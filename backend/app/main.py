@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware 
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -9,77 +8,52 @@ import shutil
 import os
 import cloudinary
 import cloudinary.uploader
-from typing import Optional
-from pydantic import BaseModel
-
 
 cloudinary.config(
-    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME", "dgdpuo8og"),
-    api_key=os.environ.get("CLOUDINARY_API_KEY", "758787818257213"),
-    api_secret=os.environ.get("CLOUDINARY_API_SECRET", ""),
+    cloud_name = os.environ.get("CLOUDINARY_CLOUD_NAME", "dgdpuo8og"),
+    api_key = os.environ.get("CLOUDINARY_API_KEY", "758787818257213"),
+    api_secret = os.environ.get("CLOUDINARY_API_SECRET", "")
 )
+from typing import Optional
+from pydantic import BaseModel
 
 from .database import engine, get_db
 from . import models, schemas, auth
 
 models.Base.metadata.create_all(bind=engine)
 
-with engine.connect() as conn:
-    for statement in [
-        "ALTER TABLE songs ADD COLUMN release_year INTEGER",
-        "ALTER TABLE songs ADD COLUMN album VARCHAR",
-        "ALTER TABLE songs ADD COLUMN song_type VARCHAR",
-        "ALTER TABLE songs ADD COLUMN solo_artist VARCHAR",
-        "ALTER TABLE songs ADD COLUMN album_id INTEGER",
-        "ALTER TABLE songs ADD COLUMN image_url VARCHAR",
-        "CREATE TABLE IF NOT EXISTS song_favorites (id INTEGER PRIMARY KEY AUTOINCREMENT, song_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(song_id, user_id))",
-        "CREATE TABLE IF NOT EXISTS solo_albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, image_url VARCHAR, youtube_url VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS albums (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL, artist VARCHAR NOT NULL, year INTEGER, album_type VARCHAR NOT NULL DEFAULT 'BTS', image_url VARCHAR, playlist_url VARCHAR, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(name, artist, album_type))",
-        "CREATE TABLE IF NOT EXISTS quiz_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, category VARCHAR NOT NULL DEFAULT 'knowledge', question VARCHAR NOT NULL, image_url VARCHAR, option_a VARCHAR NOT NULL, option_b VARCHAR NOT NULL, option_c VARCHAR NOT NULL, option_d VARCHAR NOT NULL, correct_answer VARCHAR NOT NULL, created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS quiz_topics (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR NOT NULL UNIQUE, icon VARCHAR DEFAULT '📚', created_by_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "ALTER TABLE quiz_questions ADD COLUMN category VARCHAR DEFAULT 'knowledge'",
-        "ALTER TABLE quiz_questions ADD COLUMN image_url VARCHAR",
-        "ALTER TABLE quiz_questions ADD COLUMN topic_id INTEGER",
-        "CREATE INDEX IF NOT EXISTS idx_quiz_questions_topic_id ON quiz_questions(topic_id)",
-        "ALTER TABLE users ADD COLUMN nickname VARCHAR",
-        "ALTER TABLE users ADD COLUMN profile_picture VARCHAR",
-        "CREATE TABLE IF NOT EXISTS bts_member_descriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, member_name VARCHAR NOT NULL, content VARCHAR NOT NULL, created_by_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR PRIMARY KEY, value VARCHAR, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "CREATE TABLE IF NOT EXISTS special_days (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, date DATE NOT NULL, description VARCHAR, image_url VARCHAR, created_by_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-        "ALTER TABLE special_days ADD COLUMN image_url VARCHAR",
-    ]:
-        try:
-            conn.execute(text(statement))
-            conn.commit()
-            print(f"Migration executed: {statement}")
-        except Exception as e:
-            print("Migration skipped or already applied:", statement, e)
-
 with engine.begin() as conn:
-    try:
-        conn.execute(text("""
-            ALTER TABLE special_days
-            ADD COLUMN IF NOT EXISTS image_url VARCHAR
-        """))
-        print("special_days.image_url column is ready")
-    except Exception as e:
-        print("special_days.image_url migration skipped:", e)
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key VARCHAR PRIMARY KEY,
+            value VARCHAR,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """))
+
+print("Using SQLAlchemy models for PostgreSQL schema creation")
+
+print("Using SQLAlchemy models for PostgreSQL schema creation")
 
 app = FastAPI(title="Purple Family API 💜")
+
+@app.get("/")
+def root():
+    return {"message": "Purple Family API is live 💜"}
+
 
 # CORS - allows React frontend to talk to this backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://purple-family-website.vercel.app",
+        "https://purple-family-website-58bylyu9l-kasuni22s-projects.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Static files for wallpapers
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
 
 BTS_ALBUMS_SEED = [
     {"name": "ARIRANG", "year": 2025},
@@ -310,18 +284,45 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db), current
 @app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).order_by(models.Post.created_at.desc()).all()
-    return [
-        {
-            "id": p.id,
-            "title": p.title,
-            "content": p.content,
-            "owner_id": p.owner_id,
-            "created_at": p.created_at,
-            "username": db.query(models.User).filter(
-                models.User.id == p.owner_id).first().username
-        }
-        for p in posts
-    ]
+    result = []
+
+    for p in posts:
+        owner = db.query(models.User).filter(models.User.id == p.owner_id).first()
+        result.append(
+            {
+                "id": p.id,
+                "title": p.title,
+                "content": p.content,
+                "owner_id": p.owner_id,
+                "created_at": p.created_at,
+                "username": owner.username if owner else "Deleted ARMY",
+                "nickname": owner.nickname if owner else None,
+                "profile_picture": owner.profile_picture if owner else None,
+                "bias": owner.bias if owner else None,
+                "can_delete": False,
+            }
+        )
+
+    return result
+
+
+@app.delete("/posts/{post_id}")
+def delete_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    if not current_user.is_admin and post.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this post")
+
+    db.delete(post)
+    db.commit()
+
+    return {"detail": "Post deleted"}
 
 # ─── WALLPAPER ROUTES ──────────────────────────────────────
 
@@ -333,27 +334,43 @@ def upload_wallpaper(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    if not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
-    
-    file_path = f"uploads/{file.filename}"
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
+    result = cloudinary.uploader.upload(file.file, folder="wallpapers")
+    file_path = result["secure_url"]
+
     wallpaper = models.Wallpaper(
         title=title,
         file_path=file_path,
         member=member,
         uploaded_by_id=current_user.id
     )
+
     db.add(wallpaper)
     db.commit()
     db.refresh(wallpaper)
-    return wallpaper
+
+    return {
+        "id": wallpaper.id,
+        "title": wallpaper.title,
+        "file_path": wallpaper.file_path,
+        "member": wallpaper.member,
+        "created_at": wallpaper.created_at,
+        "uploaded_by_id": wallpaper.uploaded_by_id,
+        "uploaded_by_username": current_user.nickname or current_user.username,
+        "likes_count": 0,
+        "liked_by_current_user": False,
+        "can_edit": True,
+        "can_delete": True,
+    }
 
 @app.get("/wallpapers")
-def get_wallpapers(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
-    wallpapers = db.query(models.Wallpaper).order_by(models.Wallpaper.created_at.desc()).all()
+def get_wallpapers(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    wallpapers = db.query(models.Wallpaper).order_by(
+        models.Wallpaper.created_at.desc()
+    ).all()
+
     return [
         {
             "id": w.id,
@@ -362,15 +379,69 @@ def get_wallpapers(db: Session = Depends(get_db), current_user: models.User = De
             "member": w.member,
             "created_at": w.created_at,
             "uploaded_by_id": w.uploaded_by_id,
-            "uploaded_by_username": w.uploaded_by.username if w.uploaded_by else None,
-            "likes_count": db.query(models.WallpaperLike).filter(models.WallpaperLike.wallpaper_id == w.id).count(),
+            "uploaded_by_username": (
+                w.uploaded_by.nickname or w.uploaded_by.username
+                if w.uploaded_by else "Deleted ARMY"
+            ),
+            "likes_count": db.query(models.WallpaperLike).filter(
+                models.WallpaperLike.wallpaper_id == w.id
+            ).count(),
             "liked_by_current_user": db.query(models.WallpaperLike).filter(
                 models.WallpaperLike.wallpaper_id == w.id,
                 models.WallpaperLike.user_id == current_user.id
             ).first() is not None,
+            "can_edit": bool(
+                current_user.is_admin or w.uploaded_by_id == current_user.id
+            ),
+            "can_delete": bool(
+                current_user.is_admin or w.uploaded_by_id == current_user.id
+            ),
         }
         for w in wallpapers
     ]
+
+@app.put("/wallpapers/{wallpaper_id}")
+def update_wallpaper(
+    wallpaper_id: int,
+    title: str = Form(...),
+    member: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    wallpaper = db.query(models.Wallpaper).filter(
+        models.Wallpaper.id == wallpaper_id
+    ).first()
+
+    if not wallpaper:
+        raise HTTPException(status_code=404, detail="Wallpaper not found")
+
+    if not current_user.is_admin and wallpaper.uploaded_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this wallpaper")
+
+    wallpaper.title = title
+    wallpaper.member = member
+
+    db.commit()
+    db.refresh(wallpaper)
+
+    return {
+        "id": wallpaper.id,
+        "title": wallpaper.title,
+        "file_path": wallpaper.file_path,
+        "member": wallpaper.member,
+        "created_at": wallpaper.created_at,
+        "uploaded_by_id": wallpaper.uploaded_by_id,
+        "uploaded_by_username": current_user.nickname or current_user.username,
+        "likes_count": db.query(models.WallpaperLike).filter(
+            models.WallpaperLike.wallpaper_id == wallpaper.id
+        ).count(),
+        "liked_by_current_user": db.query(models.WallpaperLike).filter(
+            models.WallpaperLike.wallpaper_id == wallpaper.id,
+            models.WallpaperLike.user_id == current_user.id
+        ).first() is not None,
+        "can_edit": True,
+        "can_delete": True,
+    }
 
 
 @app.delete("/wallpapers/{wallpaper_id}")
@@ -427,22 +498,44 @@ def unlike_wallpaper(wallpaper_id: int, db: Session = Depends(get_db), current_u
 @app.get("/wallpapers/{wallpaper_id}/download")
 def download_wallpaper(wallpaper_id: int, db: Session = Depends(get_db)):
     wallpaper = db.query(models.Wallpaper).filter(models.Wallpaper.id == wallpaper_id).first()
+
     if not wallpaper:
         raise HTTPException(status_code=404, detail="Wallpaper not found")
 
     file_path = wallpaper.file_path
-    if not file_path or not os.path.exists(file_path):
+
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Wallpaper URL not found")
+
+    # New uploads are stored in Cloudinary, so file_path is a remote URL.
+    # Redirect to Cloudinary instead of checking local server files.
+    if file_path.startswith("http://") or file_path.startswith("https://"):
+        return RedirectResponse(url=file_path, status_code=302)
+
+    # Backward compatibility for any old local files.
+    if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
     filename = os.path.basename(file_path)
     _, ext = os.path.splitext(filename)
+
     if not ext:
         ext = ".jpg"
 
-    disp_name = (wallpaper.title or filename) + ext if not (wallpaper.title and wallpaper.title.endswith(ext)) else (wallpaper.title or filename)
+    disp_name = (
+        (wallpaper.title or filename) + ext
+        if not (wallpaper.title and wallpaper.title.endswith(ext))
+        else (wallpaper.title or filename)
+    )
 
     headers = {"Content-Disposition": f'attachment; filename="{disp_name}"'}
-    return FileResponse(file_path, media_type="application/octet-stream", filename=disp_name, headers=headers)
+
+    return FileResponse(
+        file_path,
+        media_type="application/octet-stream",
+        filename=disp_name,
+        headers=headers,
+    )
 
 # ─── BIRTHDAY ROUTES ───────────────────────────────────────
 
@@ -486,58 +579,78 @@ def get_today_birthdays(db: Session = Depends(get_db)):
         for u in today_birthdays
     ]
 
-    
-
-# ─── BTS SPECIAL DAYS ROUTES ───────────────────────────────
-
-def serialize_special_day(day: models.SpecialDay, current_user: models.User):
+def serialize_special_day(day, current_user):
     creator = day.created_by
+
     return {
         "id": day.id,
         "title": day.title,
         "date": day.date,
         "description": day.description,
         "image_url": day.image_url,
+
         "created_by_id": day.created_by_id,
-        "created_by_username": creator.username if creator else None,
-        "created_by_nickname": creator.nickname if creator else None,
+
+        "created_by_username":
+            creator.username if creator else None,
+
+        "created_by_nickname":
+            creator.nickname if creator else None,
+
         "created_at": day.created_at,
-        "can_edit": bool(current_user and (current_user.is_admin or day.created_by_id == current_user.id)),
-        "can_delete": bool(current_user and (current_user.is_admin or day.created_by_id == current_user.id)),
+
+        "can_edit":
+            bool(
+                current_user.is_admin
+                or day.created_by_id == current_user.id
+            ),
+
+        "can_delete":
+            bool(
+                current_user.is_admin
+                or day.created_by_id == current_user.id
+            ),
     }
+
 
 @app.get("/special-days")
 def get_special_days(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user),
+    current_user: models.User = Depends(auth.get_current_user)
 ):
-    days = db.query(models.SpecialDay).order_by(models.SpecialDay.date.asc()).all()
+    days = db.query(models.SpecialDay).order_by(
+        models.SpecialDay.date.asc()
+    ).all()
+
     return [serialize_special_day(day, current_user) for day in days]
+
 
 @app.post("/special-days")
 def create_special_day(
     title: str = Form(...),
     date: str = Form(...),
-    description: Optional[str] = Form(""),
+    description: str = Form(""),
     file: UploadFile = File(None),
+
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user),
+    current_user: models.User = Depends(auth.get_current_user)
 ):
     from datetime import date as date_class
 
-    clean_title = title.strip()
-    if not clean_title:
-        raise HTTPException(status_code=400, detail="Title is required")
-
     image_url = ""
+
     if file and file.filename:
-        result = cloudinary.uploader.upload(file.file, folder="special-days")
+        result = cloudinary.uploader.upload(
+            file.file,
+            folder="special-days"
+        )
+
         image_url = result["secure_url"]
 
     day = models.SpecialDay(
-        title=clean_title,
+        title=title.strip(),
         date=date_class.fromisoformat(date),
-        description=description or "",
+        description=description,
         image_url=image_url,
         created_by_id=current_user.id,
     )
@@ -546,7 +659,11 @@ def create_special_day(
     db.commit()
     db.refresh(day)
 
-    return serialize_special_day(day, current_user)
+    return serialize_special_day(
+        day,
+        current_user
+    )
+
 
 @app.put("/special-days/{day_id}")
 def update_special_day(
@@ -554,43 +671,37 @@ def update_special_day(
     title: str = Form(...),
     date: str = Form(...),
     description: Optional[str] = Form(""),
-    file: UploadFile = File(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user),
+    current_user: models.User = Depends(auth.get_current_user)
 ):
     from datetime import date as date_class
 
     day = db.query(models.SpecialDay).filter(models.SpecialDay.id == day_id).first()
+
     if not day:
         raise HTTPException(status_code=404, detail="Special day not found")
 
     if not current_user.is_admin and day.created_by_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to edit this special day")
 
-    clean_title = title.strip()
-    if not clean_title:
-        raise HTTPException(status_code=400, detail="Title is required")
-
-    day.title = clean_title
+    day.title = title.strip()
     day.date = date_class.fromisoformat(date)
     day.description = description or ""
-
-    if file and file.filename:
-        result = cloudinary.uploader.upload(file.file, folder="special-days")
-        day.image_url = result["secure_url"]
 
     db.commit()
     db.refresh(day)
 
     return serialize_special_day(day, current_user)
 
+
 @app.delete("/special-days/{day_id}")
 def delete_special_day(
     day_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user),
+    current_user: models.User = Depends(auth.get_current_user)
 ):
     day = db.query(models.SpecialDay).filter(models.SpecialDay.id == day_id).first()
+
     if not day:
         raise HTTPException(status_code=404, detail="Special day not found")
 
@@ -602,7 +713,7 @@ def delete_special_day(
 
     return {"detail": "Special day deleted"}
 
-# ─── MEMBERS ROUTE ─────────────────────────────────────────
+    # ─── MEMBERS ROUTE ─────────────────────────────────────────
 
 @app.get("/members")
 def get_members(db: Session = Depends(get_db)):
@@ -747,12 +858,8 @@ def create_album(
     db.refresh(album)
 
     if file and file.filename:
-        os.makedirs("uploads/albums", exist_ok=True)
-        safe_name = f"album_{album.id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/albums/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        album.image_url = file_path
+        result = cloudinary.uploader.upload(file.file, folder="albums")
+        album.image_url = result["secure_url"]
         db.commit()
         db.refresh(album)
 
@@ -785,12 +892,8 @@ def update_album(
     album.image_url = image_url or album.image_url or ""
 
     if file and file.filename:
-        os.makedirs("uploads/albums", exist_ok=True)
-        safe_name = f"album_{album_id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/albums/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        album.image_url = file_path
+        result = cloudinary.uploader.upload(file.file, folder="albums")
+        album.image_url = result["secure_url"]
 
     db.commit()
     db.refresh(album)
@@ -857,12 +960,8 @@ def update_solo_album(
     album.image_url = image_url or album.image_url or ""
 
     if file and file.filename:
-        os.makedirs("uploads/solo_albums", exist_ok=True)
-        safe_name = f"solo_album_{album_id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/solo_albums/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        album.image_url = file_path
+        result = cloudinary.uploader.upload(file.file, folder="solo-albums")
+        album.image_url = result["secure_url"]
 
     db.commit()
     db.refresh(album)
@@ -916,15 +1015,8 @@ def update_profile(
         current_user.birthday = date.fromisoformat(birthday)
 
     if file and file.filename:
-        os.makedirs("uploads/profile", exist_ok=True)
-
-        filename = f"user_{current_user.id}_{file.filename}"
-        filepath = f"uploads/profile/{filename}"
-
-        with open(filepath, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        current_user.profile_picture = filepath
+        result = cloudinary.uploader.upload(file.file, folder="profiles")
+        current_user.profile_picture = result["secure_url"]
 
     db.commit()
     db.refresh(current_user)
@@ -969,8 +1061,8 @@ def create_birthday_post(
     image_path = None
     if file and file.filename:
         image_path = f"uploads/{file.filename}"
-        with open(image_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        result = cloudinary.uploader.upload(file.file, folder="birthday-posts")
+        image_path = result["secure_url"]
 
     post = models.BirthdayPost(
         message=message,
@@ -1114,6 +1206,75 @@ def delete_bts_description(
 
     return {"detail": "Description deleted"}
 
+
+
+# ─── BTS MAIN DESCRIPTION SETTINGS ─────────────────────────
+
+@app.get("/bts-main-descriptions")
+def get_bts_main_descriptions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    rows = db.execute(
+        text("SELECT key, value FROM app_settings WHERE key LIKE 'bts_main_desc_%'")
+    ).fetchall()
+
+    result = {}
+    for row in rows:
+        member_name = row.key.replace("bts_main_desc_", "", 1)
+        result[member_name] = row.value
+
+    return result
+
+
+@app.put("/bts-main-descriptions/{member_name}")
+def update_bts_main_description(
+    member_name: str,
+    content: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    clean_member = member_name.strip()
+    clean_content = content.strip()
+
+    if not clean_member:
+        raise HTTPException(status_code=400, detail="Member name is required")
+
+    if not clean_content:
+        raise HTTPException(status_code=400, detail="Description is required")
+
+    key = f"bts_main_desc_{clean_member}"
+
+    existing = db.execute(
+        text("SELECT key FROM app_settings WHERE key = :key"),
+        {"key": key},
+    ).first()
+
+    if existing:
+        db.execute(
+            text("""
+                UPDATE app_settings
+                SET value = :value
+                WHERE key = :key
+            """),
+            {"key": key, "value": clean_content},
+        )
+    else:
+        db.execute(
+            text("""
+                INSERT INTO app_settings (key, value)
+                VALUES (:key, :value)
+            """),
+            {"key": key, "value": clean_content},
+        )
+
+    db.commit()
+
+    return {"member_name": clean_member, "content": clean_content}
+
 # ─── QUIZ ROUTES ───────────────────────────────────────────
 
 DEFAULT_QUIZ_TOPICS = [
@@ -1161,9 +1322,26 @@ def seed_quiz_topics(db: Session):
         )
         db.commit()
 
-    db.execute(
-        text("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('quiz_default_topics_seeded', 'true')")
-    )
+    existing = db.execute(
+        text("SELECT key FROM app_settings WHERE key = 'quiz_default_topics_seeded'")
+    ).first()
+
+    if existing:
+        db.execute(
+            text("""
+                UPDATE app_settings
+                SET value = 'true'
+                WHERE key = 'quiz_default_topics_seeded'
+            """)
+        )
+    else:
+        db.execute(
+            text("""
+                INSERT INTO app_settings (key, value)
+                VALUES ('quiz_default_topics_seeded', 'true')
+            """)
+        )
+
     db.commit()
 
 def serialize_quiz_topic(topic: models.QuizTopic, current_user: models.User, db: Session):
@@ -1331,14 +1509,10 @@ def create_quiz_question(
     db.commit()
     db.refresh(new_question)
     if file and file.filename:
-        os.makedirs("uploads/quiz", exist_ok=True)
-        safe_name = f"quiz_{new_question.id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/quiz/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        new_question.image_url = file_path
-        db.commit()
-        db.refresh(new_question)
+     result = cloudinary.uploader.upload(file.file, folder="quiz")
+    new_question.image_url = result["secure_url"]
+    db.commit()
+    db.refresh(new_question)
     return serialize_quiz_question(new_question, current_user)
 
 @app.put("/quiz/questions/{question_id}")
@@ -1373,12 +1547,8 @@ def update_quiz_question(
     quiz_question.correct_answer = correct_answer
     quiz_question.image_url = image_url or quiz_question.image_url or ""
     if file and file.filename:
-        os.makedirs("uploads/quiz", exist_ok=True)
-        safe_name = f"quiz_{question_id}_{file.filename}".replace(" ", "_")
-        file_path = f"uploads/quiz/{safe_name}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        quiz_question.image_url = file_path
+        result = cloudinary.uploader.upload(file.file, folder="quiz")
+        quiz_question.image_url = result["secure_url"]
     db.commit()
     db.refresh(quiz_question)
     return serialize_quiz_question(quiz_question, current_user)
@@ -1399,3 +1569,141 @@ def delete_quiz_question(
     db.delete(quiz_question)
     db.commit()
     return {"detail": "Question deleted"}
+
+
+# ─── QUIZ LEADERBOARD ROUTES ───────────────────────────────
+
+def serialize_quiz_score_row(row):
+    percent = 0
+    if row.total_questions:
+        percent = round((row.score / row.total_questions) * 100)
+
+    return {
+        "id": row.id,
+        "user_id": row.user_id,
+        "username": row.username,
+        "nickname": row.nickname,
+        "profile_picture": row.profile_picture,
+        "topic_id": row.topic_id,
+        "topic_name": row.topic_name,
+        "topic_icon": row.topic_icon,
+        "score": row.score,
+        "total_questions": row.total_questions,
+        "percentage": percent,
+        "created_at": row.created_at,
+    }
+
+
+@app.post("/quiz/scores")
+def save_quiz_score(
+    topic_id: int,
+    score: int,
+    total_questions: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    topic = db.query(models.QuizTopic).filter(models.QuizTopic.id == topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+
+    if total_questions <= 0:
+        raise HTTPException(status_code=400, detail="Total questions must be greater than 0")
+
+    if score < 0 or score > total_questions:
+        raise HTTPException(status_code=400, detail="Invalid score")
+
+    db.execute(
+        text("""
+            INSERT INTO quiz_scores (user_id, topic_id, score, total_questions)
+            VALUES (:user_id, :topic_id, :score, :total_questions)
+        """),
+        {
+            "user_id": current_user.id,
+            "topic_id": topic_id,
+            "score": score,
+            "total_questions": total_questions,
+        },
+    )
+    db.commit()
+
+    return {"detail": "Score saved"}
+
+
+@app.get("/quiz/leaderboard")
+def get_quiz_leaderboard(
+    topic_id: Optional[int] = None,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    limit = max(1, min(limit, 100))
+
+    query = """
+        SELECT
+            qs.id,
+            qs.user_id,
+            qs.topic_id,
+            qs.score,
+            qs.total_questions,
+            qs.created_at,
+            u.username,
+            u.nickname,
+            u.profile_picture,
+            qt.name AS topic_name,
+            qt.icon AS topic_icon
+        FROM quiz_scores qs
+        JOIN users u ON u.id = qs.user_id
+        JOIN quiz_topics qt ON qt.id = qs.topic_id
+    """
+
+    params = {"limit": limit}
+
+    if topic_id:
+        query += " WHERE qs.topic_id = :topic_id"
+        params["topic_id"] = topic_id
+
+    query += """
+        ORDER BY
+            CAST(qs.score AS FLOAT) / qs.total_questions DESC,
+            qs.score DESC,
+            qs.total_questions DESC,
+            qs.created_at ASC
+        LIMIT :limit
+    """
+
+    rows = db.execute(text(query), params).fetchall()
+
+    return [serialize_quiz_score_row(row) for row in rows]
+
+
+@app.get("/quiz/my-scores")
+def get_my_quiz_scores(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    rows = db.execute(
+        text("""
+            SELECT
+                qs.id,
+                qs.user_id,
+                qs.topic_id,
+                qs.score,
+                qs.total_questions,
+                qs.created_at,
+                u.username,
+                u.nickname,
+                u.profile_picture,
+                qt.name AS topic_name,
+                qt.icon AS topic_icon
+            FROM quiz_scores qs
+            JOIN users u ON u.id = qs.user_id
+            JOIN quiz_topics qt ON qt.id = qs.topic_id
+            WHERE qs.user_id = :user_id
+            ORDER BY qs.created_at DESC
+            LIMIT 50
+        """),
+        {"user_id": current_user.id},
+    ).fetchall()
+
+    return [serialize_quiz_score_row(row) for row in rows]
+
