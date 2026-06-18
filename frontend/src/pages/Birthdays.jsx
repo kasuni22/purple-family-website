@@ -731,7 +731,7 @@ export default function Birthdays() {
 
                   <input
                     style={styles.input}
-                    placeholder="Image path e.g. /bts/bts-debut.png"
+                    placeholder="Image path optional"
                     value={btsForm.image}
                     onChange={(e) => setBtsForm({ ...btsForm, image: e.target.value })}
                   />
