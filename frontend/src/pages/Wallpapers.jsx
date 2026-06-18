@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
+const API_BASE = "https://purple-family-website.onrender.com";
+
 export default function Wallpapers() {
   const [wallpapers, setWallpapers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,40 +14,48 @@ export default function Wallpapers() {
   const [form, setForm] = useState({ title: "", member: "", file: null });
   const [selectedWallpaper, setSelectedWallpaper] = useState(null);
   const [editingWallpaper, setEditingWallpaper] = useState(null);
-  const [editForm, setEditForm] = useState({
-    title: "",
-    member: "",
-  });
+  const [editForm, setEditForm] = useState({ title: "", member: "" });
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
-  const members = ["All", "OT7", "RM", "Jin", "Suga", "J-Hope", "Jimin", "Taehyung", "Jungkook"];
+  const members = [
+    "All",
+    "OT7",
+    "RM",
+    "Jin",
+    "Suga",
+    "J-Hope",
+    "Jimin",
+    "Taehyung",
+    "Jungkook",
+  ];
 
   useEffect(() => {
     const loadData = async () => {
-  try {
-    const userRes = await API.get("/auth/me");
-    setCurrentUser(userRes.data);
-    const wallpapersRes = await API.get("/wallpapers");
-    setWallpapers(wallpapersRes.data || []);
-  } catch {
-    navigate("/login");
-  } finally {
-    setLoading(false);
-  }
-};
+      try {
+        setLoading(true);
+
+        const userRes = await API.get("/auth/me");
+        setCurrentUser(userRes.data);
+
+        const wallpapersRes = await API.get("/wallpapers");
+        setWallpapers(wallpapersRes.data || []);
+      } catch {
+        navigate("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
 
     loadData();
   }, [navigate]);
 
   const getFileUrl = (path) => {
     if (!path) return "";
-    if (path.startsWith("http") && path.includes("cloudinary")) {
-      return path.replace("/upload/", "/upload/q_auto,f_auto,w_600/");
-    }
+
     return path.startsWith("http")
       ? path
-      : `https://purple-family-website.onrender.com/${path}`;
+      : `${API_BASE}/${path}`;
   };
 
   const formatDate = (value) => {
@@ -54,11 +64,17 @@ export default function Wallpapers() {
   };
 
   const canDeleteWallpaper = (wallpaper) => {
-    return currentUser && (currentUser.is_admin || currentUser.id === wallpaper.uploaded_by_id);
+    return (
+      currentUser &&
+      (currentUser.is_admin || currentUser.id === wallpaper.uploaded_by_id)
+    );
   };
 
   const canEditWallpaper = (wallpaper) => {
-    return currentUser && (currentUser.is_admin || currentUser.id === wallpaper.uploaded_by_id);
+    return (
+      currentUser &&
+      (currentUser.is_admin || currentUser.id === wallpaper.uploaded_by_id)
+    );
   };
 
   const updateWallpaperState = (wallpaperId, changes) => {
@@ -114,6 +130,10 @@ export default function Wallpapers() {
       if (selectedWallpaper?.id === wallpaper.id) {
         setSelectedWallpaper(null);
       }
+
+      if (editingWallpaper?.id === wallpaper.id) {
+        cancelEditWallpaper();
+      }
     } catch (err) {
       alert(err.response?.data?.detail || "Could not delete wallpaper");
     }
@@ -131,10 +151,7 @@ export default function Wallpapers() {
 
   const cancelEditWallpaper = () => {
     setEditingWallpaper(null);
-    setEditForm({
-      title: "",
-      member: "",
-    });
+    setEditForm({ title: "", member: "" });
   };
 
   const handleUpdateWallpaper = async (e) => {
@@ -147,26 +164,18 @@ export default function Wallpapers() {
     formData.append("member", editForm.member);
 
     try {
-      const res = await API.put(
-        `/wallpapers/${editingWallpaper.id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const res = await API.put(`/wallpapers/${editingWallpaper.id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const updated = res.data;
 
       setWallpapers((prev) =>
-        prev.map((w) =>
-          w.id === editingWallpaper.id ? res.data : w
-        )
+        prev.map((w) => (w.id === editingWallpaper.id ? updated : w))
       );
 
       setSelectedWallpaper((prev) =>
-        prev && prev.id === editingWallpaper.id
-          ? res.data
-          : prev
+        prev && prev.id === editingWallpaper.id ? updated : prev
       );
 
       cancelEditWallpaper();
@@ -203,8 +212,16 @@ export default function Wallpapers() {
   const filtered =
     filter === "All" ? wallpapers : wallpapers.filter((w) => w.member === filter);
 
-  const handleDownload = (wallpaper) => {
-    window.location.href = `https://purple-family-website.onrender.com/wallpapers/${wallpaper.id}/download`;
+  const handleDownload = async (wallpaper) => {
+    try {
+      window.open(
+        `https://purple-family-website.onrender.com/wallpapers/${wallpaper.id}/download`,
+        "_blank"
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Download failed");
+    }
   };
 
   return (
@@ -212,6 +229,102 @@ export default function Wallpapers() {
       <Navbar />
 
       <main className="wallpapers-page" style={styles.page}>
+        <style>{`
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+
+          @media (max-width: 768px) {
+            .wallpapers-page {
+              padding: 24px 14px !important;
+              overflow-x: hidden !important;
+            }
+
+            .wallpapers-hero {
+              grid-template-columns: 1fr !important;
+              padding: 30px 22px !important;
+              border-radius: 28px !important;
+              gap: 20px !important;
+              text-align: center !important;
+              margin-bottom: 18px !important;
+            }
+
+            .wallpapers-hero h1 {
+              font-size: 2.15rem !important;
+              line-height: 1.02 !important;
+              letter-spacing: -0.04em !important;
+              margin-bottom: 14px !important;
+            }
+
+            .wallpapers-hero p {
+              font-size: 0.95rem !important;
+              line-height: 1.7 !important;
+              max-width: 100% !important;
+            }
+
+            .wallpapers-hero-card {
+              width: 100% !important;
+              min-height: 150px !important;
+              border-radius: 24px !important;
+              padding: 22px !important;
+            }
+
+            .wallpapers-hero-card h2 {
+              font-size: 1.8rem !important;
+            }
+
+            .wallpapers-toolbar {
+              padding: 16px !important;
+              border-radius: 24px !important;
+              flex-direction: column !important;
+              align-items: stretch !important;
+            }
+
+            .wallpapers-filters {
+              display: flex !important;
+              flex-wrap: nowrap !important;
+              overflow-x: auto !important;
+              padding-bottom: 6px !important;
+              -webkit-overflow-scrolling: touch !important;
+            }
+
+            .wallpapers-filters button {
+              flex: 0 0 auto !important;
+              white-space: nowrap !important;
+            }
+
+            .wallpapers-upload-btn {
+              width: 100% !important;
+              justify-content: center !important;
+            }
+
+            .wallpapers-grid {
+              grid-template-columns: 1fr !important;
+              gap: 18px !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .wallpapers-page {
+              padding: 18px 12px !important;
+            }
+
+            .wallpapers-hero {
+              padding: 26px 18px !important;
+              border-radius: 26px !important;
+            }
+
+            .wallpapers-hero h1 {
+              font-size: 1.9rem !important;
+            }
+
+            .wallpapers-hero-card {
+              min-height: 130px !important;
+            }
+          }
+        `}</style>
+
         <section className="wallpapers-hero" style={styles.hero}>
           <div>
             <div style={styles.badge}>🖼️ BTS Wallpaper Gallery</div>
@@ -246,7 +359,6 @@ export default function Wallpapers() {
           </div>
 
           <button
-            className="wallpapers-upload-main-btn"
             onClick={() => setUploading(!uploading)}
             style={styles.uploadBtn}
           >
@@ -258,7 +370,7 @@ export default function Wallpapers() {
           <section className="wallpapers-upload-card" style={styles.uploadCard}>
             <h3 style={styles.cardTitle}>Upload New Wallpaper</h3>
 
-            <form className="wallpapers-form" onSubmit={handleUpload} style={styles.form}>
+            <form onSubmit={handleUpload} style={styles.form}>
               <input
                 style={styles.input}
                 placeholder="Wallpaper title"
@@ -295,7 +407,20 @@ export default function Wallpapers() {
           </section>
         )}
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <section className="wallpapers-grid" style={styles.grid}>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="wallpapers-card" style={styles.card}>
+                <div style={styles.skeletonImage} />
+
+                <div style={{ padding: "18px" }}>
+                  <div style={styles.skeletonTitle} />
+                  <div style={styles.skeletonText} />
+                </div>
+              </div>
+            ))}
+          </section>
+        ) : filtered.length === 0 ? (
           <section className="wallpapers-empty-card" style={styles.emptyCard}>
             <h3>No wallpapers yet 💜</h3>
             <p>Upload a beautiful BTS wallpaper to start the gallery.</p>
@@ -357,6 +482,7 @@ export default function Wallpapers() {
                     >
                       ⬇️
                     </button>
+
                     {canEditWallpaper(w) && (
                       <button
                         onClick={(e) => startEditWallpaper(w, e)}
@@ -374,7 +500,6 @@ export default function Wallpapers() {
                         🗑️
                       </button>
                     )}
-
                   </div>
                 </div>
               </article>
@@ -383,13 +508,13 @@ export default function Wallpapers() {
         )}
 
         {editingWallpaper && (
-          <div className="wallpapers-modal-overlay" style={styles.modalOverlay} onClick={cancelEditWallpaper}>
-            <div className="wallpapers-modal-content" style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modalOverlay} onClick={cancelEditWallpaper}>
+            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
               <button style={styles.closeBtn} onClick={cancelEditWallpaper}>
                 ×
               </button>
 
-              <div className="wallpapers-modal-info" style={styles.modalInfo}>
+              <div style={styles.modalInfo}>
                 <h3 style={styles.modalTitle}>Edit Wallpaper</h3>
 
                 <form onSubmit={handleUpdateWallpaper} style={styles.form}>
@@ -398,10 +523,7 @@ export default function Wallpapers() {
                     placeholder="Wallpaper title"
                     value={editForm.title}
                     onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        title: e.target.value,
-                      })
+                      setEditForm({ ...editForm, title: e.target.value })
                     }
                     required
                   />
@@ -410,10 +532,7 @@ export default function Wallpapers() {
                     style={styles.input}
                     value={editForm.member}
                     onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        member: e.target.value,
-                      })
+                      setEditForm({ ...editForm, member: e.target.value })
                     }
                   >
                     <option value="">Select Member</option>
@@ -435,11 +554,10 @@ export default function Wallpapers() {
 
         {selectedWallpaper && (
           <div
-            className="wallpapers-modal-overlay"
             style={styles.modalOverlay}
             onClick={() => setSelectedWallpaper(null)}
           >
-            <div className="wallpapers-modal-content" style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
               <button
                 style={styles.closeBtn}
                 onClick={() => setSelectedWallpaper(null)}
@@ -450,12 +568,10 @@ export default function Wallpapers() {
               <img
                 src={getFileUrl(selectedWallpaper.file_path)}
                 alt={selectedWallpaper.title}
-                className="wallpapers-modal-image"
-                className="wallpapers-modal-image"
                 style={styles.modalImage}
               />
 
-              <div className="wallpapers-modal-info" style={styles.modalInfo}>
+              <div style={styles.modalInfo}>
                 <h3 style={styles.modalTitle}>{selectedWallpaper.title}</h3>
 
                 {selectedWallpaper.member && (
@@ -467,7 +583,7 @@ export default function Wallpapers() {
                   {formatDate(selectedWallpaper.created_at)}
                 </p>
 
-                <div className="wallpapers-modal-actions" style={styles.modalActions}>
+                <div style={styles.modalActions}>
                   <button
                     style={{
                       ...styles.likeBtn,
@@ -481,7 +597,9 @@ export default function Wallpapers() {
                         : handleLike(selectedWallpaper, e)
                     }
                   >
-                    {selectedWallpaper.liked_by_current_user ? "❤️ Liked" : "🤍 Like"}{" "}
+                    {selectedWallpaper.liked_by_current_user
+                      ? "❤️ Liked"
+                      : "🤍 Like"}{" "}
                     {selectedWallpaper.likes_count || 0}
                   </button>
 
@@ -491,6 +609,7 @@ export default function Wallpapers() {
                   >
                     ⬇️ Download
                   </button>
+
                   {canEditWallpaper(selectedWallpaper) && (
                     <button
                       style={styles.editBtn}
@@ -513,162 +632,12 @@ export default function Wallpapers() {
             </div>
           </div>
         )}
-        <WallpaperResponsiveStyles />
       </main>
 
       <Footer />
     </>
   );
 }
-
-
-function WallpaperResponsiveStyles() {
-  return (
-    <style>{`
-      @media (max-width: 768px) {
-        .wallpapers-page {
-          padding: 24px 14px !important;
-          overflow-x: hidden !important;
-        }
-
-        .wallpapers-hero {
-          grid-template-columns: 1fr !important;
-          padding: 32px 22px !important;
-          border-radius: 28px !important;
-          text-align: center !important;
-          gap: 18px !important;
-        }
-
-        .wallpapers-hero-card {
-          min-height: 170px !important;
-          border-radius: 24px !important;
-        }
-
-        .wallpapers-toolbar {
-          padding: 16px !important;
-          border-radius: 24px !important;
-          flex-direction: column !important;
-          align-items: stretch !important;
-        }
-
-        .wallpapers-filters {
-          width: 100% !important;
-          display: grid !important;
-          grid-template-columns: repeat(2, 1fr) !important;
-          gap: 10px !important;
-        }
-
-        .wallpapers-filters button {
-          width: 100% !important;
-          padding: 11px 10px !important;
-          font-size: 0.88rem !important;
-        }
-
-        .wallpapers-upload-main-btn {
-          width: 100% !important;
-          padding: 14px 18px !important;
-        }
-
-        .wallpapers-upload-card {
-          padding: 22px !important;
-          border-radius: 24px !important;
-        }
-
-        .wallpapers-form {
-          grid-template-columns: 1fr !important;
-        }
-
-        .wallpapers-grid {
-          grid-template-columns: 1fr !important;
-          gap: 18px !important;
-        }
-
-        .wallpapers-card {
-          border-radius: 24px !important;
-        }
-
-        .wallpapers-image-wrap {
-          height: 360px !important;
-        }
-
-        .wallpapers-card-info {
-          padding: 16px !important;
-        }
-
-        .wallpapers-action-row {
-          display: grid !important;
-          grid-template-columns: repeat(4, 1fr) !important;
-          gap: 8px !important;
-        }
-
-        .wallpapers-action-row button {
-          width: 100% !important;
-          padding: 10px 8px !important;
-          text-align: center !important;
-        }
-
-        .wallpapers-empty-card {
-          padding: 44px 18px !important;
-          border-radius: 24px !important;
-        }
-
-        .wallpapers-modal-overlay {
-          padding: 12px !important;
-          align-items: start !important;
-          overflow-y: auto !important;
-        }
-
-        .wallpapers-modal-content {
-          width: 100% !important;
-          max-height: none !important;
-          margin-top: 18px !important;
-          border-radius: 26px !important;
-          padding: 12px !important;
-        }
-
-        .wallpapers-modal-image {
-          max-height: 62vh !important;
-          border-radius: 20px !important;
-        }
-
-        .wallpapers-modal-info {
-          padding: 16px 6px 8px !important;
-          text-align: center !important;
-        }
-
-        .wallpapers-modal-actions {
-          display: grid !important;
-          grid-template-columns: 1fr !important;
-          gap: 10px !important;
-        }
-
-        .wallpapers-modal-actions button {
-          width: 100% !important;
-          justify-content: center !important;
-        }
-      }
-
-      @media (max-width: 420px) {
-        .wallpapers-hero {
-          padding: 28px 18px !important;
-        }
-
-        .wallpapers-image-wrap {
-          height: 310px !important;
-        }
-
-        .wallpapers-filters {
-          grid-template-columns: 1fr !important;
-        }
-
-        .wallpapers-action-row {
-          grid-template-columns: repeat(2, 1fr) !important;
-        }
-      }
-    `}</style>
-  );
-}
-
 
 const styles = {
   page: {
@@ -846,12 +815,32 @@ const styles = {
     cursor: "pointer",
   },
 
+  skeletonImage: {
+    height: "320px",
+    background:
+      "linear-gradient(90deg, #f3e8ff 25%, #e9d5ff 50%, #f3e8ff 75%)",
+    backgroundSize: "200% 100%",
+    animation: "shimmer 1.5s infinite",
+  },
+
+  skeletonTitle: {
+    height: "20px",
+    background: "#f3e8ff",
+    borderRadius: "8px",
+    marginBottom: "10px",
+  },
+
+  skeletonText: {
+    height: "16px",
+    background: "#f3e8ff",
+    borderRadius: "8px",
+    width: "60%",
+  },
+
   imageWrap: {
     position: "relative",
     height: "320px",
-    background: "linear-gradient(90deg, #f3e8ff 25%, #e9d5ff 50%, #f3e8ff 75%)",
-    backgroundSize: "200% 100%",
-    animation: "shimmer 1.5s infinite",
+    background: "#f3e8ff",
   },
 
   image: {
@@ -919,15 +908,17 @@ const styles = {
     cursor: "pointer",
     fontWeight: 900,
   },
+
   editBtn: {
     border: "none",
     borderRadius: "999px",
     background: "#e0f2fe",
     color: "#0369a1",
-    padding: "10px 13px",
+    padding: "9px 14px",
     cursor: "pointer",
     fontWeight: 900,
   },
+
   deleteBtn: {
     border: "1px solid #fecaca",
     background: "#fee2e2",
