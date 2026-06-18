@@ -72,6 +72,7 @@ export default function Birthdays() {
     title: "",
     date: "",
     description: "",
+    file: null,
   });
 
   const navigate = useNavigate();
@@ -232,6 +233,10 @@ export default function Birthdays() {
     formData.append("date", specialForm.date);
     formData.append("description", specialForm.description);
 
+    if (specialForm.file) {
+      formData.append("file", specialForm.file);
+    }
+
     try {
       if (editingSpecialDay) {
         await API.put(
@@ -248,6 +253,7 @@ export default function Birthdays() {
         title: "",
         date: "",
         description: "",
+        file: null,
       });
 
       setEditingSpecialDay(null);
@@ -798,6 +804,20 @@ export default function Birthdays() {
                       })
                     }
                   />
+                  <div style={styles.formGroup}>
+                    <label>Image 💜</label>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setSpecialForm({
+                          ...specialForm,
+                          file: e.target.files?.[0] || null,
+                        })
+                      }
+                    />
+                  </div>
 
                   <button style={styles.button}>
                     {editingSpecialDay ? "Update" : "Create"}
@@ -871,6 +891,14 @@ export default function Birthdays() {
                   <div className="birthdays-grid" style={styles.grid}>
                     {specialDays.map((day) => (
                       <div key={day.id} style={styles.card}>
+                        {day.image_url && (
+                          <img
+                            src={day.image_url}
+                            alt={day.title}
+                            style={styles.specialDayImage}
+                          />
+                        )}
+
                         <h3>{day.title}</h3>
 
                         <p>
@@ -1732,4 +1760,11 @@ const styles = {
     fontSize: "0.8rem",
     fontWeight: 900,
   },
+  specialDayImage: {
+  width: "100%",
+  height: "220px",
+  objectFit: "cover",
+  borderRadius: "16px",
+  marginBottom: "12px",
+},
 };
