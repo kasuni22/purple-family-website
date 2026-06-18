@@ -222,3 +222,16 @@ class QuizScore(Base):
 
     user = relationship("User")
     topic = relationship("QuizTopic")
+
+class BtsEvent(Base):
+    __tablename__ = "bts_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    month = Column(Integer, nullable=False)
+    day = Column(Integer, nullable=False)
+    image_url = Column(String, nullable=True)
+    is_special = Column(Boolean, default=False)
+    is_default = Column(Boolean, default=False)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())

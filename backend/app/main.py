@@ -649,26 +649,29 @@ def update_special_day(
     title: str = Form(...),
     date: str = Form(...),
     description: Optional[str] = Form(""),
+    file: UploadFile = File(None),          
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
     from datetime import date as date_class
 
     day = db.query(models.SpecialDay).filter(models.SpecialDay.id == day_id).first()
-
     if not day:
         raise HTTPException(status_code=404, detail="Special day not found")
-
     if not current_user.is_admin and day.created_by_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to edit this special day")
+        raise HTTPException(status_code=403, detail="Not authorized")
 
     day.title = title.strip()
     day.date = date_class.fromisoformat(date)
     day.description = description or ""
 
+    
+    if file and file.filename:
+        result = cloudinary.uploader.upload(file.file, folder="bts-special-days")
+        day.image_url = result["secure_url"]
+
     db.commit()
     db.refresh(day)
-
     return serialize_special_day(day, current_user)
 
 
