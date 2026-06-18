@@ -61,13 +61,13 @@ export default function Birthdays() {
   const [showBtsForm, setShowBtsForm] = useState(false);
   const [editingBtsEvent, setEditingBtsEvent] = useState(null);
   const [btsForm, setBtsForm] = useState({
-    name: "",
-    month: 1,
-    day: 1,
-    image: "",
-    special: false,
-    file: null,
-  });
+  name: "",
+  month: 1,
+  day: 1,
+  image: "",
+  special: false,
+  file: null,  
+});
 
   const [specialForm, setSpecialForm] = useState({
     title: "",
@@ -234,8 +234,8 @@ export default function Birthdays() {
     formData.append("date", specialForm.date);
     formData.append("description", specialForm.description);
 
-    if (btsForm.file) {
-      formData.append("file", btsForm.file);
+    if (specialForm.file) {
+      formData.append("file", specialForm.file);
     }
 
     try {
@@ -320,10 +320,6 @@ export default function Birthdays() {
 
     const month = Number(btsForm.month);
     const day = Number(btsForm.day);
-
-    if (btsForm.file) {
-      formData.append("file", btsForm.file);
-    }
 
     const payload = {
       id: editingBtsEvent?.id || `${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
