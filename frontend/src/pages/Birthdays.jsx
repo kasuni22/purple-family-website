@@ -683,20 +683,7 @@ export default function Birthdays() {
                 <h2 style={styles.sectionTitle}>BTS Birthdays & Special Days</h2>
                 <div style={styles.inlineActions}>
                   {currentUser && (
-                    <button
-                      onClick={() => {
-                        setEditingSpecialDay(null);
-                        setSpecialForm({
-                          title: "",
-                          date: "",
-                          description: "",
-                          file: null,
-                        });
-                        setShowSpecialForm(!showSpecialForm);
-                        setShowBtsForm(false);
-                      }}
-                      style={styles.addBtn}
-                    >
+                    <button onClick={openAddBtsEvent} style={styles.addBtn}>
                       ➕ Add BTS Day
                     </button>
                   )}
@@ -888,79 +875,7 @@ export default function Birthdays() {
                   </div>
                 );
               })}
-              {specialDays.length > 0 && (
-                <>
-                  <h2
-                    style={{
-                      marginTop: "30px",
-                      marginBottom: "20px",
-                    }}
-                  >
-                    🌟 ARMY Special Days
-                  </h2>
-
-                  <div className="birthdays-grid" style={styles.grid}>
-                    {specialDays.map((day) => (
-                      <div key={day.id} style={styles.card}>
-                        {day.image_url && (
-                          <img
-                            src={day.image_url}
-                            alt={day.title}
-                            style={styles.specialDayImage}
-                          />
-                        )}
-
-                        <h3>{day.title}</h3>
-
-                        <p>
-                          📅{" "}
-                          {new Date(day.date).toLocaleDateString()}
-                        </p>
-
-                        {day.description && (
-                          <p>{day.description}</p>
-                        )}
-
-                        {isSpecialDayToday(day) && (
-                          <div style={styles.todayBadge}>🎉 Today</div>
-                        )}
-
-                        <small>
-                          by{" "}
-                          {day.created_by_nickname ||
-                            day.created_by_username}
-                        </small>
-
-                        {(day.can_edit || day.can_delete) && (
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "8px",
-                              marginTop: "10px",
-                            }}
-                          >
-                            {day.can_edit && (
-                              <button
-                                onClick={() => editSpecialDay(day)}
-                              >
-                                ✏️ Edit
-                              </button>
-                            )}
-
-                            {day.can_delete && (
-                              <button
-                                onClick={() => deleteSpecialDay(day)}
-                              >
-                                🗑️ Delete
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+              
             </div>
           </section>
         )}
