@@ -66,6 +66,7 @@ export default function Birthdays() {
     day: 1,
     image: "",
     special: false,
+    file: null,
   });
 
   const [specialForm, setSpecialForm] = useState({
@@ -233,8 +234,8 @@ export default function Birthdays() {
     formData.append("date", specialForm.date);
     formData.append("description", specialForm.description);
 
-    if (specialForm.file) {
-      formData.append("file", specialForm.file);
+    if (btsForm.file) {
+      formData.append("file", btsForm.file);
     }
 
     try {
@@ -319,6 +320,10 @@ export default function Birthdays() {
 
     const month = Number(btsForm.month);
     const day = Number(btsForm.day);
+
+    if (btsForm.file) {
+      formData.append("file", btsForm.file);
+    }
 
     const payload = {
       id: editingBtsEvent?.id || `${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
@@ -746,8 +751,8 @@ export default function Birthdays() {
                     accept="image/*"
                     style={styles.input}
                     onChange={(e) =>
-                      setSpecialForm({
-                        ...specialForm,
+                      setBtsForm({
+                        ...btsForm,
                         file: e.target.files?.[0] || null,
                       })
                     }
@@ -849,9 +854,9 @@ export default function Birthdays() {
                       ...(isToday ? styles.todayRowBorder : {}),
                     }}
                   >
-                    {member.image ? (
+                    {(member.image || member.image_url) ? (
                       <img
-                        src={member.image}
+                        src={member.image || member.image_url}
                         alt={member.name}
                         style={styles.btsImage}
                         onError={(e) => {
