@@ -804,20 +804,18 @@ export default function Birthdays() {
                       })
                     }
                   />
-                  <div style={styles.formGroup}>
-                    <label>Image 💜</label>
 
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        setSpecialForm({
-                          ...specialForm,
-                          file: e.target.files?.[0] || null,
-                        })
-                      }
-                    />
-                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={styles.input}
+                    onChange={(e) =>
+                      setSpecialForm({
+                        ...specialForm,
+                        file: e.target.files?.[0] || null,
+                      })
+                    }
+                  />
 
                   <button style={styles.button}>
                     {editingSpecialDay ? "Update" : "Create"}
@@ -1761,10 +1759,10 @@ const styles = {
     fontWeight: 900,
   },
   specialDayImage: {
-  width: "100%",
-  height: "220px",
-  objectFit: "cover",
-  borderRadius: "16px",
-  marginBottom: "12px",
-},
+    width: "100%",
+    height: "220px",
+    objectFit: "cover",
+    borderRadius: "16px",
+    marginBottom: "12px",
+  },
 };
