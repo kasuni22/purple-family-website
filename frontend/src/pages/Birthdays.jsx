@@ -742,17 +742,6 @@ export default function Birthdays() {
                     value={btsForm.image}
                     onChange={(e) => setBtsForm({ ...btsForm, image: e.target.value })}
                   />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={styles.input}
-                    onChange={(e) =>
-                      setBtsForm({
-                        ...btsForm,
-                        file: e.target.files?.[0] || null,
-                      })
-                    }
-                  />
 
                   <label style={styles.checkboxLabel}>
                     <input
