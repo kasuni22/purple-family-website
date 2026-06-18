@@ -19,16 +19,16 @@ const MONTHS = [
 ];
 
 const DEFAULT_BTS_EVENTS = [
-  { id: "jin", name: "Jin", date: "December 4", month: 12, day: 4, image: jinImg, emoji: "🐹" },
-  { id: "suga", name: "SUGA", date: "March 9", month: 3, day: 9, image: sugaImg, emoji: "🐱" },
-  { id: "jhope", name: "j-hope", date: "February 18", month: 2, day: 18, image: jhopeImg, emoji: "🐿️" },
-  { id: "rm", name: "RM", date: "September 12", month: 9, day: 12, image: rmImg, emoji: "🐨" },
-  { id: "jimin", name: "Jimin", date: "October 13", month: 10, day: 13, image: jiminImg, emoji: "🐥" },
-  { id: "v", name: "V", date: "December 30", month: 12, day: 30, image: vImg, emoji: "🐯" },
-  { id: "jungkook", name: "Jung Kook", date: "September 1", month: 9, day: 1, image: jungkookImg, emoji: "🐰" },
-  { id: "bts-debut", name: "BTS Debut", date: "June 13", month: 6, day: 13, image: btsDebutImg, emoji: "💜", special: true },
-  { id: "army-day", name: "ARMY Day", date: "July 9", month: 7, day: 9, image: armyDayImg, emoji: "💜", special: true },
-];
+  { title: "Jin", date: "December 4", month: 12, image_url: "/src/assets/bts-members/jin.jpg", isDefault: true },
+  { title: "SUGA", date: "March 9", month: 3, image_url: "/src/assets/bts-members/suga.jpg", isDefault: true },
+  { title: "j-hope", date: "February 18", month: 2, image_url: "/src/assets/bts-members/jhope.jpg", isDefault: true },
+  { title: "RM", date: "September 12", month: 9, image_url: "/src/assets/bts-members/rm.jpg", isDefault: true },
+  { title: "Jimin", date: "October 13", month: 10, image_url: "/src/assets/bts-members/jimin.jpg", isDefault: true },
+  { title: "V", date: "December 30", month: 12, image_url: "/src/assets/bts-members/v.jpg", isDefault: true },
+  { title: "Jung Kook", date: "September 1", month: 9, image_url: "/src/assets/bts-members/jungkook.jpg", isDefault: true },
+  { title: "BTS Debut", date: "June 13", month: 6, image_url: "/src/assets/bts-debut.png", isDefault: true, isSpecial: true },
+  { title: "ARMY Day", date: "July 9", month: 7, image_url: "/src/assets/army-day.jpg", isDefault: true, isSpecial: true },
+];;
 
 const getSavedBtsEvents = () => {
   try {

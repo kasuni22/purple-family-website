@@ -155,6 +155,7 @@ class SpecialDay(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
+    image_url = Column(String, nullable=True)
     date = Column(Date, nullable=False)
     description = Column(String, nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)

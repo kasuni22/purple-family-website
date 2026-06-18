@@ -581,12 +581,12 @@ def get_today_birthdays(db: Session = Depends(get_db)):
 
 def serialize_special_day(day: models.SpecialDay, current_user: models.User):
     creator = day.created_by
-
     return {
         "id": day.id,
         "title": day.title,
         "date": day.date,
         "description": day.description,
+        "image_url": day.image_url,
         "created_by_id": day.created_by_id,
         "created_by_username": creator.username if creator else None,
         "created_by_nickname": creator.nickname if creator else None,
@@ -613,6 +613,7 @@ def create_special_day(
     title: str = Form(...),
     date: str = Form(...),
     description: Optional[str] = Form(""),
+    file: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
@@ -622,10 +623,16 @@ def create_special_day(
     if not clean_title:
         raise HTTPException(status_code=400, detail="Title is required")
 
+    image_url = None
+    if file and file.filename:
+        result = cloudinary.uploader.upload(file.file, folder="bts-special-days")
+        image_url = result["secure_url"]
+
     day = models.SpecialDay(
         title=clean_title,
         date=date_class.fromisoformat(date),
         description=description or "",
+        image_url=image_url,
         created_by_id=current_user.id,
     )
 
