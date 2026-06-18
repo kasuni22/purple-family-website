@@ -303,7 +303,7 @@ export default function Singalong() {
   })();
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} className="singalongContainer">
       <Navbar />
       <style>{`
         @keyframes softPulse {
@@ -327,8 +327,58 @@ export default function Singalong() {
             opacity: 1;
           }
         }
+
+        @media (max-width: 768px) {
+          .singalongContent {
+            padding: 1rem !important;
+          }
+          .songDetailContainer {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1rem !important;
+          }
+          .detailAlbumGrid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1rem !important;
+          }
+          .detailCoverBox {
+            width: 100% !important;
+            max-width: 320px !important;
+            margin: 0 auto !important;
+          }
+          .songInfo {
+            width: 100% !important;
+            min-width: 0 !important;
+          }
+          .videoContainer {
+            width: 100% !important;
+            min-width: 0 !important;
+          }
+          .videoContainer iframe,
+          .videoIframe {
+            width: 100% !important;
+            aspect-ratio: 16 / 9 !important;
+            height: auto !important;
+            display: block !important;
+          }
+          .songDetail {
+            width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          body, html, #root {
+            overflow-x: hidden !important;
+          }
+          .filterTopRow {
+            flex-direction: column !important;
+          }
+          .search, .select {
+            width: 100% !important;
+            min-width: 0 !important;
+          }
+        }
       `}</style>
-      <div style={styles.content}>
+      <div style={styles.content} className="singalongContent">
         <div style={styles.headerControls}>
           <div>
             <h2 style={styles.title}>🎵 BTS Sing-Along</h2>
@@ -442,14 +492,14 @@ export default function Singalong() {
         )}
 
         <div style={styles.filterToolbar}>
-          <div style={styles.filterTopRow}>
-            <input style={styles.search} placeholder="Search albums or songs..." value={search} onChange={(e) => setSearch(e.target.value)} />
-            <select style={styles.select} value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setAlbumFilter("All"); setSelectedAlbum(null); setSelectedSong(null); }}>
+          <div style={styles.filterTopRow} className="filterTopRow">
+            <input style={styles.search} className="search" placeholder="Search albums or songs..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <select style={styles.select} className="select" value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setAlbumFilter("All"); setSelectedAlbum(null); setSelectedSong(null); }}>
               <option value="All">All Types</option>
               <option value="BTS">BTS</option>
               <option value="Solo">Solo</option>
             </select>
-            <select style={styles.select} value={albumFilter} onChange={(e) => { setAlbumFilter(e.target.value); setSelectedAlbum(null); setSelectedSong(null); }}>
+            <select style={styles.select} className="select" value={albumFilter} onChange={(e) => { setAlbumFilter(e.target.value); setSelectedAlbum(null); setSelectedSong(null); }}>
               <option value="All">All Albums</option>
               {(typeFilter === "All" || typeFilter === "BTS") && (
                 <optgroup label="BTS Albums">
@@ -479,20 +529,20 @@ export default function Singalong() {
         </div>
 
         {selectedAlbum?.album_type === "Solo" && (
-          <div style={styles.detailAlbumPanel}>
+          <div style={styles.detailAlbumPanel} className="detailAlbumPanel">
             <button style={styles.backBtn} onClick={() => setSelectedAlbum(null)}>← Back to albums</button>
-            <div style={styles.detailAlbumGrid}>
-              <div style={styles.detailCoverBox}>
+            <div style={styles.detailAlbumGrid} className="detailAlbumGrid">
+              <div style={styles.detailCoverBox} className="detailCoverBox">
                 {selectedAlbum.image_url ? <img src={getFileUrl(selectedAlbum.image_url)} alt={selectedAlbum.name} style={styles.albumImage} /> : <span style={styles.albumEmoji}>🎵</span>}
               </div>
-              <div>
+              <div className="songInfo">
                 <h2 style={styles.detailTitle}>{selectedAlbum.name}</h2>
                 <p style={styles.detailMeta}>👤 {selectedAlbum.artist}</p>
                 <p style={styles.detailMeta}>📅 {selectedAlbum.year || "Unknown"}</p>
                 <p style={styles.albumType}>Solo</p>
                 {selectedAlbum.playlist_url && getYoutubePlaylistId(selectedAlbum.playlist_url) && (
-                  <div style={styles.videoWrapper}>
-                    <iframe width="100%" height="315" src={`https://www.youtube.com/embed/videoseries?list=${getYoutubePlaylistId(selectedAlbum.playlist_url)}`} title={selectedAlbum.name} frameBorder="0" allowFullScreen style={styles.video} />
+                  <div style={styles.videoWrapper} className="videoContainer videoWrapper">
+                    <iframe width="100%" height="315" src={`https://www.youtube.com/embed/videoseries?list=${getYoutubePlaylistId(selectedAlbum.playlist_url)}`} title={selectedAlbum.name} frameBorder="0" allowFullScreen style={styles.video} className="videoIframe" />
                   </div>
                 )}
                 {selectedAlbum.playlist_url && (
@@ -510,8 +560,8 @@ export default function Singalong() {
             {albumSongs.length === 0 ? (
               <div style={styles.emptyCard}>No songs added to this album yet! 💜</div>
             ) : (
-              <div style={styles.albumSongLayout}>
-                <div style={styles.songCardsGrid}>
+              <div style={styles.albumSongLayout} className="albumSongLayout songDetailContainer">
+                <div style={styles.songCardsGrid} className="songCardsGrid">
                   {albumSongs.map((song) => (
                     <SongMiniCard
                       key={song.id}
@@ -624,17 +674,19 @@ function SongDetail({ song, getYoutubeId }) {
   }
 
   return (
-    <div style={styles.songDetail}>
-      <h2 style={styles.detailTitle}>{song.title}</h2>
-      <p style={styles.detailArtist}>🎤 {song.artist}</p>
-      <p style={styles.detailMeta}>📅 Release Year: {song.release_year || "Unknown"}</p>
-      <p style={styles.detailMeta}>🎤 Type: {song.song_type || "BTS"}</p>
-      <p style={styles.detailMeta}>💿 Album: {song.album || "Unknown"}</p>
-      <p style={styles.detailMeta}>👤 Added by: {song.added_by_username || "Unknown"}</p>
-      <p style={styles.detailMeta}>❤️ Favorites: {song.favorites_count || 0}</p>
+    <div style={styles.songDetail} className="songDetail">
+      <div className="songInfo">
+        <h2 style={styles.detailTitle}>{song.title}</h2>
+        <p style={styles.detailArtist}>🎤 {song.artist}</p>
+        <p style={styles.detailMeta}>📅 Release Year: {song.release_year || "Unknown"}</p>
+        <p style={styles.detailMeta}>🎤 Type: {song.song_type || "BTS"}</p>
+        <p style={styles.detailMeta}>💿 Album: {song.album || "Unknown"}</p>
+        <p style={styles.detailMeta}>👤 Added by: {song.added_by_username || "Unknown"}</p>
+        <p style={styles.detailMeta}>❤️ Favorites: {song.favorites_count || 0}</p>
+      </div>
       {song.youtube_url && getYoutubeId(song.youtube_url) && (
-        <div style={styles.videoWrapper}>
-          <iframe width="100%" height="315" src={`https://www.youtube.com/embed/${getYoutubeId(song.youtube_url)}`} title={song.title} frameBorder="0" allowFullScreen style={styles.video} />
+        <div style={styles.videoWrapper} className="videoContainer videoWrapper">
+          <iframe className="videoIframe" width="100%" height="315" src={`https://www.youtube.com/embed/${getYoutubeId(song.youtube_url)}`} title={song.title} frameBorder="0" allowFullScreen style={styles.video} />
         </div>
       )}
       <div style={styles.lyricsBox}>
