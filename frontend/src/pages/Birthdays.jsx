@@ -683,7 +683,20 @@ export default function Birthdays() {
                 <h2 style={styles.sectionTitle}>BTS Birthdays & Special Days</h2>
                 <div style={styles.inlineActions}>
                   {currentUser && (
-                    <button onClick={openAddBtsEvent} style={styles.addBtn}>
+                    <button
+                      onClick={() => {
+                        setEditingSpecialDay(null);
+                        setSpecialForm({
+                          title: "",
+                          date: "",
+                          description: "",
+                          file: null,
+                        });
+                        setShowSpecialForm(!showSpecialForm);
+                        setShowBtsForm(false);
+                      }}
+                      style={styles.addBtn}
+                    >
                       ➕ Add BTS Day
                     </button>
                   )}
