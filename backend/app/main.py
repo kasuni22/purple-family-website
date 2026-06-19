@@ -1490,10 +1490,10 @@ def create_quiz_question(
     db.commit()
     db.refresh(new_question)
     if file and file.filename:
-     result = cloudinary.uploader.upload(file.file, folder="quiz")
-    new_question.image_url = result["secure_url"]
-    db.commit()
-    db.refresh(new_question)
+        result = cloudinary.uploader.upload(file.file, folder="quiz")
+        new_question.image_url = result["secure_url"]
+        db.commit()
+        db.refresh(new_question)
     return serialize_quiz_question(new_question, current_user)
 
 @app.put("/quiz/questions/{question_id}")
@@ -1583,6 +1583,7 @@ def save_quiz_score(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    from datetime import datetime
     topic = db.query(models.QuizTopic).filter(models.QuizTopic.id == topic_id).first()
     if not topic:
         raise HTTPException(status_code=404, detail="Topic not found")
@@ -1593,19 +1594,29 @@ def save_quiz_score(
     if score < 0 or score > total_questions:
         raise HTTPException(status_code=400, detail="Invalid score")
 
-    db.execute(
-        text("""
-            INSERT INTO quiz_scores (user_id, topic_id, score, total_questions)
-            VALUES (:user_id, :topic_id, :score, :total_questions)
-        """),
-        {
-            "user_id": current_user.id,
-            "topic_id": topic_id,
-            "score": score,
-            "total_questions": total_questions,
-        },
-    )
-    db.commit()
+    existing_score = db.query(models.QuizScore).filter(
+        models.QuizScore.user_id == current_user.id,
+        models.QuizScore.topic_id == topic_id
+    ).first()
+
+    if existing_score:
+        new_percent = score / total_questions
+        old_percent = existing_score.score / existing_score.total_questions
+        if new_percent > old_percent or (abs(new_percent - old_percent) < 1e-9 and score > existing_score.score):
+            existing_score.score = score
+            existing_score.total_questions = total_questions
+            existing_score.created_at = datetime.utcnow()
+            db.commit()
+    else:
+        new_score = models.QuizScore(
+            user_id=current_user.id,
+            topic_id=topic_id,
+            score=score,
+            total_questions=total_questions,
+            created_at=datetime.utcnow()
+        )
+        db.add(new_score)
+        db.commit()
 
     return {"detail": "Score saved"}
 

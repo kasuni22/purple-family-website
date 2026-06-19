@@ -380,53 +380,59 @@ export default function Quiz() {
         <aside className="quiz-sidebar" style={styles.sidebar}>
           <h2 style={styles.sideTitle}>🎮 Quiz Topics</h2>
 
-          {topics.map((topic) => (
-            <div
-              key={topic.id}
-              className="quiz-topic-card"
-              onClick={() => changeTopic(topic.id)}
-              style={{
-                ...styles.topicCard,
-                ...(Number(activeTopicId) === topic.id ? styles.topicCardActive : {}),
-              }}
+          <div className="quiz-topics-list">
+            {topics.map((topic) => (
+              <div
+                key={topic.id}
+                className="quiz-topic-card"
+                onClick={() => changeTopic(topic.id)}
+                style={{
+                  ...styles.topicCard,
+                  ...(Number(activeTopicId) === topic.id ? styles.topicCardActive : {}),
+                }}
+              >
+                <div style={styles.topicTitleRow}>
+                  <strong>{topic.icon || "📚"} {topic.name}</strong>
+                  <span style={styles.countBadge}>{topic.question_count || 0}</span>
+                </div>
+                <div style={styles.topicMeta}>Added by {topic.created_by_username || "System"}</div>
+                <div style={styles.topicActions} onClick={(e) => e.stopPropagation()}>
+                  {topic.can_edit && <button onClick={() => openEditTopicForm(topic)} style={styles.blueBtn}>Edit</button>}
+                  {topic.can_delete && <button onClick={() => deleteTopic(topic)} style={styles.redBtn}>Delete</button>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="quiz-action-buttons">
+            <button onClick={openAddTopicForm} style={styles.addTopicBtn}>➕ Add Topic</button>
+            <button onClick={openAddQuestionForm} style={styles.addBtn}>➕ Add Question</button>
+          </div>
+
+          <div className="quiz-side-divider" style={styles.sideDivider} />
+
+          <div className="quiz-nav-buttons">
+            <button
+              onClick={() => setViewMode("quiz")}
+              style={viewMode === "quiz" ? styles.leaderActiveBtn : styles.leaderBtn}
             >
-              <div style={styles.topicTitleRow}>
-                <strong>{topic.icon || "📚"} {topic.name}</strong>
-                <span style={styles.countBadge}>{topic.question_count || 0}</span>
-              </div>
-              <div style={styles.topicMeta}>Added by {topic.created_by_username || "System"}</div>
-              <div style={styles.topicActions} onClick={(e) => e.stopPropagation()}>
-                {topic.can_edit && <button onClick={() => openEditTopicForm(topic)} style={styles.blueBtn}>Edit</button>}
-                {topic.can_delete && <button onClick={() => deleteTopic(topic)} style={styles.redBtn}>Delete</button>}
-              </div>
-            </div>
-          ))}
+              🎮 Play Quiz
+            </button>
 
-          <button onClick={openAddTopicForm} style={styles.addTopicBtn}>➕ Add Topic</button>
-          <button onClick={openAddQuestionForm} style={styles.addBtn}>➕ Add Question</button>
+            <button
+              onClick={() => setViewMode("leaderboard")}
+              style={viewMode === "leaderboard" ? styles.leaderActiveBtn : styles.leaderBtn}
+            >
+              🏆 Leaderboard
+            </button>
 
-          <div style={styles.sideDivider} />
-
-          <button
-            onClick={() => setViewMode("quiz")}
-            style={viewMode === "quiz" ? styles.leaderActiveBtn : styles.leaderBtn}
-          >
-            🎮 Play Quiz
-          </button>
-
-          <button
-            onClick={() => setViewMode("leaderboard")}
-            style={viewMode === "leaderboard" ? styles.leaderActiveBtn : styles.leaderBtn}
-          >
-            🏆 Leaderboard
-          </button>
-
-          <button
-            onClick={() => setViewMode("myScores")}
-            style={viewMode === "myScores" ? styles.leaderActiveBtn : styles.leaderBtn}
-          >
-            💜 My Scores
-          </button>
+            <button
+              onClick={() => setViewMode("myScores")}
+              style={viewMode === "myScores" ? styles.leaderActiveBtn : styles.leaderBtn}
+            >
+              💜 My Scores
+            </button>
+          </div>
         </aside>
 
         <main className="quiz-main-area" style={styles.mainArea}>
@@ -499,7 +505,7 @@ export default function Quiz() {
               ) : (
                 <div className="quiz-rank-list" style={styles.rankList}>
                   {myScores.map((item) => (
-                    <div key={item.id} className="quiz-rank-row" style={styles.rankRow}>
+                    <div key={item.id} className="quiz-history-row" style={styles.historyRow}>
                       <div style={styles.rankAvatar}>
                         {item.profile_picture ? (
                           <img
@@ -741,6 +747,52 @@ function QuizResponsiveStyles() {
           max-height: none !important;
         }
 
+        .quiz-topics-list {
+          display: flex !important;
+          overflow-x: auto !important;
+          white-space: nowrap !important;
+          gap: 12px !important;
+          padding-bottom: 8px !important;
+          scrollbar-width: thin !important;
+        }
+
+        .quiz-topic-card {
+          flex: 0 0 260px !important;
+          margin-bottom: 0 !important;
+          white-space: normal !important;
+        }
+
+        .quiz-action-buttons {
+          display: flex !important;
+          gap: 10px !important;
+          margin-top: 10px !important;
+        }
+
+        .quiz-action-buttons button {
+          flex: 1 !important;
+          margin-top: 0 !important;
+          padding: 10px !important;
+          font-size: 0.9rem !important;
+        }
+
+        .quiz-side-divider {
+          margin: 10px 0 !important;
+        }
+
+        .quiz-nav-buttons {
+          display: flex !important;
+          gap: 8px !important;
+          margin-top: 10px !important;
+          flex-wrap: wrap !important;
+        }
+
+        .quiz-nav-buttons button {
+          flex: 1 1 120px !important;
+          margin-top: 0 !important;
+          padding: 10px !important;
+          font-size: 0.9rem !important;
+        }
+
         .quiz-main-area {
           padding: 22px 16px !important;
           border-radius: 28px !important;
@@ -811,6 +863,23 @@ function QuizResponsiveStyles() {
         }
 
         .quiz-rank-row > div:last-child {
+          grid-column: 1 / -1 !important;
+          align-items: flex-start !important;
+          background: rgba(124,58,237,0.08) !important;
+          padding: 10px 12px !important;
+          border-radius: 14px !important;
+          margin-top: 4px !important;
+        }
+
+        .quiz-history-row {
+          display: grid !important;
+          grid-template-columns: 46px 1fr !important;
+          gap: 10px !important;
+          padding: 12px !important;
+          align-items: center !important;
+        }
+
+        .quiz-history-row > div:last-child {
           grid-column: 1 / -1 !important;
           align-items: flex-start !important;
           background: rgba(124,58,237,0.08) !important;
@@ -893,6 +962,8 @@ const styles = {
     background: "rgba(255,255,255,0.82)",
     border: "1px solid rgba(124,58,237,0.14)",
     boxShadow: "0 18px 45px rgba(76,29,149,0.08)",
+    maxHeight: "calc(100vh - 140px)",
+    overflowY: "auto",
   },
 
   sideTitle: {
@@ -1358,6 +1429,17 @@ const styles = {
   rankRow: {
     display: "grid",
     gridTemplateColumns: "58px 54px 1fr auto",
+    alignItems: "center",
+    gap: "14px",
+    padding: "14px",
+    borderRadius: "20px",
+    background: "#faf7ff",
+    border: "1px solid rgba(124,58,237,0.12)",
+  },
+
+  historyRow: {
+    display: "grid",
+    gridTemplateColumns: "54px 1fr auto",
     alignItems: "center",
     gap: "14px",
     padding: "14px",
