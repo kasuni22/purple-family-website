@@ -90,6 +90,8 @@ export default function Register() {
               <option value="Jimin">Jimin</option>
               <option value="V">V</option>
               <option value="Jung Kook">Jung Kook</option>
+              <option value="Jung Kook">OT7</option>
+
             </select>
 
             <button className="auth-submit" type="submit" disabled={loading}>
