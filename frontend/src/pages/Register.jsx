@@ -90,7 +90,7 @@ export default function Register() {
               <option value="Jimin">Jimin</option>
               <option value="V">V</option>
               <option value="Jung Kook">Jung Kook</option>
-              <option value="Jung Kook">OT7</option>
+              <option value="OT7">OT7</option>
 
             </select>
 
