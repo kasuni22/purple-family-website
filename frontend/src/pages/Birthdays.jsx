@@ -18,26 +18,7 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-const DEFAULT_BTS_EVENTS = [
-  { title: "Jin", date: "December 4", month: 12, image_url: "/src/assets/bts-members/jin.jpg", isDefault: true },
-  { title: "SUGA", date: "March 9", month: 3, image_url: "/src/assets/bts-members/suga.jpg", isDefault: true },
-  { title: "j-hope", date: "February 18", month: 2, image_url: "/src/assets/bts-members/jhope.jpg", isDefault: true },
-  { title: "RM", date: "September 12", month: 9, image_url: "/src/assets/bts-members/rm.jpg", isDefault: true },
-  { title: "Jimin", date: "October 13", month: 10, image_url: "/src/assets/bts-members/jimin.jpg", isDefault: true },
-  { title: "V", date: "December 30", month: 12, image_url: "/src/assets/bts-members/v.jpg", isDefault: true },
-  { title: "Jung Kook", date: "September 1", month: 9, image_url: "/src/assets/bts-members/jungkook.jpg", isDefault: true },
-  { title: "BTS Debut", date: "June 13", month: 6, image_url: "/src/assets/bts-debut.png", isDefault: true, isSpecial: true },
-  { title: "ARMY Day", date: "July 9", month: 7, image_url: "/src/assets/army-day.jpg", isDefault: true, isSpecial: true },
-];;
-
-const getSavedBtsEvents = () => {
-  try {
-    const saved = localStorage.getItem("purple_family_bts_events");
-    return saved ? JSON.parse(saved) : DEFAULT_BTS_EVENTS;
-  } catch {
-    return DEFAULT_BTS_EVENTS;
-  }
-};
+// BTS events are loaded from the backend API (/bts-events)
 
 export default function Birthdays() {
   const [birthdays, setBirthdays] = useState([]);
@@ -57,7 +38,7 @@ export default function Birthdays() {
   const [specialDays, setSpecialDays] = useState([]);
   const [showSpecialForm, setShowSpecialForm] = useState(false);
   const [editingSpecialDay, setEditingSpecialDay] = useState(null);
-  const [btsEvents, setBtsEvents] = useState(getSavedBtsEvents);
+  const [btsEvents, setBtsEvents] = useState([]);
   const [showBtsForm, setShowBtsForm] = useState(false);
   const [editingBtsEvent, setEditingBtsEvent] = useState(null);
   const [btsForm, setBtsForm] = useState({
@@ -86,6 +67,7 @@ export default function Birthdays() {
     API.get("/special-days")
       .then((res) => setSpecialDays(res.data || []))
       .catch(() => { });
+    API.get("/bts-events").then((res) => setBtsEvents(res.data || [])).catch(() => {});
   }, [navigate]);
 
   const imageUrl = (path) => {
@@ -291,7 +273,15 @@ export default function Birthdays() {
 
   const persistBtsEvents = (events) => {
     setBtsEvents(events);
-    localStorage.setItem("purple_family_bts_events", JSON.stringify(events));
+  };
+
+  const refreshBtsEvents = async () => {
+    try {
+      const res = await API.get("/bts-events");
+      setBtsEvents(res.data || []);
+    } catch (err) {
+      console.error("Failed to refresh BTS events", err);
+    }
   };
 
   const openAddBtsEvent = () => {
@@ -306,49 +296,65 @@ export default function Birthdays() {
       name: event.name || "",
       month: Number(event.month) || 1,
       day: Number(event.day) || 1,
-      image: event.image || "",
-      special: Boolean(event.special),
+      image: event.image_url || "",
+      special: Boolean(event.is_special),
+      file: null,
     });
     setShowBtsForm(true);
   };
-
-  const saveBtsEvent = (e) => {
+  const saveBtsEvent = async (e) => {
     e.preventDefault();
 
     const cleanName = btsForm.name.trim();
     if (!cleanName) return alert("Name is required");
 
-    const month = Number(btsForm.month);
-    const day = Number(btsForm.day);
+    const formData = new FormData();
+    formData.append("name", cleanName);
+    formData.append("month", String(Number(btsForm.month)));
+    formData.append("day", String(Number(btsForm.day)));
+    formData.append("is_special", btsForm.special ? "true" : "false");
+    if (btsForm.file) {
+      formData.append("file", btsForm.file);
+    } else if (btsForm.image) {
+      // allow passing a direct URL if user supplied one in the image path input
+      formData.append("image_url", btsForm.image.trim());
+    }
 
-    const payload = {
-      id: editingBtsEvent?.id || `${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
-      name: cleanName,
-      month,
-      day,
-      date: monthDayToDateLabel(month, day),
-      image: btsForm.image.trim(),
-      emoji: "💜",
-      special: Boolean(btsForm.special),
-    };
+    try {
+      if (editingBtsEvent) {
+        await API.put(`/bts-events/${editingBtsEvent.id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        await API.post(`/bts-events`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
 
-    const updated = editingBtsEvent
-      ? btsEvents.map((item) => (item.id === editingBtsEvent.id ? payload : item))
-      : [...btsEvents, payload];
+      await refreshBtsEvents();
 
-    persistBtsEvents(updated);
-    setShowBtsForm(false);
-    setEditingBtsEvent(null);
+      setBtsForm({ name: "", month: todayMonth, day: todayDate, image: "", special: false, file: null });
+      setEditingBtsEvent(null);
+      setShowBtsForm(false);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || "Failed");
+    }
   };
 
-  const deleteBtsEvent = (event) => {
+  const deleteBtsEvent = async (event) => {
     if (!window.confirm(`Delete "${event.name}"?`)) return;
-    persistBtsEvents(btsEvents.filter((item) => item.id !== event.id));
+    try {
+      await API.delete(`/bts-events/${event.id}`);
+      await refreshBtsEvents();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed");
+    }
   };
 
-  const resetBtsEvents = () => {
+  const resetBtsEvents = async () => {
     if (!window.confirm("Reset BTS birthdays and special days to default?")) return;
-    persistBtsEvents(DEFAULT_BTS_EVENTS);
+    await refreshBtsEvents();
   };
 
   return (
@@ -835,13 +841,13 @@ export default function Birthdays() {
                     key={member.id || member.name}
                     style={{
                       ...styles.card,
-                      ...(member.special ? styles.specialCard : {}),
+                      ...(member.is_special ? styles.specialCard : {}),
                       ...(isToday ? styles.todayRowBorder : {}),
                     }}
                   >
-                    {(member.image || member.image_url) ? (
+                    {(member.image_url || member.image) ? (
                       <img
-                        src={member.image || member.image_url}
+                        src={member.image_url || member.image}
                         alt={member.name}
                         style={styles.btsImage}
                         onError={(e) => {
@@ -855,7 +861,7 @@ export default function Birthdays() {
                     <h3 style={styles.username}>{member.name}</h3>
                     <p style={styles.date}>🎂 {member.date || monthDayToDateLabel(member.month, member.day)}</p>
 
-                    {member.special && (
+                    {member.is_special && (
                       <div style={styles.specialBadge}>Special Day 💜</div>
                     )}
 

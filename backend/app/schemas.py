@@ -184,6 +184,23 @@ class SpecialDayOut(BaseModel):
         from_attributes = True
 
 
+class BtsEventOut(BaseModel):
+    id: int
+    name: str
+    month: int
+    day: int
+    image_url: Optional[str] = None
+    is_special: bool = False
+    is_default: bool = False
+    created_by_id: Optional[int] = None
+    created_at: datetime
+    can_edit: bool = False
+    can_delete: bool = False
+
+    class Config:
+        from_attributes = True
+
+
 class WallpaperUpdate(BaseModel):
     title: Optional[str] = None
     member: Optional[str] = None

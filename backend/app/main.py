@@ -1189,6 +1189,156 @@ def delete_bts_description(
 
 
 
+# ─── BTS EVENTS ROUTES ─────────────────────────────────────
+
+
+def serialize_bts_event(event: models.BtsEvent, current_user: Optional[models.User]):
+    creator = None
+    if event.created_by_id:
+        creator = event.created_by
+    can_edit = bool(current_user and (current_user.is_admin or event.created_by_id == current_user.id))
+    can_delete = bool(current_user and (current_user.is_admin or event.created_by_id == current_user.id))
+    return {
+        "id": event.id,
+        "name": event.name,
+        "month": event.month,
+        "day": event.day,
+        "image_url": event.image_url,
+        "is_special": event.is_special,
+        "is_default": event.is_default,
+        "created_by_id": event.created_by_id,
+        "created_by_username": creator.username if creator else None,
+        "created_at": event.created_at,
+        "can_edit": can_edit,
+        "can_delete": can_delete,
+    }
+
+
+def seed_bts_events(db: Session):
+    if db.query(models.BtsEvent).first():
+        return
+
+    defaults = [
+        {"name": "Jin", "month": 12, "day": 4, "is_special": False},
+        {"name": "SUGA", "month": 3, "day": 9, "is_special": False},
+        {"name": "j-hope", "month": 2, "day": 18, "is_special": False},
+        {"name": "RM", "month": 9, "day": 12, "is_special": False},
+        {"name": "Jimin", "month": 10, "day": 13, "is_special": False},
+        {"name": "V", "month": 12, "day": 30, "is_special": False},
+        {"name": "Jung Kook", "month": 9, "day": 1, "is_special": False},
+        {"name": "BTS Debut", "month": 6, "day": 13, "is_special": True},
+        {"name": "ARMY Day", "month": 7, "day": 9, "is_special": True},
+    ]
+
+    for entry in defaults:
+        db.add(models.BtsEvent(
+            name=entry["name"],
+            month=entry["month"],
+            day=entry["day"],
+            image_url=None,
+            is_special=entry.get("is_special", False),
+            is_default=True,
+            created_by_id=None,
+        ))
+
+    db.commit()
+
+
+@app.get("/bts-events")
+def get_bts_events(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    seed_bts_events(db)
+    events = db.query(models.BtsEvent).order_by(models.BtsEvent.month.asc(), models.BtsEvent.day.asc()).all()
+    return [serialize_bts_event(ev, current_user) for ev in events]
+
+
+@app.post("/bts-events")
+def create_bts_event(
+    name: str = Form(...),
+    month: int = Form(...),
+    day: int = Form(...),
+    is_special: bool = Form(False),
+    image_url: Optional[str] = Form(None),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    clean_name = name.strip()
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Name is required")
+
+    uploaded_url = None
+    if file and getattr(file, "filename", None):
+        result = cloudinary.uploader.upload(file.file, folder="bts-special-days")
+        uploaded_url = result.get("secure_url")
+
+    final_image = uploaded_url or (image_url or None)
+
+    event = models.BtsEvent(
+        name=clean_name,
+        month=month,
+        day=day,
+        image_url=final_image,
+        is_special=bool(is_special),
+        is_default=False,
+        created_by_id=current_user.id,
+    )
+
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+
+    return serialize_bts_event(event, current_user)
+
+
+@app.put("/bts-events/{event_id}")
+def update_bts_event(
+    event_id: int,
+    name: str = Form(...),
+    month: int = Form(...),
+    day: int = Form(...),
+    is_special: bool = Form(False),
+    image_url: Optional[str] = Form(None),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    event = db.query(models.BtsEvent).filter(models.BtsEvent.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="BTS event not found")
+    if not current_user.is_admin and event.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this event")
+
+    event.name = name.strip()
+    event.month = month
+    event.day = day
+    event.is_special = bool(is_special)
+
+    if file and getattr(file, "filename", None):
+        result = cloudinary.uploader.upload(file.file, folder="bts-special-days")
+        event.image_url = result.get("secure_url")
+    else:
+        # allow updating via direct URL if provided
+        if image_url:
+            event.image_url = image_url
+
+    db.commit()
+    db.refresh(event)
+
+    return serialize_bts_event(event, current_user)
+
+
+@app.delete("/bts-events/{event_id}")
+def delete_bts_event(event_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    event = db.query(models.BtsEvent).filter(models.BtsEvent.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="BTS event not found")
+    if not current_user.is_admin and event.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this event")
+
+    db.delete(event)
+    db.commit()
+    return {"detail": "BTS event deleted"}
+
 # ─── BTS MAIN DESCRIPTION SETTINGS ─────────────────────────
 
 @app.get("/bts-main-descriptions")
