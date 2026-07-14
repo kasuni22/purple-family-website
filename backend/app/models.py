@@ -235,3 +235,5 @@ class BtsEvent(Base):
     is_default = Column(Boolean, default=False)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+
+    created_by = relationship("User")
